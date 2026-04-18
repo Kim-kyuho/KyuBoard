@@ -2,7 +2,7 @@ interface MemoCardProps {
     content: string;
     x: number;
     y: number;
-    with?: number;
+    width?: number;
     height?: number;
     color? : string;
 }
@@ -11,7 +11,7 @@ export default function MemoCard({
     content, 
     x, 
     y, 
-    with: width = 240, 
+    width: width = 240, 
     height = 240, 
     color = 'yellow',
 }: MemoCardProps) {
