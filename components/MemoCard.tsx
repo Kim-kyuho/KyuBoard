@@ -1,33 +1,30 @@
 interface MemoCardProps {
+    id : number;
     content: string;
     x: number;
     y: number;
     width?: number;
     height?: number;
     color? : string;
+    isPublic?: boolean;
 }
-
-export default function MemoCard({ 
-    content, 
-    x, 
-    y, 
-    width: width = 240, 
-    height = 240, 
-    color = 'yellow',
-}: MemoCardProps) {
+export default function MemoCard({ memo }: { memo: MemoCardProps })
+   {
     return (
         <div 
             className="absolute rounded-xl border p-4 shadow-md" 
             style={{
-            left: `${x}px`,
-            top: `${y}px`,
-            width: `${width}px`,
-            height: `${height}px`,
-            backgroundColor: color,
+            left: `${memo .x}px`,
+            top: `${memo .y}px`,
+            width: `${memo .width}px`,
+            height: `${memo .height}px`,
+            backgroundColor: memo .color,
             borderColor: '#facc15',
       }}
         >
-      <p className="text-sm text-neutral-800">{content}</p>
+    {memo.isPublic ? <p className="text-sm text-neutral-800">{memo.content}</p>:<p className="text-sm text-neutral-800 italic">비공개 메모</p>}
+
+
     </div>
     );
 }

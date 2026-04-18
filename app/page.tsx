@@ -6,6 +6,26 @@ import { useState } from "react";
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const memos = [{
+    id: 1,
+    content : "KyuBoard 첫번째 메모",
+    x: 240,
+    y: 180,
+    width: 500,
+    height: 300,
+    color: 'yellow',
+    isPublic: true,
+  },
+  {
+    id: 2,
+    content : "KyuBoard 두번째 메모",
+    x: 800,
+    y: 300,
+    width: 500,
+    height: 300,
+    color: 'yellow',
+    isPublic: false,
+  }]
 
   return (
     <main className="h-screen w-screen overflow-auto bg-neutral-200">
@@ -26,7 +46,7 @@ export default function Home() {
           </div>
         </button>
       {menuOpen && (
-        <div className="fixed w-46 left-5 top-17 z-100 rounded-xl bg-white/30 px-4 py-3 shadow-md">
+        <div className="fixed w-46 left-5 top-17 z-50 rounded-xl bg-white/30 px-4 py-3 shadow-md">
           <button className="block w-full text-left text-neutral-900" onClick={() => setMenuOpen(false)}>Search</button>
           <button className="block w-full text-left text-neutral-900" onClick={() => setMenuOpen(false)}>Recent</button>
           <button className="block w-full text-left text-neutral-900" onClick={() => setMenuOpen(false)}>Write</button>
@@ -43,11 +63,7 @@ export default function Home() {
           backgroundSize: '24px 24px',
         }}
       >
-        <MemoCard
-          content="KyuBoard 첫 메모"
-          x={240}
-          y={180}
-        />
+        {memos.map((memo) => <MemoCard key={memo.id} memo={memo} />)}
       </div>
     </main>
   );
