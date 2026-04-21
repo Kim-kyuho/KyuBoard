@@ -1,3 +1,6 @@
+import { useState } from "react";
+
+// 메모 카드 컴포넌트
 interface MemoCardProps {
     id : number;
     content: string;
@@ -8,23 +11,75 @@ interface MemoCardProps {
     color? : string;
     isPublic?: boolean;
 }
-export default function MemoCard({ memo }: { memo: MemoCardProps })
+export default function MemoCard({ memo, onDelete, onSave }: { memo: MemoCardProps; onDelete: (id: number) => void; onSave: (id: number, content: string) => void; })
    {
+    // 컨텍스트 메뉴 오픈: Edit, Delete 버튼이 있는 메뉴 - 메모 카드에서 우클릭 시 열림
+    const [contextMenuOpen, setContextMenuOpen] = useState(false);
+    // 컨텍스트 메뉴 위치 상태
+    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
     return (
-        <div 
-            className="absolute rounded-xl border p-4 shadow-md" 
-            style={{
-            left: `${memo .x}px`,
-            top: `${memo .y}px`,
-            width: `${memo .width}px`,
-            height: `${memo .height}px`,
-            backgroundColor: memo .color,
-            borderColor: '#facc15',
-      }}
-        >
-    {memo.isPublic ? <p className="text-sm text-neutral-800">{memo.content}</p>:<p className="text-sm text-neutral-800 italic">비공개 메모</p>}
-
-
+        <div onContextMenu={(e) => {
+            e.preventDefault();
+            const x = e.clientX;
+            const y = e.clientY;
+            setContextMenuPosition({ x, y });
+            setContextMenuOpen(true);
+        }}
+        >   
+        { /* 메모 공개/비공개 상태에 따른 표시 */
+        memo.isPublic ? 
+            /* 공개 메모 */
+            <textarea
+                className="absolute rounded-xl border p-4 shadow-md text-neutral-900" 
+                defaultValue ={memo.content}
+                style={{
+                left: `${memo .x}px`,
+                top: `${memo .y}px`,
+                width: `${memo .width}px`,
+                height: `${memo .height}px`,
+                backgroundColor: memo .color,
+                borderColor: '#facc15',
+                resize: 'none',}}
+                onBlur={(e) => {
+                    onSave(memo.id, e.target.value);
+                    }
+                }
+                >
+            </textarea>
+            /* 비공개 메모 */
+            :<textarea 
+                className="absolute rounded-xl border p-4 shadow-md text-neutral-900" 
+                defaultValue = "비공개 메모입니다."
+                style={{
+                left: `${memo .x}px`,
+                top: `${memo .y}px`,
+                width: `${memo .width}px`,
+                height: `${memo .height}px`,
+                backgroundColor: memo .color,
+                borderColor: '#facc15',
+                resize: 'none',
+            }}>
+            </textarea>}
+            {/* 컨텍스트 메뉴: Edit, Delete 버튼이 있는 메뉴 - 메모 카드에서 우클릭 시 열림 */
+            contextMenuOpen && (
+                <div 
+                    className="absolute bg-white px-4 py-3 shadow-md"
+                    style={{
+                        left: `${contextMenuPosition.x}px`,
+                        top: `${contextMenuPosition.y}px`,
+                }}>
+                    {/* Delete 버튼 */}
+                    <button 
+                        className="block w-full text-left text-neutral-900" 
+                        onClick={() => {
+                            setContextMenuOpen(false);
+                            onDelete(memo.id);
+                        }}>    
+                        Delete
+                    </button>
+                </div>
+            )}
     </div>
+    
     );
 }
