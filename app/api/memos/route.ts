@@ -1,8 +1,9 @@
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { db_memos } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
+    const db = getDb();
     const body = await request.json();
 
     const newMemo = await db

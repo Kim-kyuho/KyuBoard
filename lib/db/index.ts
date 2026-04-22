@@ -1,9 +1,14 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 
-// Neon 데이터베이스 연결 설정
-const connectionString = process.env.NEON_CONNECTION_STRING || "";
-const client = neon(connectionString);
+export function getDb() {
+    const connectionString = process.env.NEON_CONNECTION_STRING;
 
-// Drizzle ORM 인스턴스 생성
-export const db = drizzle(client);  
+    if (!connectionString) {
+        throw new Error("NEON_CONNECTION_STRING is not set");
+    }
+
+    const client = neon(connectionString);
+
+    return drizzle(client);
+}
