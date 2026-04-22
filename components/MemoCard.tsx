@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import PressableButton from "@/components/PressableButton";
 
 // 메모 카드 컴포넌트
 interface MemoCardProps {
@@ -93,14 +94,14 @@ export default function MemoCard({ memo, onDelete, onSave }: { memo: MemoCardPro
                         top: `${contextMenuPosition.y}px`,
                 }}>
                     {/* Delete 버튼 */}
-                    <button 
-                        className="ui-button-menu" 
+                    <PressableButton 
+                        variant="menu"
                         onClick={() => {
                             setContextMenuOpen(false);
                             onDelete(memo.id);
                         }}>    
                         Delete
-                    </button>
+                    </PressableButton>
                 </div>
             )}
     </div>

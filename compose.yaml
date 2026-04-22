@@ -1,0 +1,11 @@
+services:
+  kyuboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kyuboard
+    ports:
+      - "3001:3000"
+    env_file:
+      - .env.local
+    restart: unless-stopped
