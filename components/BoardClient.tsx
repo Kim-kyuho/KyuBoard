@@ -83,7 +83,7 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
           </Link>
         </div>
         {/* 메뉴 버튼 */}
-        <button className="fixed left-38 top-7 z-50 rounded-xl bg-white/30 px-4 py-3 shadow-md" 
+        <button className="ui-button fixed left-38 top-7 z-50 bg-white/30 px-4 py-3 shadow-md" 
         onClick={() => setMenuOpen((prev) => !prev)}>
         <div className="flex flex-col gap-1">
             <span className="block h-0.5 w-5 bg-neutral-800" />
@@ -95,32 +95,32 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
         <div className="fixed w-46 left-5  top-17 z-50 rounded-xl bg-white/30 px-4 py-3 shadow-md">
           {/* Search버튼: 메모를 검색하는 기능 */}
           <button 
-            className="block w-full text-left text-neutral-900" 
+            className="ui-button-menu" 
             onClick={() => setMenuOpen(false)}>
               Search
           </button>
           {/* Recent버튼: 최근 작성한 메모를 보여주는 기능 */}
           <button 
-            className="block w-full text-left text-neutral-900" 
+            className="ui-button-menu" 
             onClick={() => setMenuOpen(false)}>
               Recent
           </button>
           {/* Write버튼: 새로운 메모를 작성하는 기능 */}
           <button 
-            className="block w-full text-left text-neutral-900" 
+            className="ui-button-menu" 
             onClick={() => { setWriteClicked(true); 
             }}>
               Write
             </button>
           {/* View버튼: 작성한 메모를 보는 기능 */}
           <button 
-            className="block w-full text-left text-neutral-900" 
+            className="ui-button-menu" 
             onClick={() => setMenuOpen(false)}>
               View
           </button>
           {/* Kyu.Log→버튼: Kyu.Log로 이동 */}
           <button 
-            className="block w-full text-left text-neutral-900" 
+            className="ui-button-menu" 
             onClick={() => setMenuOpen(false)}>
               Kyu.Log→
           </button>

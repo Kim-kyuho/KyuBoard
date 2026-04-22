@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 // 메모 카드 컴포넌트
 interface MemoCardProps {
@@ -95,7 +94,7 @@ export default function MemoCard({ memo, onDelete, onSave }: { memo: MemoCardPro
                 }}>
                     {/* Delete 버튼 */}
                     <button 
-                        className="block w-full text-left text-neutral-900" 
+                        className="ui-button-menu" 
                         onClick={() => {
                             setContextMenuOpen(false);
                             onDelete(memo.id);

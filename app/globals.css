@@ -24,3 +24,13 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@layer components {
+  .ui-button {
+    @apply rounded-xl transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 hover:shadow-lg active:translate-y-0.5 active:scale-[0.98] active:bg-white/80;
+  }
+
+  .ui-button-menu {
+    @apply block w-full rounded-lg px-3 py-2 text-left text-neutral-900 transition duration-150 ease-out hover:bg-white/70 hover:pl-4 active:scale-[0.99] active:bg-white/90;
+  }
+}
