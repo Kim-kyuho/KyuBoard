@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRef } from "react";
 
 // 메모 카드 컴포넌트
 interface MemoCardProps {
@@ -17,6 +18,13 @@ export default function MemoCard({ memo, onDelete, onSave }: { memo: MemoCardPro
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
     // 컨텍스트 메뉴 위치 상태
     const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+
+    const longPressRef = useRef<NodeJS.Timeout | null>(null);
+    const openContextMenu = (x: number, y: number) => {
+        setContextMenuPosition({ x, y });
+        setContextMenuOpen(true);
+    };
+
     return (
         <div onContextMenu={(e) => {
             e.preventDefault();
@@ -24,7 +32,24 @@ export default function MemoCard({ memo, onDelete, onSave }: { memo: MemoCardPro
             const y = e.clientY;
             setContextMenuPosition({ x, y });
             setContextMenuOpen(true);
-        }}
+            }}
+
+            onTouchStart={(e) => {
+                const touch = e.touches[0];
+                longPressRef.current = setTimeout(() => {
+                    openContextMenu(touch.clientX, touch.clientY);
+                }, 500);
+            }}
+            onTouchEnd={() => {
+                if (longPressRef.current) {
+                    clearTimeout(longPressRef.current);
+                }
+            }}
+            onTouchMove={() => {
+                if (longPressRef.current) {
+                    clearTimeout(longPressRef.current);
+                }
+            }}
         >   
         { /* 메모 공개/비공개 상태에 따른 표시 */
         memo.isPublic ? 
