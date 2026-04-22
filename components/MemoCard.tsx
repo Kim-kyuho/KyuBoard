@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import PressableButton from "@/components/PressableButton";
 
 // 메모 카드 컴포넌트
@@ -18,7 +18,20 @@ export default function MemoCard({ memo, onDelete, onSave }: { memo: MemoCardPro
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
     // 컨텍스트 메뉴 위치 상태
     const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-
+    // 컨텍스트 메뉴 외부 클릭 감지를 위한 ref
+    const menuRef = useRef<HTMLDivElement | null>(null);
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setContextMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+    // 모바일에서 롱프레스 감지를 위한 ref
     const longPressRef = useRef<NodeJS.Timeout | null>(null);
     const openContextMenu = (x: number, y: number) => {
         setContextMenuPosition({ x, y });
@@ -88,6 +101,7 @@ export default function MemoCard({ memo, onDelete, onSave }: { memo: MemoCardPro
             {/* 컨텍스트 메뉴: Edit, Delete 버튼이 있는 메뉴 - 메모 카드에서 우클릭 시 열림 */
             contextMenuOpen && (
                 <div 
+                    ref={menuRef}
                     className="absolute bg-white px-4 py-3 shadow-md"
                     style={{
                         left: `${contextMenuPosition.x}px`,
