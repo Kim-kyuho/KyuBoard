@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import MemoCard from "@/components/MemoCard";
-import AddMemo from "@/components/AddMemo";
 import Link from "next/link";
 
 interface Memo {
@@ -25,9 +24,26 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
     // Write 버튼 클릭 상태
     const [writeClicked, setWriteClicked] = useState(false);
 
-    // 메모삭제를 위한 함수 - MemoCard에서 호출 Delete 버튼 클릭 시 해당 메모 id를 받아서 memos 상태에서 삭제
-    const handleDeleteMemo = (id: number) => {
-        setMemos((prev) => prev.filter((memo) => memo.id !== id));
+    // 메모 생성을 위한 함수 - CreateMemo 컴포넌트에서 호출 보드 영역 클릭 시 해당 위치에 새로운 메모 생성
+    const handleCreateMemo = async (x: number, y: number) => {
+        const response = await fetch("/api/memos", {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            boardId: 1,
+            content: "",
+            x,
+            y,
+            width: 300,
+            height: 500,
+            color: "yellow",
+            isPublic: true,
+           }), 
+        });
+        const data = await response.json();
+        setMemos((prev) => [...prev, data.memo]);
     };
 
     // 메모 추가를 위한 함수 - 보드 영역 클릭 시 AddMemo 컴포넌트를 호출하여 새로운 메모 생성
@@ -40,13 +56,19 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
         body: JSON.stringify({ content }),
     });
 
-    setMemos((prev) =>
-        prev.map((memo) =>
-        memo.id === id ? { ...memo, content } : memo
-        )
-    );
+        setMemos((prev) =>
+            prev.map((memo) =>
+            memo.id === id ? { ...memo, content } : memo
+            )
+        );
     };
-
+    // 메모삭제를 위한 함수 - MemoCard에서 호출 Delete 버튼 클릭 시 해당 메모 id를 받아서 memos 상태에서 삭제
+    const handleDeleteMemo = async (id: number) => {
+        await fetch(`/api/memos/${id}`, {
+        method: "DELETE",
+        });
+        setMemos((prev) => prev.filter((memo) => memo.id !== id)); 
+    };
 
     // 페이지 영역
   return (
@@ -70,7 +92,7 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
           </div>
         </button>
       {menuOpen && (
-        <div className="fixed w-46 left-5 top-17 z-50 rounded-xl bg-white/30 px-4 py-3 shadow-md">
+        <div className="fixed w-46 left-5  top-17 z-50 rounded-xl bg-white/30 px-4 py-3 shadow-md">
           {/* Search버튼: 메모를 검색하는 기능 */}
           <button 
             className="block w-full text-left text-neutral-900" 
@@ -116,7 +138,7 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
               const x = e.clientX - rect.left;
               const y = e.clientY - rect.top; 
               console.log(`Clicked at: (${x}, ${y})`);
-              setMemos([...memos, AddMemo({x, y})]);
+              handleCreateMemo(x, y);
               setWriteClicked(false);
             }
         }}
@@ -133,4 +155,4 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
       </div>
     </main>
   );
-}   
+}
