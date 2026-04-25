@@ -31,7 +31,7 @@ export default function MemoCard({ memo, onDelete, onSave }: { memo: MemoCardPro
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
-    // 모바일에서 롱프레스 감지를 위한 ref
+    // 모바일에서 길게 누름 이벤트 감지를 위한 ref
     const longPressRef = useRef<NodeJS.Timeout | null>(null);
     const openContextMenu = (x: number, y: number) => {
         setContextMenuPosition({ x, y });
@@ -40,13 +40,15 @@ export default function MemoCard({ memo, onDelete, onSave }: { memo: MemoCardPro
 
     return (
         <div onContextMenu={(e) => {
+            /* 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시 */
             e.preventDefault();
             const x = e.clientX;
             const y = e.clientY;
             setContextMenuPosition({ x, y });
             setContextMenuOpen(true);
             }}
-
+            
+            /* 모바일에서 길게 누름 이벤트 - 터치한 좌표에 컨텍스트 메뉴를 표시 */
             onTouchStart={(e) => {
                 const touch = e.touches[0];
                 longPressRef.current = setTimeout(() => {
