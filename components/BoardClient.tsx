@@ -11,10 +11,10 @@ interface Memo {
     content: string;
     x: number;
     y: number;
-    width?: number;
-    height?: number;
-    color? : string;
-    isPublic?: boolean;
+    width: number;
+    height: number;
+    color : string;
+    isPublic: boolean;
 }
 
 export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
@@ -38,7 +38,7 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
             x,
             y,
             width: 300,
-            height: 500,
+            height: 200,
             color: "yellow",
             isPublic: true,
            }), 
@@ -48,18 +48,18 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
     };
 
     // 메모 추가를 위한 함수 - 보드 영역 클릭 시 AddMemo 컴포넌트를 호출하여 새로운 메모 생성
-    const handleSaveMemo = async (id: number, content: string) => {
+    const handleSaveMemo = async (id: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
     await fetch(`/api/memos/${id}`, {
         method: "PATCH",
         headers: {
         "Content-Type": "application/json",
         },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, x, y, width, height, color, isPublic }),
     });
 
         setMemos((prev) =>
             prev.map((memo) =>
-            memo.id === id ? { ...memo, content } : memo
+            memo.id === id ? { ...memo, content, x, y, width, height, color, isPublic } : memo
             )
         );
     };
@@ -131,7 +131,7 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
         Wrtie버튼을 누르고 보드 영역을 클릭하면 해당 위치에 새로운 메모가 생성  
       */}
       <div
-        className="relative bg-white"
+        className="kyu-board relative bg-white"
         onClick={(e)=>{
             if(writeClicked)
             {

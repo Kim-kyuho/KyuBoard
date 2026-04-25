@@ -10,7 +10,7 @@ export async function PATCH(request: NextRequest, {params}: { params: Promise<{ 
 
     await db
     .update(db_memos)
-    .set({ content: body.content })
+    .set({ content: body.content, x: body.x, y: body.y, width: body.width, height: body.height, color: body.color, isPublic: body.isPublic })
     .where(eq(db_memos.id, parseInt(id)));
 
     return NextResponse.json({ ok: true});
