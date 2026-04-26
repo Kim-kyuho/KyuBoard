@@ -150,7 +150,13 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
         >
           {
           /* 메모카드 리스트를 랜더링 */
-          memos.map((memo) => <MemoCard key={memo.id} memo={memo} onDelete={handleDeleteMemo} onSave={handleSaveMemo} />)}
+          memos.map((memo) => 
+          <MemoCard 
+            key={memo.id} 
+            memo={memo} 
+            onDelete={handleDeleteMemo} 
+            onSave={handleSaveMemo} 
+            />)}
         </div>
       </main>
     </>
