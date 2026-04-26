@@ -4,6 +4,7 @@ import { useState } from "react";
 import MemoCard from "@/components/MemoCard";
 import PressableButton from "@/components/PressableButton";
 import Link from "next/link";
+import { Menu } from "lucide-react";
 
 interface Memo {
     id : number;
@@ -55,13 +56,12 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
         "Content-Type": "application/json",
         },
         body: JSON.stringify({ content, x, y, width, height, color, isPublic }),
-    });
-
-        setMemos((prev) =>
-            prev.map((memo) =>
-            memo.id === id ? { ...memo, content, x, y, width, height, color, isPublic } : memo
-            )
-        );
+      });
+      setMemos((prev) =>
+          prev.map((memo) =>
+          memo.id === id ? { ...memo, content, x, y, width, height, color, isPublic } : memo
+          )
+      );
     };
     // 메모삭제를 위한 함수 - MemoCard에서 호출 Delete 버튼 클릭 시 해당 메모 id를 받아서 memos 상태에서 삭제
     const handleDeleteMemo = async (id: number) => {
@@ -73,27 +73,24 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
 
     // 페이지 영역
   return (
-    <main className="h-screen w-screen overflow-auto bg-neutral-200">
-        <div className="fixed left-5 top-5 z-50 rounded-xl text-neutral-900 px-4 py-3 shadow-md" >
-          {/* 로고 */}
-          <Link
-            href="/"
-            className="transition duration-300 active:scale-105 active:rotate-1 text-sky-500 hover:text-pink-500 font-mono text-1xl sm:text-1xl font-extrabold"
-          >
-            •kyu.board
-          </Link>
-        </div>
-        {/* 메뉴 버튼 */}
-        <PressableButton className="fixed left-38 top-7 z-50 bg-white/30 px-4 py-3 shadow-md" 
-        onClick={() => setMenuOpen((prev) => !prev)}>
-        <div className="flex flex-col gap-1">
-            <span className="block h-0.5 w-5 bg-neutral-800" />
-            <span className="block h-0.5 w-5 bg-neutral-800" />
-            <span className="block h-0.5 w-5 bg-neutral-800" />
-          </div>
-        </PressableButton>
+    <>
+      <div className="fixed left-5 top-5 z-50 rounded-xl text-neutral-900 px-4 py-3 shadow-md" >
+        {/* 로고 */}
+        <Link
+          href="/"
+          className="transition duration-300 active:scale-105 active:rotate-1 text-sky-500 hover:text-pink-500 font-mono text-1xl sm:text-1xl font-extrabold"
+        >
+          •kyu.board
+        </Link>
+      </div>
+      {/* 메뉴 버튼 */}
+      <PressableButton className="fixed left-38 top-5 z-50 bg-white/30 px-4 py-3 shadow-md" 
+      onClick={() => setMenuOpen((prev) => !prev)}>
+        <Menu className="w-5 h-5" />
+      </PressableButton>
+      
       {menuOpen && (
-        <div className="fixed w-46 left-5  top-17 z-50 rounded-xl bg-white/30 px-4 py-3 shadow-md">
+        <div className="fixed w-46 left-5 top-17 z-50 rounded-xl bg-white/30 px-4 py-3 shadow-md">
           {/* Search버튼: 메모를 검색하는 기능 */}
           <PressableButton 
             variant="menu"
@@ -127,33 +124,35 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
           </PressableButton>
         </div>
       )}
-      {/* 보드 영역: 사이즈 3840x2160, 그리드 배경, 메모 카드들이 배치되는 영역
-        Wrtie버튼을 누르고 보드 영역을 클릭하면 해당 위치에 새로운 메모가 생성  
-      */}
-      <div
-        className="kyu-board relative bg-white"
-        onClick={(e)=>{
-            if(writeClicked)
-            {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const y = e.clientY - rect.top; 
-              console.log(`Clicked at: (${x}, ${y})`);
-              handleCreateMemo(x, y);
-              setWriteClicked(false);
-            }
-        }}
-        style={{
-          width: '3840px',
-          height: '2160px',
-          backgroundImage: 'radial-gradient(#d4d4d8 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-        }}
-      >
-        {
-        /* 메모카드 리스트를 랜더링 */
-        memos.map((memo) => <MemoCard key={memo.id} memo={memo} onDelete={handleDeleteMemo} onSave={handleSaveMemo} />)}
-      </div>
-    </main>
+      <main className="h-screen w-screen overflow-auto bg-neutral-200">
+        {/* 보드 영역: 사이즈 3840x2160, 그리드 배경, 메모 카드들이 배치되는 영역
+          Wrtie버튼을 누르고 보드 영역을 클릭하면 해당 위치에 새로운 메모가 생성  
+        */}
+        <div
+          className="kyu-board relative bg-white"
+          onClick={(e)=>{
+              if(writeClicked)
+              {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top; 
+                console.log(`Clicked at: (${x}, ${y})`);
+                handleCreateMemo(x, y);
+                setWriteClicked(false);
+              }
+          }}
+          style={{
+            width: '3840px',
+            height: '2160px',
+            backgroundImage: 'radial-gradient(#d4d4d8 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        >
+          {
+          /* 메모카드 리스트를 랜더링 */
+          memos.map((memo) => <MemoCard key={memo.id} memo={memo} onDelete={handleDeleteMemo} onSave={handleSaveMemo} />)}
+        </div>
+      </main>
+    </>
   );
 }

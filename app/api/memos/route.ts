@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { db_memos } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 
+// 메모 생성 API - POST 요청을 처리하여 새로운 메모를 데이터베이스에 추가
 export async function POST(request: NextRequest) {
     const db = getDb();
     const body = await request.json();
