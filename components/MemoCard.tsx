@@ -17,11 +17,20 @@ interface MemoCardProps {
     color : string;
     isPublic: boolean;
 }
-export default function MemoCard({ memo, onDelete, onSave}: { 
+export default function MemoCard({ memo, onInsert, onUpdate, onDelete}: { 
     memo: MemoCardProps; 
-    onDelete: (
-        id: number) => void; 
-    onSave: (
+    onInsert:(
+        tempId: number,
+        borderId: number,
+        content: string, 
+        x: number, 
+        y: number, 
+        width: number, 
+        height: number, 
+        color: string, 
+        isPublic: boolean
+    ) => void;
+    onUpdate: (
         id: number, 
         content: string, 
         x: number, 
@@ -31,8 +40,10 @@ export default function MemoCard({ memo, onDelete, onSave}: {
         color: string, 
         isPublic: boolean
     ) => void; 
-
-})
+    onDelete: (
+        id: number
+    ) => void; 
+    })
    {
     // 메모 카드의 위치, 크기, 내용, 색상, 공개/비공개 상태
     const [memoState, setMemoState] = useState({
@@ -43,9 +54,22 @@ export default function MemoCard({ memo, onDelete, onSave}: {
     });
     // 메모 내용 상태 - 편집 모드에서 텍스트 영역의 내용을 저장하기 위해 사용
     const [memoContent, setMemoContent] = useState(memo.content);
-    // 메모 저장 함수 - 메모 카드 이동, 크기 조절, 내용 변경 시 호출되어 변경된 메모 정보를 부모 컴포넌트로 전달
-    const saveMemo = useCallback(() => {
-        onSave(
+    const insertMemo = useCallback(() => {
+        onInsert(
+            memo.id,
+            1,
+            memoContent,
+            Math.round(memoState.x),
+            Math.round(memoState.y),
+            Math.round(memoState.width),
+            Math.round(memoState.height),
+            memo.color,
+            memo.isPublic
+        );
+    },[memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onInsert]);
+    // 메모 갱신 함수 - 메모 카드 이동, 크기 조절, 내용 변경 시 호출되어 변경된 메모 정보를 부모 컴포넌트로 전달
+    const updateMemo = useCallback(() => {
+        onUpdate(
             memo.id,
             memoContent,
             Math.round(memoState.x),
@@ -55,7 +79,7 @@ export default function MemoCard({ memo, onDelete, onSave}: {
             memo.color,
             memo.isPublic
         );
-    },[ memo.id, memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onSave]);
+    },[ memo.id, memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onUpdate]);
     // 컨텍스트 메뉴 오픈: Edit, Delete 버튼이 있는 메뉴 - 메모 카드에서 우클릭 시 열림
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
     // 메모 편집가능 상태
@@ -197,12 +221,12 @@ export default function MemoCard({ memo, onDelete, onSave}: {
                     height: memo.height ?? 200,
                 }}
                 bounds="parent"
-	                // 텍스트가 활성화되어 있을 때만 드래그 가능
-	                disableDragging={ !isEditing }
-	                // 텍스트가 활성화되어 있을 때만 크기 조절 가능
-	                enableResizing={ isEditing } 
-                    /* 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시 */
-	                onContextMenu={(e: ReactMouseEvent<HTMLElement>) => {
+                // 텍스트가 활성화되어 있을 때만 드래그 가능
+                disableDragging={ !isEditing }
+                // 텍스트가 활성화되어 있을 때만 크기 조절 가능
+                enableResizing={ isEditing } 
+                /* 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시 */
+                onContextMenu={(e: ReactMouseEvent<HTMLElement>) => {
                     e.preventDefault();
                     if(isTouchDevice()) { return; }
                     const x = e.clientX;
@@ -250,11 +274,12 @@ export default function MemoCard({ memo, onDelete, onSave}: {
                 //         clearTimeout(longPressRef.current);
                 //     }
                 // }}
-                // 메모 카드 이동 완료 시 onSave 함수 호출하여 변경된 메모 정보 저장
+
+                // 메모 카드 이동 완료 시 좌표 저장
                 onDragStop={(e, d) => {
                     setMemoState((prev) => ({ ...prev, x: d.x, y: d.y }));
                 }}
-                // 메모 카드 크기 조절 완료 시 onSave 함수 호출하여 변경된 메모 정보 저장
+                // 메모 카드 크기 조절 완료 시 사이즈 정보 저장
                 onResizeStop={(e, direction, ref, delta, position) => {
                     setMemoState({
                         x: position.x,
@@ -337,7 +362,11 @@ export default function MemoCard({ memo, onDelete, onSave}: {
                 <ConfirmDialog 
                     message="Save changes?"
                     onConfirm={() => {
-                        saveMemo();
+                        if (memo.id < 0){
+                            insertMemo();
+                        } else{
+                            updateMemo();
+                        }
                         setSaveDialogOpen(false);
                         setIsEditing(false);
                     }}

@@ -25,31 +25,44 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
     const [menuOpen, setMenuOpen] = useState(false);
     // Write 버튼 클릭 상태
     const [writeClicked, setWriteClicked] = useState(false);
-
     // 메모 생성을 위한 함수 - CreateMemo 컴포넌트에서 호출 보드 영역 클릭 시 해당 위치에 새로운 메모 생성
-    const handleCreateMemo = async (x: number, y: number) => {
+    const handleCreateTempMemo = (x: number, y: number) => {
+        const tempMemo: Memo = {
+          id: -Date.now(),
+          boardId: 1,
+          content: "",
+          x,
+          y,
+          width: 300,
+          height: 200,
+          color: "yellow",
+          isPublic: true,
+        };
+        setMemos((prev) => [...prev, tempMemo]);
+    };
+    // 메모 생성을 위한 함수
+    const handleInsertMemo = async (tempId:number, boardId: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
         const response = await fetch("/api/memos", {
         method: "POST",
         headers: {
         "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            boardId: 1,
-            content: "",
-            x,
-            y,
-            width: 300,
-            height: 200,
-            color: "yellow",
-            isPublic: true,
+            boardId, content, x, y, width, height, color, isPublic
            }), 
         });
+        
         const data = await response.json();
-        setMemos((prev) => [...prev, data.memo]);
-    };
+        setMemos((prev) =>
+                prev.map((memo) =>
+                    memo.id === tempId ? { ...data.memo, isNew: false } : memo
+                )
+            );
+        
+      }
 
-    // 메모 추가를 위한 함수 - 보드 영역 클릭 시 AddMemo 컴포넌트를 호출하여 새로운 메모 생성
-    const handleSaveMemo = async (id: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
+    // 메모 갱신를 위한 함수 - 보드 영역 클릭 시 AddMemo 컴포넌트를 호출하여 새로운 메모 생성
+    const handleUpdateMemo = async (id: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
     await fetch(`/api/memos/${id}`, {
         method: "PATCH",
         headers: {
@@ -86,7 +99,7 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
       {/* 메뉴 버튼 */}
       <PressableButton className="fixed left-38 top-5 z-50 bg-white/30 px-4 py-3 shadow-md" 
       onClick={() => setMenuOpen((prev) => !prev)}>
-        <Menu className="w-5 h-5" />
+        <Menu className="w-5 h-5 text-neutral-900 " />
       </PressableButton>
       
       {menuOpen && (
@@ -137,7 +150,7 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top; 
                 console.log(`Clicked at: (${x}, ${y})`);
-                handleCreateMemo(x, y);
+                handleCreateTempMemo(x, y);
                 setWriteClicked(false);
               }
           }}
@@ -150,13 +163,7 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
         >
           {
           /* 메모카드 리스트를 랜더링 */
-          memos.map((memo) => 
-          <MemoCard 
-            key={memo.id} 
-            memo={memo} 
-            onDelete={handleDeleteMemo} 
-            onSave={handleSaveMemo} 
-            />)}
+          memos.map((memo) => <MemoCard key={memo.id} memo={memo} onInsert={handleInsertMemo} onUpdate={handleUpdateMemo} onDelete={handleDeleteMemo} />)}
         </div>
       </main>
     </>
