@@ -17,11 +17,20 @@ interface MemoCardProps {
     color : string;
     isPublic: boolean;
 }
-export default function MemoCard({ memo, onDelete, onSave}: { 
+export default function MemoCard({ memo, onInsert, onUpdate, onDelete}: { 
     memo: MemoCardProps; 
-    onDelete: (
-        id: number) => void; 
-    onSave: (
+    onInsert:(
+        tempId: number,
+        borderId: number,
+        content: string, 
+        x: number, 
+        y: number, 
+        width: number, 
+        height: number, 
+        color: string, 
+        isPublic: boolean
+    ) => void;
+    onUpdate: (
         id: number, 
         content: string, 
         x: number, 
@@ -31,8 +40,10 @@ export default function MemoCard({ memo, onDelete, onSave}: {
         color: string, 
         isPublic: boolean
     ) => void; 
-
-})
+    onDelete: (
+        id: number
+    ) => void; 
+    })
    {
     // 메모 카드의 위치, 크기, 내용, 색상, 공개/비공개 상태
     const [memoState, setMemoState] = useState({
@@ -43,9 +54,22 @@ export default function MemoCard({ memo, onDelete, onSave}: {
     });
     // 메모 내용 상태 - 편집 모드에서 텍스트 영역의 내용을 저장하기 위해 사용
     const [memoContent, setMemoContent] = useState(memo.content);
-    // 메모 저장 함수 - 메모 카드 이동, 크기 조절, 내용 변경 시 호출되어 변경된 메모 정보를 부모 컴포넌트로 전달
-    const saveMemo = useCallback(() => {
-        onSave(
+    const insertMemo = useCallback(() => {
+        onInsert(
+            memo.id,
+            1,
+            memoContent,
+            Math.round(memoState.x),
+            Math.round(memoState.y),
+            Math.round(memoState.width),
+            Math.round(memoState.height),
+            memo.color,
+            memo.isPublic
+        );
+    },[memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onInsert]);
+    // 메모 갱신 함수 - 메모 카드 이동, 크기 조절, 내용 변경 시 호출되어 변경된 메모 정보를 부모 컴포넌트로 전달
+    const updateMemo = useCallback(() => {
+        onUpdate(
             memo.id,
             memoContent,
             Math.round(memoState.x),
@@ -55,7 +79,7 @@ export default function MemoCard({ memo, onDelete, onSave}: {
             memo.color,
             memo.isPublic
         );
-    },[ memo.id, memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onSave]);
+    },[ memo.id, memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onUpdate]);
     // 컨텍스트 메뉴 오픈: Edit, Delete 버튼이 있는 메뉴 - 메모 카드에서 우클릭 시 열림
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
     // 메모 편집가능 상태
@@ -68,8 +92,8 @@ export default function MemoCard({ memo, onDelete, onSave}: {
     const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
     // 컨텍스트 메뉴 외부 클릭 감지를 위한 ref - 메뉴 영역 외부 클릭 시 메뉴 닫기
     const menuRef = useRef<HTMLDivElement | null>(null);
-    // 메모 전체 영역을 감싸는 div의 ref - 
-    const divRef = useRef<HTMLDivElement | null>(null);
+    // 메모 전체 영역을 감싸는 div의 ref - closest(.memo-rnd-${memo.id})로 변경함에 따라 사용중지
+    // const divRef = useRef<HTMLDivElement | null>(null);
     // 메모 내용 편집을 위한 ref - 편집 모드에서 텍스트 영역에 포커스 주기 위해 사용
     const memoRef = useRef<HTMLTextAreaElement | null>(null);
     // 저장 확인 다이얼로그 외부 클릭 감지를 위한 ref 
@@ -78,6 +102,7 @@ export default function MemoCard({ memo, onDelete, onSave}: {
     const deleteDialogRef = useRef<HTMLDivElement | null>(null);
     // 모바일에서 더블탭 이벤트 감지를 위한 ref - 직전의 탭 시간을 저장
     const lastTapRef = useRef<number>(0);
+    const outsideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
 
     // 터치 디바이스 여부를 판단하는 함수
     const isTouchDevice = () =>
@@ -111,10 +136,16 @@ export default function MemoCard({ memo, onDelete, onSave}: {
         // };
         const handleClickOutside = (event: PointerEvent) => {
             const target = event.target as Node;
+            // 이벤트를 엘리멘트로 다루기 위한 체크
+            const targetElement = target instanceof Element ? target : null;
+            // 메뉴 안쪽에서 이벤트가 발생했는지 체크
             const isClickInsideMenu = menuRef.current?.contains(target);
+            // 저장 다이얼로그 안쪽에서 이벤트가 발생했는지 체크
             const isClickInsideSaveDialog = saveDialogRef.current?.contains(target);
+            // 삭제 다이얼로그 안쪽에서 이벤트가 발생했는지 체크
             const isClickInsideDeleteDialog = deleteDialogRef.current?.contains(target);
-            const isClickInsideMemo = divRef.current?.contains(target);
+            // 메모 안쪽에서 이벤가 발생헀는지 체크 (해당하는 클래스가 존재할 때, 그 엘리멘트 요소를 반환)
+            const isClickInsideMemo = targetElement?.closest(`.memo-rnd-${memo.id}`);
             if (isClickInsideSaveDialog || isClickInsideDeleteDialog) {
                 return;
             }
@@ -122,14 +153,48 @@ export default function MemoCard({ memo, onDelete, onSave}: {
                 setContextMenuOpen(false);
             }
             if(!isClickInsideMemo && !isClickInsideMenu && isEditing){
+                if (event.pointerType === "touch") {
+                    outsideTouchStartRef.current = {
+                        x: event.clientX,
+                        y: event.clientY,
+                    };
+                    return;
+                }
+
                 setSaveDialogOpen(true);
-            }  
+                return;
+            }
+
+            outsideTouchStartRef.current = null;
+        }
+
+        const handleTouchOutsideEnd = (event: PointerEvent) => {
+            if (event.pointerType !== "touch" || !outsideTouchStartRef.current || !isEditing) {
+                return;
+            }
+
+            const deltaX = event.clientX - outsideTouchStartRef.current.x;
+            const deltaY = event.clientY - outsideTouchStartRef.current.y;
+            const moved = Math.hypot(deltaX, deltaY);
+            outsideTouchStartRef.current = null;
+
+            if (moved < 10) {
+                setSaveDialogOpen(true);
+            }
+        }
+
+        const clearOutsideTouchStart = () => {
+            outsideTouchStartRef.current = null;
         }
         document.addEventListener("pointerdown", handleClickOutside);
+        document.addEventListener("pointerup", handleTouchOutsideEnd);
+        document.addEventListener("pointercancel", clearOutsideTouchStart);
         return () => {
             document.removeEventListener("pointerdown", handleClickOutside);
+            document.removeEventListener("pointerup", handleTouchOutsideEnd);
+            document.removeEventListener("pointercancel", clearOutsideTouchStart);
         };
-    }, [isEditing]);
+    }, [isEditing, memo.id]);
     
     const editMemo = () => {
         setIsEditing(true);
@@ -148,6 +213,7 @@ export default function MemoCard({ memo, onDelete, onSave}: {
     return (
         <>
             <Rnd 
+                className={`memo-rnd-${memo.id}`}
                 default={{
                     x: memo.x,
                     y: memo.y,
@@ -155,19 +221,20 @@ export default function MemoCard({ memo, onDelete, onSave}: {
                     height: memo.height ?? 200,
                 }}
                 bounds="parent"
-                // 편집 모드에서는 드래그 비활성화
-                disableDragging={ isEditing }
-                // 편집 모드가 아닐때 크기 조절 활성화
-                enableResizing={ !isEditing } 
+                // 텍스트가 활성화되어 있을 때만 드래그 가능
+                disableDragging={ !isEditing }
+                // 텍스트가 활성화되어 있을 때만 크기 조절 가능
+                enableResizing={ isEditing } 
                 /* 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시 */
-	                onContextMenu={(e: ReactMouseEvent<HTMLElement>) => {
+                onContextMenu={(e: ReactMouseEvent<HTMLElement>) => {
                     e.preventDefault();
                     if(isTouchDevice()) { return; }
                     const x = e.clientX;
                     const y = e.clientY;
                     setContextMenuPosition({ x, y });
                     setContextMenuOpen(true);
-                }}       
+                }}
+                 /* 모바일에서 길게 누름 이벤트 - 터치한 좌표에 컨텍스트 메뉴를 표시 */      
                 onPointerDown={(e: PointerEvent) => {
                     if (e.pointerType !== "touch") return;
 
@@ -207,24 +274,24 @@ export default function MemoCard({ memo, onDelete, onSave}: {
                 //         clearTimeout(longPressRef.current);
                 //     }
                 // }}
-                // 메모 카드 이동 완료 시 onSave 함수 호출하여 변경된 메모 정보 저장
+
+                // 메모 카드 이동 완료 시 좌표 저장
                 onDragStop={(e, d) => {
                     setMemoState((prev) => ({ ...prev, x: d.x, y: d.y }));
-                    editMemo();
                 }}
-                // 메모 카드 크기 조절 완료 시 onSave 함수 호출하여 변경된 메모 정보 저장
+                // 메모 카드 크기 조절 완료 시 사이즈 정보 저장
                 onResizeStop={(e, direction, ref, delta, position) => {
                     setMemoState({
                         x: position.x,
                         y: position.y,
                         width: ref.offsetWidth,
                         height: ref.offsetHeight,
-                    }); 
-                    editMemo();
-                }}
+	                    }); 
+	                }}
             >   
                 {/* 메모 카드 내용 영역 - 공개 메모는 내용 표시, 비공개 메모는 "비공개 메모입니다." 표시 */}
-                   <div ref={divRef} className="h-full w-full">
+                <div //ref={divRef} - closest(.memo-rnd-${memo.id})로 변경함에 따라 사용중지
+                    className="h-full w-full">
                     {memo.isPublic ? (
                         // 편집 모드에서는 텍스트 영역, 일반 모드에서는 div로 내용을 표시
                         isEditing ? (
@@ -295,7 +362,11 @@ export default function MemoCard({ memo, onDelete, onSave}: {
                 <ConfirmDialog 
                     message="Save changes?"
                     onConfirm={() => {
-                        saveMemo();
+                        if (memo.id < 0){
+                            insertMemo();
+                        } else{
+                            updateMemo();
+                        }
                         setSaveDialogOpen(false);
                         setIsEditing(false);
                     }}
