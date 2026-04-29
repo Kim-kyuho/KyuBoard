@@ -17,8 +17,9 @@ interface MemoCardProps {
     color : string;
     isPublic: boolean;
 }
-export default function MemoCard({ memo, onInsert, onUpdate, onDelete}: { 
+export default function MemoCard({ memo, zoom, onInsert, onUpdate, onDelete}: { 
     memo: MemoCardProps; 
+    zoom: number;
     onInsert:(
         tempId: number,
         borderId: number,
@@ -66,7 +67,7 @@ export default function MemoCard({ memo, onInsert, onUpdate, onDelete}: {
             memo.color,
             memo.isPublic
         );
-    },[memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onInsert]);
+    },[memo.id, memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onInsert]);
     // 메모 갱신 함수 - 메모 카드 이동, 크기 조절, 내용 변경 시 호출되어 변경된 메모 정보를 부모 컴포넌트로 전달
     const updateMemo = useCallback(() => {
         onUpdate(
@@ -221,6 +222,7 @@ export default function MemoCard({ memo, onInsert, onUpdate, onDelete}: {
                     height: memo.height ?? 200,
                 }}
                 bounds="parent"
+                scale={zoom}
                 // 텍스트가 활성화되어 있을 때만 드래그 가능
                 disableDragging={ !isEditing }
                 // 텍스트가 활성화되어 있을 때만 크기 조절 가능
