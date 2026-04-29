@@ -142,21 +142,21 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
           </PressableButton>
         </div>
       )}
-      {/* 줌 아웃 버튼 - 보드 영역만 축소하고 메뉴와 로고 크기는 유지 */}
-      <PressableButton
-        className="fixed right-20 top-5 z-50 bg-white/30 px-4 py-3 shadow-md"
-        onClick={() => setBoardZoom((zoom) => Math.max(0.25, zoom - 0.1))}
-        title="Zoom out"
-      >
-        <Minus className="w-5 h-5 text-neutral-900" />
-      </PressableButton>
       {/* 줌 인 버튼 - 보드 영역만 확대하고 메뉴와 로고 크기는 유지 */}
       <PressableButton
-        className="fixed right-5 top-5 z-50 bg-white/30 px-4 py-3 shadow-md"
+        className="fixed right-5 bottom-20 z-50 bg-white/30 px-4 py-3 shadow-md"
         onClick={() => setBoardZoom((zoom) => Math.min(2, zoom + 0.1))}
         title="Zoom in"
       >
         <Plus className="w-5 h-5 text-neutral-900" />
+      </PressableButton>
+      {/* 줌 아웃 버튼 - 보드 영역만 축소하고 메뉴와 로고 크기는 유지 */}
+      <PressableButton
+        className="fixed right-5 bottom-5 z-50 bg-white/30 px-4 py-3 shadow-md"
+        onClick={() => setBoardZoom((zoom) => Math.max(0.25, zoom - 0.1))}
+        title="Zoom out"
+      >
+        <Minus className="w-5 h-5 text-neutral-900" />
       </PressableButton>
       <main className="h-screen w-screen overflow-auto bg-neutral-200">
         {/* 보드 영역: 사이즈 3840x2160, 그리드 배경, 메모 카드들이 배치되는 영역
