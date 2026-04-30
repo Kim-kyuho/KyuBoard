@@ -23,7 +23,7 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
     const boardWidth = 3840;
     const boardHeight = 2160;
     // 보드 줌 상태 - 보드 영역만 확대/축소하고 메뉴와 로고는 고정
-    const [boardZoom, setBoardZoom] = useState(0.5);
+    const [boardZoom, setBoardZoom] = useState(0.75);
     // 메모 리스트 상태
     const [memos,setMemos] = useState(mappedMemos);
     // 메뉴 열기/닫기 상태
