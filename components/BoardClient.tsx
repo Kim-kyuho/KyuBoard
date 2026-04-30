@@ -124,7 +124,9 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
           {/* Write버튼: 새로운 메모를 작성하는 기능 */}
           <PressableButton 
             variant="menu"
-            onClick={() => { setWriteClicked(true); 
+            onClick={() => { 
+              setWriteClicked(true);
+              setMenuOpen(false);
             }}>
               Write
             </PressableButton>
