@@ -1,10 +1,21 @@
 import { getDb } from "@/lib/db";
+import { getCurrentUserFromRequest, getMemoPermissionMessage } from "@/lib/auth/current-user";
 import { db_memos } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 // 메모 수정 API - PATCH 요청을 처리하여 특정 ID의 메모를 업데이트
 export async function PATCH(request: NextRequest, {params}: { params: Promise<{ id: string }> }) {
+    const currentUser = await getCurrentUserFromRequest(request);
+    const permissionMessage = getMemoPermissionMessage(currentUser);
+
+    if (permissionMessage) {
+        return NextResponse.json({
+            ok: false,
+            message: permissionMessage,
+        });
+    }
+
     const db = getDb();
     const { id } = await params;
     const body = await request.json();
@@ -27,6 +38,16 @@ export async function PATCH(request: NextRequest, {params}: { params: Promise<{ 
 }
 // 메모 삭제 API - DELETE 요청을 처리하여 특정 ID의 메모를 데이터베이스에서 삭제
 export async function DELETE(request: NextRequest, {params}: { params: Promise<{ id: string }> }) {
+    const currentUser = await getCurrentUserFromRequest(request);
+    const permissionMessage = getMemoPermissionMessage(currentUser);
+
+    if (permissionMessage) {
+        return NextResponse.json({
+            ok: false,
+            message: permissionMessage,
+        });
+    }
+
     const db = getDb();
     const { id } = await params;
     
