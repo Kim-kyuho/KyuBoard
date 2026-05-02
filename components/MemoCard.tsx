@@ -246,17 +246,22 @@ export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onIn
                 // 텍스트가 활성화되어 있을 때만 크기 조절 가능
                 enableResizing={ isEditing } 
                 /* 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시 */
-	                onContextMenu={(e: ReactMouseEvent<HTMLElement>) => {
-	                    e.preventDefault();
-                        // 메모 수정이 불가능 한 상태일때 (미접속, 미허가)
-                        // 허가 메시지를 출력하고 리턴
-                        if (!canEdit) {
-                            onPermissionDenied();
-                            return;
-                        }
-	                    if(isTouchDevice()) { return; }
-                    const x = e.clientX;
-                    const y = e.clientY;
+                onContextMenu={(e: ReactMouseEvent<HTMLElement>) => {
+                    e.preventDefault();
+                    // 메모 수정이 불가능 한 상태일때 (미접속, 미허가)
+                    // 허가 메시지를 출력하고 리턴
+                    if (!canEdit) {
+                        onPermissionDenied();
+                        return;
+                    }
+                    if(isTouchDevice()) { return; }
+
+                    // 보드의 화면상 위치와 크기 정보
+                    const board = document.querySelector(".kyu-board");
+                    const rect = board?.getBoundingClientRect();
+                    // 컨텍스트 메모 위치에 줌을 적용
+                    const x = rect ? (e.clientX - rect.left) / zoom : e.clientX;
+                    const y = rect ? (e.clientY - rect.top) /zoom : e.clientY;
                     setContextMenuPosition({ x, y });
                     setContextMenuOpen(true);
                 }}
