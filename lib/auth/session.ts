@@ -3,16 +3,24 @@ import { createHmac } from "crypto";
 // 세션을 위한 라이브러리
 export const sessionCookieName = "kyuboard_session";
 
-// 런타임 환경의 세션 비밀키(Vercel)를 체크, 존재하지 않을 경우 로컬 기본값(개발용)을 사용
-const sessionSecret =
-    process.env.AUTH_SECRET ??
-    process.env.NEXTAUTH_SECRET ??
-    "kyuboard-local-auth-secret";
+// 세션 비밀키 GET
+function getSessionSecret() {
+    // 런타임 환경의 세션 비밀키(Vercel)를 체크, 개발환경에서만 로컬 기본값을 사용
+    const sessionSecret =
+        process.env.AUTH_SECRET ??
+        (process.env.NODE_ENV === "development" ? "kyuboard-local-auth-secret" : undefined);
+
+    if (!sessionSecret) {
+        throw new Error("AUTH_SECRET is required");
+    }
+
+    return sessionSecret;
+}
 
 // 세션 쿠키용 서명 생성 - 유저 정보의 id를 HMAC-SHA256으로 계산한 서명값을 hex문자열로 출력
 // 개인학습: SHA256(가공된 비밀키 + SHA256(가공된 비밀키 + userId))
 function signUserId(userId: number) {
-    return createHmac("sha256", sessionSecret)
+    return createHmac("sha256", getSessionSecret())
         .update(String(userId))
         .digest("hex");
 }
