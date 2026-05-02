@@ -126,6 +126,16 @@ export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onIn
             editMemo();
         }
     }
+
+    const getBoardPoint = (clientX: number, clientY:number) => {
+        const board = document.querySelector(".kyu-board");
+        const boardRect = board?.getBoundingClientRect();
+
+        return {
+            x: boardRect ? (clientX - boardRect.left) / zoom : clientX,
+            y: boardRect ? (clientY - boardRect.top) / zoom : clientY,
+        };
+    }
     // 화면 전체 클릭 감지 & React 컴포넌트 바깥클릭을 감지하기 위해 글로벌 마우스이벤트 사용(안정성 확보)
     // 수정중인 메모에 대한 피드백
     useEffect(() => {
@@ -255,25 +265,19 @@ export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onIn
                         return;
                     }
                     if(isTouchDevice()) { return; }
-
-                    // 보드의 화면상 위치와 크기 정보
-                    const board = document.querySelector(".kyu-board");
-                    const rect = board?.getBoundingClientRect();
-                    // 컨텍스트 메모 위치에 줌을 적용
-                    const x = rect ? (e.clientX - rect.left) / zoom : e.clientX;
-                    const y = rect ? (e.clientY - rect.top) /zoom : e.clientY;
+                    // 보드로부터 좌표 GET
+                    const {x, y} = getBoardPoint(e.clientX, e.clientY);
                     setContextMenuPosition({ x, y });
                     setContextMenuOpen(true);
                 }}
                  /* 모바일에서 길게 누름 이벤트 - 터치한 좌표에 컨텍스트 메뉴를 표시 */      
-	                onPointerDown={(e: PointerEvent) => {
-	                    if (e.pointerType !== "touch") return;
-                        if (!canEdit) {
-                            return;
-                        }
-
-	                    const x = e.clientX;
-                    const y = e.clientY;
+                onPointerDown={(e: PointerEvent) => {
+                    if (e.pointerType !== "touch") return;
+                    if (!canEdit) {
+                        return;
+                    }
+                    // 보드로부터 좌표 GET
+	                const {x, y} = getBoardPoint(e.clientX, e.clientY);
 
                     longPressRef.current = window.setTimeout(() => {
                         setContextMenuPosition({ x, y });
