@@ -14,7 +14,7 @@ export default function BoardMessage({ message, type }:BoardMessageProps){
             {/* Permission메시지가 존재할 떄 화면상에 표시 */}
             {message && (
                 <div
-                    className="fixed left-1/2 top-5 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-rose-600 shadow-md"
+                    className="fixed left-1/2 top-20 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-rose-600 shadow-md"
                     style={{ zIndex: 60 }}
                 >
                     {message}

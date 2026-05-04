@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import SignInModal from "./SignInModal";
 import SignUpModal from "./SignUpModal";
-import BoardZoomControll from "./BoardZoomControll"
+import BoardZoomControl from "./BoardZoomControl"
 import MemoCard from "@/components/MemoCard";
 import BoardToolBar from "./BoardToolBar";
 import BoardMessage from "./BoardMessage";
@@ -32,6 +32,16 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
     const boardHeight = 2160;
     // 보드 줌 상태 - 보드 영역만 확대/축소하고 메뉴와 로고는 고정
     const [boardZoom, setBoardZoom] = useState(0.75);
+    // 보드 줌 컨트롤러 오픈 상태 - 보드 영역을 확대/축소 하는 컨트롤러
+    const [zoomOpen, setZoomOpen] = useState(false);
+    // 줌이 자동으로 닫히는 상태 - 조작 중이 아닐때, 줌 컨트롤러를 사라지게 함
+    const [zoomClosing, setZoomClosing] = useState(false);
+    // 줌 컨트롤러의 자동 페이드아웃을 예약하는 타이머 ID 
+    const zoomTimerRef = useRef<number | null>(null);
+    // 줌 컨틑롤러의 페이드아웃 이후 컨트롤러를 숨기는 타이머 ID
+    const zoomCloseTimerRef = useRef<number | null>(null);
+    // 줌 컨틀로러의 조작 상태
+    const zoomInteractingRef = useRef(false);
     // 메모 리스트 상태
     const [memos,setMemos] = useState(mappedMemos);
     // 메뉴 열기/닫기 상태
@@ -70,8 +80,58 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
         setPermissionMessage("");
         setMenuOpen(false);
     };
+    
+    // 줌 컨트롤러 출력을 위한 핸들러
+    const showZoomControl = () => {
+        setZoomOpen(true);
+        setZoomClosing(false);
+        if (!zoomInteractingRef.current) {
+            startZoomCloseTimer();
+        }
+    };
 
-    // 허가 메시지 출력 - **수정시 current-user.ts의 getMemoPermissionMessage를 함꼐 수정할 필요가 있음
+    // 줌 컴트롤러 페이드아웃 타이머를 위한 함수
+    const startZoomCloseTimer = () => {
+        clearZoomTimers();
+        zoomTimerRef.current = window.setTimeout(() => {
+            if (zoomInteractingRef.current) {
+                return;
+            }
+
+            setZoomClosing(true);
+            zoomCloseTimerRef.current = window.setTimeout(() => {
+                setZoomOpen(false);
+                setZoomClosing(false);
+            }, 300);
+        }, 2000);
+    };
+
+    // 줌 컨트롤러 타이머의 클리어를 위한 함수
+    const clearZoomTimers = () => {
+        if (zoomTimerRef.current) {
+            window.clearTimeout(zoomTimerRef.current);
+            zoomTimerRef.current = null;
+        }
+        if (zoomCloseTimerRef.current) {
+            window.clearTimeout(zoomCloseTimerRef.current);
+            zoomCloseTimerRef.current = null;
+        }
+    };
+
+    // 줌 컨트롤러 시작(onFocus)을 위한 핸들러
+    const handleZoomControlStart = () => {
+        zoomInteractingRef.current = true;
+        setZoomOpen(true);
+        setZoomClosing(false);
+        clearZoomTimers();
+    };
+    // 줌 컨트롤러 종료(onBlur)를 위한 핸들러
+    const handleZoomControlEnd = () => {
+        zoomInteractingRef.current = false;
+        startZoomCloseTimer();
+    };
+
+    // 허가 메시지 출력 핸들러 - **수정시 current-user.ts의 getMemoPermissionMessage를 함꼐 수정할 필요가 있음
     const showPermissionMessage = () => {
         setPermissionMessage(
             currentUser
@@ -166,14 +226,23 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
         setSignInOpen={setSignInOpen}
         setSignUpOpen={setSignUpOpen}
         setWriteClicked={setWriteClicked}
-        handleSignOut={handleSignOut}
+        onSignOut={handleSignOut}
         currentUser={currentUser}
         canEditMemos={canEditMemos}
-        showPermissionMessage={showPermissionMessage}
+        onZoomControlOpen={showZoomControl}
+        onPermissionDenied={showPermissionMessage}
       />
 
       {/* Zoom컨트롤을 위한 컴포넌트 */}
-      <BoardZoomControll setBoardZoom={setBoardZoom}/>
+      <BoardZoomControl
+        boardZoom={boardZoom}
+        setBoardZoom={setBoardZoom}
+        zoomOpen={zoomOpen}
+        zoomClosing={zoomClosing}
+        onZoomControlOpen={showZoomControl}
+        onZoomControlStart={handleZoomControlStart}
+        onZoomControlEnd={handleZoomControlEnd}
+      />
 
       {/* Sign-in 버튼을 눌렀을 떄 Sign-in모달을 표시 */}
       {signInOpen && (

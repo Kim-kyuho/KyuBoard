@@ -4,6 +4,9 @@ import PressableButton from "./PressableButton";
 import Link from "next/link";
 import { Dispatch, SetStateAction } from "react";
 import { Menu } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Search, SquarePen, SlidersHorizontal } from "lucide-react";
+
+
 
 type CurrentUser = {
     email: string;
@@ -16,10 +19,11 @@ type BoardToolBarProps = {
     setSignInOpen: Dispatch<SetStateAction<boolean>>;
     setSignUpOpen: Dispatch<SetStateAction<boolean>>;
     setWriteClicked: Dispatch<SetStateAction<boolean>>;
-    handleSignOut: () => void;
     currentUser: CurrentUser | null;
     canEditMemos: boolean;
-    showPermissionMessage: () => void;
+    onSignOut: () => void;
+    onZoomControlOpen: () => void;
+    onPermissionDenied: () => void;
     
 };
 
@@ -29,10 +33,11 @@ export default function BoardToolBar({
     setSignInOpen, 
     setSignUpOpen, 
     setWriteClicked, 
-    handleSignOut,
     currentUser,
     canEditMemos,
-    showPermissionMessage
+    onSignOut,
+    onZoomControlOpen,
+    onPermissionDenied
 }: BoardToolBarProps){
     return (
         <>
@@ -51,41 +56,57 @@ export default function BoardToolBar({
             onClick={() => setMenuOpen((prev) => !prev)}>
             <Menu className="w-5 h-5 text-neutral-900 " />
         </PressableButton>
-        
-        {menuOpen && (
-            <div className="fixed w-46 left-5 top-17 z-50 rounded-xl bg-white/30 px-4 py-3 shadow-md">
+        <div 
+            className = "fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-xl px-4 py-3 shadow-md" >
+            {/* 이전 메모 이동 버튼 */}
+            <PressableButton
+                variant="menu"
+                onClick={() => setMenuOpen(false)}>
+                <ChevronLeft />
+            </PressableButton>
             {/* Search버튼: 메모를 검색하는 기능 */}
             <PressableButton 
                 variant="menu"
                 onClick={() => setMenuOpen(false)}>
-                Search
-            </PressableButton>
-            {/* Recent버튼: 최근 작성한 메모를 보여주는 기능 */}
-            <PressableButton 
-                variant="menu"
-                onClick={() => setMenuOpen(false)}>
-                Recent
+                <Search />
             </PressableButton>
             {/* Write버튼: 새로운 메모를 작성하는 기능 */}
             <PressableButton 
                 variant="menu"
-                    onClick={() => { 
+                onClick={() => { 
                     if (!canEditMemos) {
-                        showPermissionMessage();
+                        onPermissionDenied();
                         setMenuOpen(false);
                         return;
                     }
                     setWriteClicked(true);
                     setMenuOpen(false);
                 }}>
-                Write
+                <SquarePen />
                 </PressableButton>
-            {/* View버튼: 작성한 메모를 보는 기능 */}
+            {/* ScreenShot버튼: 사진을 올리는 기능 */}
             <PressableButton 
                 variant="menu"
                 onClick={() => setMenuOpen(false)}>
-                View
+                <Camera />
             </PressableButton>
+
+            <PressableButton
+                variant="menu"
+                onClick={onZoomControlOpen}
+            >
+                <SlidersHorizontal/>
+            </PressableButton>
+            {/* 다음 메모 이동 버튼 */}
+            <PressableButton
+                variant="menu"
+                onClick={() => setMenuOpen(false)}>
+                <ChevronRight />
+            </PressableButton>
+        </div>
+        
+        {menuOpen && (
+            <div className="fixed w-46 left-5 top-17 z-50 rounded-xl bg-white/30 px-4 py-3 shadow-md">
             {/* Kyu.Log→버튼: Kyu.Log로 이동 */}
             <PressableButton 
                 variant="menu"
@@ -101,7 +122,7 @@ export default function BoardToolBar({
                 {/* Sign-out 버튼 */}
                 <PressableButton
                     className="px-2 py-1 text-sm font-semibold text-sky-600 hover:text-sky-500"
-                    onClick={handleSignOut}>
+                    onClick={onSignOut}>
                     Sign-out
                 </PressableButton>
                 </div>
