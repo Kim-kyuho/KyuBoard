@@ -1,6 +1,7 @@
 import { getCurrentUserFromRequest } from "@/lib/auth/current-user";
 import { NextRequest, NextResponse } from "next/server";
 
+// 유져 정보를 얻기위한 API
 export async function GET(request: NextRequest) {
     // Request로부터 유저 정보를 GET
     const currentUser = await getCurrentUserFromRequest(request);

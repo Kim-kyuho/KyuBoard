@@ -14,7 +14,7 @@ export const db_users = pgTable("users", {
 ]);
 
 export const db_boards = pgTable("boards", {
-    id: serial("id").primaryKey(),
+    boardId: serial("board_id").primaryKey(),
     title: text("title").notNull(),
     width: integer("width").notNull(),
     height: integer("height").notNull(),
@@ -25,7 +25,7 @@ export const db_boards = pgTable("boards", {
 
 export const db_memos = pgTable("memos", {
     id: serial("id").primaryKey(),
-    boardId : integer("board_id").references(() => db_boards.id).notNull(),
+    boardId : integer("board_id").references(() => db_boards.boardId).notNull(),
     content: text("content").notNull(),
     x: integer("x").notNull(),
     y: integer("y").notNull(),
