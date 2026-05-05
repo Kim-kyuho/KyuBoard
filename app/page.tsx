@@ -2,8 +2,10 @@ import BoardList from "@/components/BoardList";
 import { getDb } from "@/lib/db";
 import { db_boards } from "@/lib/db/schema";
 import { asc } from "drizzle-orm";
+import { connection } from "next/server";
 
 export default async function Home() {
+  await connection();
   const db = getDb();
   const boards = await db
       .select({
