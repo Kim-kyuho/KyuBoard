@@ -403,6 +403,8 @@ export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onIn
                         variant="menu"
                         onClick={() => {
                             setContextMenuOpen(false);
+                            setSaveDialogOpen(false);
+                            setIsEditing(false);
                             setDeleteDialogOpen(true);
                         }}>    
                         Delete

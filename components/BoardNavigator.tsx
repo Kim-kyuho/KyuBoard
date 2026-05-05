@@ -46,6 +46,7 @@ export default function BoardNavigator({currentBoardId, boardIds, onInvalidBoard
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={2}
+                    // 표시내용을 인덱스로
                     defaultValue={currentIndex + 1}
                     className="h-9 w-8 rounded-md bg-white/70 text-center text-sm font-semibold text-neutral-900 shadow-md outline-none"
                 />

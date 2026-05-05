@@ -45,7 +45,7 @@ export default async function BoardPage({
     return (
         <BoardClient
             boardIds={allBoards.map((board) => board.boardId)}
-            currentBoardId={currentBoard[0].boardId}
+            currentBoard={currentBoard[0]}
             mappedMemos={mappedMemos}
         />
     );

@@ -10,6 +10,12 @@ import BoardNavigator from "./BoardNavigator";
 import BoardToolBar from "./BoardToolBar";
 import BoardMessage from "./BoardMessage";
 
+interface Board {
+  boardId: number;
+  width: number;
+  height: number;
+}
+
 interface Memo {
     id : number;
     boardId: number;
@@ -29,12 +35,12 @@ type CurrentUser = {
 };
 // 보드 컴포넌트
 export default function BoardClient(
-  {boardIds, currentBoardId, mappedMemos}:{boardIds: number[], currentBoardId:number, mappedMemos: Memo[]}
+  {boardIds, currentBoard, mappedMemos}:{boardIds: number[], currentBoard:Board, mappedMemos: Memo[]}
 )
   {
     // 보드 기본 크기 - 실제 메모 좌표계 기준으로 사용
-    const boardWidth = 3840;
-    const boardHeight = 2160;
+    const boardWidth = currentBoard.width;
+    const boardHeight = currentBoard.height;
     // 보드 줌 상태 - 보드 영역만 확대/축소하고 메뉴와 로고는 고정
     const [boardZoom, setBoardZoom] = useState(0.75);
     // 보드 줌 컨트롤러 오픈 상태 - 보드 영역을 확대/축소 하는 컨트롤러
@@ -153,7 +159,7 @@ export default function BoardClient(
 
         const tempMemo: Memo = {
           id: -Date.now(),
-          boardId: currentBoardId,
+          boardId: currentBoard.boardId,
           content: "",
           x,
           y,
@@ -210,7 +216,7 @@ export default function BoardClient(
     };
     // 메모삭제를 위한 핸들러 - MemoCard에서 호출 Delete 버튼 클릭 시 해당 메모 id를 받아서 memos 상태에서 삭제
     const handleDeleteMemo = async (id: number) => {
-        // DB에 저장되기 전의 임시 메모일 경우 삭제
+        // DB에 저장되기 전의 임시 메모일 경우 API리퀘스트를 하지 않고 삭제
         if (id < 0) {
             setMemos((prev) => 
                 prev.filter((memo) => memo.id !== id));
@@ -239,8 +245,8 @@ export default function BoardClient(
         onSignOut={handleSignOut}
         currentUser={currentUser}
       />
-      <BoardNavigator boardIds={boardIds} currentBoardId={currentBoardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/>
-      {/* 툴바를 위한 컴포넌트 */}
+      <BoardNavigator boardIds={boardIds} currentBoardId={currentBoard.boardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/>
+      {/* 보드툴바를 위한 컴포넌트 */}
       <BoardToolBar 
         setMenuOpen={setMenuOpen}
         setWriteClicked={setWriteClicked}

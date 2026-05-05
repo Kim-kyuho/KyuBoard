@@ -1,6 +1,6 @@
 "use client";
 
-type BoardMessageType = "permission"
+type BoardMessageType = "permission" | "error"
 type BoardMessageProps = {
     message: string
     type: BoardMessageType
@@ -19,6 +19,19 @@ export default function BoardMessage({ message, type }:BoardMessageProps){
                 >
                     {message}
                 </div>
+            )}
+            </>
+        )
+    }
+    // 타입이 permission 일때 표시하는 메시지
+    if(type === "error"){
+        return(
+            <>
+            {/* Permission메시지가 존재할 떄 화면상에 표시 */}
+            {message && (
+                <p className="text-xs leading-5 text-rose-600">
+                    {message}
+                </p>
             )}
             </>
         )

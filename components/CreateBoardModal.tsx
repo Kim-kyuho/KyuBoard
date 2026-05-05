@@ -4,6 +4,7 @@ import PressableButton from "@/components/PressableButton";
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useState } from "react";
+import BoardMessage from "./BoardMessage";
 
 type CreateBoardModalProps = {
     onClose: () => void;
@@ -130,12 +131,10 @@ export default function CreateBoardModal({ onClose, onCreated }: CreateBoardModa
                             ))}
                         </select>
                     </label>
+                    
                     {/* 에러 메시지가 존재할 경우 화면상에 표시 */}
-                    {errorMessage && (
-                        <p className="text-xs leading-5 text-rose-600">
-                            {errorMessage}
-                        </p>
-                    )}
+                    <BoardMessage type="error" message={errorMessage}/>
+
                     {/* Cancel, Create 버튼 영역 */}
                     <div className="flex justify-end gap-2 pt-2">
                         <PressableButton

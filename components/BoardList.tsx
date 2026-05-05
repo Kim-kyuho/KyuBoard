@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BoardMenu from "./BoardMenu";
+import BoardMessage from "./BoardMessage";
 import SignInModal from "./SignInModal";
 import SignUpModal from "./SignUpModal";
 import CreateBoardModal from "./CreateBoardModal";
@@ -41,7 +42,7 @@ export default function BoardList({ boards }: { boards: Board[] }) {
     // 현재 로그인 유저 상태
     const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
     // 보드 리스트 화면에 출력할 메시지 상태
-    const [boardMessage, setBoardMessage] = useState("");
+    const [permissionMessage, setBoardListMessage] = useState("");
     // 보드 컨텍스트 메뉴 열기/닫기 상태
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
     // 보드 컨텍스트 메뉴 위치 상태
@@ -95,11 +96,11 @@ export default function BoardList({ boards }: { boards: Board[] }) {
     // 보드 생성 버튼 클릭 핸들러 - admin권한이 없을 경우 메시지 출력
     const handleCreateBoardClick = () => {
         if (currentUser?.role !== "admin") {
-            setBoardMessage("Only administrators can create boards.");
+            setBoardListMessage("Only administrators can create boards.");
             return;
         }
 
-        setBoardMessage("");
+        setBoardListMessage("");
         setCreateBoardOpen(true);
     };
 
@@ -112,11 +113,11 @@ export default function BoardList({ boards }: { boards: Board[] }) {
     // 보드 컨텍스트 메뉴 오픈 핸들러 - admin권한이 없을 경우 메시지 출력
     const openBoardContextMenu = (boardId: number, x: number, y: number) => {
         if (currentUser?.role !== "admin") {
-            setBoardMessage("Only administrators can delete boards.");
+            setBoardListMessage("Only administrators can delete boards.");
             return;
         }
 
-        setBoardMessage("");
+        setBoardListMessage("");
         setSelectedBoardId(boardId);
         setContextMenuPosition({ x, y });
         setContextMenuOpen(true);
@@ -142,7 +143,7 @@ export default function BoardList({ boards }: { boards: Board[] }) {
         const data = await response.json();
 
         if (!data.ok) {
-            setBoardMessage(data.message ?? "Board could not be deleted.");
+            setBoardListMessage(data.message ?? "Board could not be deleted.");
             setDeleteDialogOpen(false);
             return;
         }
@@ -189,14 +190,7 @@ export default function BoardList({ boards }: { boards: Board[] }) {
             )}
 
             {/* 보드 권한/삭제 관련 메시지가 존재할 떄 화면상에 표시 */}
-            {boardMessage && (
-                <div
-                    className="fixed left-1/2 top-5 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-rose-600 shadow-md"
-                    style={{ zIndex: 60 }}
-                >
-                    {boardMessage}
-                </div>
-            )}
+            <BoardMessage type = "permission" message = {permissionMessage} />
 
             {/* 보드 리스트 영역 */}
             <main className="min-h-screen bg-neutral-100 px-6 py-24">
