@@ -5,6 +5,8 @@ import SignInModal from "./SignInModal";
 import SignUpModal from "./SignUpModal";
 import BoardZoomControl from "./BoardZoomControl"
 import MemoCard from "@/components/MemoCard";
+import BoardMenu from "./BoardMenu"
+import BoardNavigator from "./BoardNavigator";
 import BoardToolBar from "./BoardToolBar";
 import BoardMessage from "./BoardMessage";
 
@@ -26,7 +28,10 @@ type CurrentUser = {
     role: string;
 };
 // 보드 컴포넌트
-export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
+export default function BoardClient(
+  {boardIds, currentBoardId, mappedMemos}:{boardIds: number[], currentBoardId:number, mappedMemos: Memo[]}
+)
+  {
     // 보드 기본 크기 - 실제 메모 좌표계 기준으로 사용
     const boardWidth = 3840;
     const boardHeight = 2160;
@@ -118,14 +123,14 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
         }
     };
 
-    // 줌 컨트롤러 시작(onFocus)을 위한 핸들러
+    // 줌 컨트롤러 조작할 경우(onFocus)를 위한 핸들러
     const handleZoomControlStart = () => {
         zoomInteractingRef.current = true;
         setZoomOpen(true);
         setZoomClosing(false);
         clearZoomTimers();
     };
-    // 줌 컨트롤러 종료(onBlur)를 위한 핸들러
+    // 줌 컨트롤러 조작하지 않을 경우(onBlur)를 위한 핸들러
     const handleZoomControlEnd = () => {
         zoomInteractingRef.current = false;
         startZoomCloseTimer();
@@ -148,7 +153,7 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
 
         const tempMemo: Memo = {
           id: -Date.now(),
-          boardId: 1,
+          boardId: currentBoardId,
           content: "",
           x,
           y,
@@ -160,7 +165,7 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
         setMemos((prev) => [...prev, tempMemo]);
     };
     // 메모 생성을 위한 핸들러
-    const handleInsertMemo = async (tempId:number, boardId: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
+    const handleInsertMemo = async (tempId: number, boardId: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
         const response = await fetch("/api/memos", {
           method: "POST",
           headers: {
@@ -184,13 +189,13 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
       }
 
     // 메모 갱신를 위한 핸들러 - 보드 영역 클릭 시 AddMemo 컴포넌트를 호출하여 새로운 메모 생성
-    const handleUpdateMemo = async (id: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
+    const handleUpdateMemo = async (id: number, boardId: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
         const response = await fetch(`/api/memos/${id}`, {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ content, x, y, width, height, color, isPublic }),
+            body: JSON.stringify({ boardId, content, x, y, width, height, color, isPublic }),
         });
         const data = await response.json();
         if (!data.ok) {
@@ -205,6 +210,13 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
     };
     // 메모삭제를 위한 핸들러 - MemoCard에서 호출 Delete 버튼 클릭 시 해당 메모 id를 받아서 memos 상태에서 삭제
     const handleDeleteMemo = async (id: number) => {
+        // DB에 저장되기 전의 임시 메모일 경우 삭제
+        if (id < 0) {
+            setMemos((prev) => 
+                prev.filter((memo) => memo.id !== id));
+            return;
+        }
+
         const response = await fetch(`/api/memos/${id}`, {
         method: "DELETE",
         });
@@ -216,18 +228,22 @@ export default function BoardClient({mappedMemos}:{mappedMemos: Memo[]}) {
         setMemos((prev) => prev.filter((memo) => memo.id !== id)); 
     };
 
-    // 페이지 영역
   return (
     <>
-      {/* 메뉴를 위한 컴포넌트 */}
-      <BoardToolBar 
+      {/* 보드메뉴를 위한 컴포넌트 */}
+      <BoardMenu
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         setSignInOpen={setSignInOpen}
         setSignUpOpen={setSignUpOpen}
-        setWriteClicked={setWriteClicked}
         onSignOut={handleSignOut}
         currentUser={currentUser}
+      />
+      <BoardNavigator boardIds={boardIds} currentBoardId={currentBoardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/>
+      {/* 툴바를 위한 컴포넌트 */}
+      <BoardToolBar 
+        setMenuOpen={setMenuOpen}
+        setWriteClicked={setWriteClicked}
         canEditMemos={canEditMemos}
         onZoomControlOpen={showZoomControl}
         onPermissionDenied={showPermissionMessage}

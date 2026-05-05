@@ -9,6 +9,7 @@ import ConfirmDialog from "@/components/ConfrimDialog";
 // 메모 카드 컴포넌트
 interface MemoCardProps {
     id : number;
+    boardId: number;
     content: string;
     x: number;
     y: number;
@@ -18,11 +19,11 @@ interface MemoCardProps {
     isPublic: boolean;
 }
 export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onInsert, onUpdate, onDelete}: { 
-	    memo: MemoCardProps; 
-	    zoom: number;
-        canEdit: boolean;
-        onPermissionDenied: () => void;
-	    onInsert:(
+    memo: MemoCardProps; 
+    zoom: number;
+    canEdit: boolean;
+    onPermissionDenied: () => void;
+    onInsert:(
         tempId: number,
         borderId: number,
         content: string, 
@@ -35,6 +36,7 @@ export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onIn
     ) => void;
     onUpdate: (
         id: number, 
+        boardId: number,
         content: string, 
         x: number, 
         y: number, 
@@ -60,7 +62,7 @@ export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onIn
     const insertMemo = useCallback(() => {
         onInsert(
             memo.id,
-            1,
+            memo.boardId,
             memoContent,
             Math.round(memoState.x),
             Math.round(memoState.y),
@@ -74,6 +76,7 @@ export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onIn
     const updateMemo = useCallback(() => {
         onUpdate(
             memo.id,
+            memo.boardId,
             memoContent,
             Math.round(memoState.x),
             Math.round(memoState.y),
@@ -242,7 +245,13 @@ export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onIn
     return (
         <>
             <Rnd 
-                className={`memo-rnd-${memo.id}`}
+                className={`memo-rnd-${memo.id} select-none`}
+                style={{
+                    WebkitTouchCallout: "none",
+                    WebkitUserSelect: isEditing ? "text" : "none",
+                    userSelect: isEditing ? "text" : "none",
+                    touchAction: "none",
+                }}
                 default={{
                     x: memo.x,
                     y: memo.y,
@@ -350,6 +359,9 @@ export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onIn
                                 style={{
                                     backgroundColor: memo.color,
                                     borderColor: "#facc15",
+                                    WebkitTouchCallout: "none",
+                                    WebkitUserSelect: "none",
+                                    userSelect: "none",
                                     touchAction: "none",
                                 }}
                                 onDoubleClick={editMemo}
@@ -364,6 +376,9 @@ export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onIn
                             style={{
                                 backgroundColor: memo.color,
                                 borderColor: "#facc15",
+                                WebkitTouchCallout: "none",
+                                WebkitUserSelect: "none",
+                                userSelect: "none",
                                 touchAction: "none",
                             }}
                         >
@@ -373,28 +388,28 @@ export default function MemoCard({ memo, zoom, canEdit, onPermissionDenied, onIn
                 </div>
         </Rnd>
         
-	        {/* 컨텍스트 메뉴: Edit, Delete 버튼이 있는 메뉴 - 메모 카드에서 우클릭 시 열림 */
-	                contextMenuOpen && (
-                    <div 
-                        ref={menuRef}
-                        className=" fixed bg-white px-3 py-4 shadow-md"
-                        style={{
-                            left: `${contextMenuPosition.x}px`,
-                            top: `${contextMenuPosition.y}px`,
-                        }}
-                    >
-                        {/* Delete 버튼 */}
-                        <PressableButton 
-                            variant="menu"
-                            onClick={() => {
-                                setContextMenuOpen(false);
-                                setDeleteDialogOpen(true);
-                            }}>    
-                            Delete
-                        </PressableButton>
-                    </div>
-	                )
-	            }
+	        {/* 컨텍스트 메뉴: Edit, Delete 버튼이 있는 메뉴 - 메모 카드에서 우클릭 시 열림 */}
+            {contextMenuOpen && (
+                <div 
+                    ref={menuRef}
+                    className=" fixed bg-white px-3 py-4 shadow-md"
+                    style={{
+                        left: `${contextMenuPosition.x}px`,
+                        top: `${contextMenuPosition.y}px`,
+                    }}
+                >
+                    {/* Delete 버튼 */}
+                    <PressableButton 
+                        variant="menu"
+                        onClick={() => {
+                            setContextMenuOpen(false);
+                            setDeleteDialogOpen(true);
+                        }}>    
+                        Delete
+                    </PressableButton>
+                </div>
+                )
+            }
             {/* 저장 확인 다이얼로그 - 메모 카드 영역 외부 클릭 시 열림, Yes 클릭 시 메모 저장, No 클릭 시 페이지 새로고침하여 변경사항 무시 */}
             {saveDialogOpen && (
                 <ConfirmDialog 

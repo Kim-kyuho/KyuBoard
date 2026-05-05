@@ -21,6 +21,7 @@ export async function PATCH(request: NextRequest, {params}: { params: Promise<{ 
     const body = await request.json();
     const updates: Partial<typeof db_memos.$inferInsert> = {};
     // 업데이트할 필드가 요청 본문에 존재하는 경우에만 업데이트 객체에 추가 - undefined 체크를 통해 필요한 필드만 업데이트
+    if (body.boardId !== undefined) updates.boardId = body.boardId;
     if (body.content !== undefined) updates.content = body.content;
     if (body.x !== undefined) updates.x = body.x;
     if (body.y !== undefined) updates.y = body.y;
