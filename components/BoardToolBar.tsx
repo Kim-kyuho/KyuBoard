@@ -1,7 +1,6 @@
 "use client";
 
 import PressableButton from "./PressableButton";
-import Link from "next/link";
 import { Dispatch, SetStateAction } from "react";
 import { Camera, ChevronLeft, ChevronRight, Search, SquarePen, SlidersHorizontal } from "lucide-react";
 
@@ -9,6 +8,8 @@ type BoardToolBarProps = {
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
     setWriteClicked: Dispatch<SetStateAction<boolean>>;
     canEditMemos: boolean;
+    onFocusPrevMemo: () => void;
+    onFocusNextMemo: () => void;
     onZoomControlOpen: () => void;
     onPermissionDenied: () => void;
 };
@@ -17,17 +18,22 @@ export default function BoardToolBar({
     setMenuOpen,
     setWriteClicked, 
     canEditMemos,
+    onFocusPrevMemo,
+    onFocusNextMemo,
     onZoomControlOpen,
     onPermissionDenied
 }: BoardToolBarProps){
     return (
         <>
         <div 
-            className = "fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-xl px-4 py-3 shadow-md" >
+            className = "board-toolbar fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-xl px-4 py-3 shadow-md" >
             {/* 이전 메모 이동 버튼 */}
             <PressableButton 
                 variant="menu"
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                    onFocusPrevMemo();
+                    setMenuOpen(false);
+                }}
             >
                 <ChevronLeft />
             </PressableButton>
@@ -73,7 +79,10 @@ export default function BoardToolBar({
             {/* 다음 메모 이동 버튼 */}
             <PressableButton
                 variant="menu"
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                    onFocusNextMemo();
+                    setMenuOpen(false);
+                }}
             >
                 <ChevronRight />
             </PressableButton>

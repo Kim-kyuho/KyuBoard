@@ -7,6 +7,7 @@ import { useState } from "react";
 import BoardMessage from "./BoardMessage";
 
 type CreateBoardModalProps = {
+    ownerId: string | null;
     onClose: () => void;
     onCreated: (boardId: number) => void;
 };
@@ -17,13 +18,14 @@ const boardSizeOptions = [
     { label: "1920 x 1080", width: 1920, height: 1080 },
     { label: "1280 x 720", width: 1280, height: 720 },
     { label: "480 x 320", width: 480, height: 320 },
+    { label: "2160 x 3840", width: 2160, height: 3840 },
     { label: "1080 x 1920", width: 1080, height: 1920 },
     { label: "720 x 1280", width: 720, height: 1280 },
     { label: "320 x 480", width: 320, height: 480 },
 ];
 
 // 보드 생성을 위한 모달을 추가
-export default function CreateBoardModal({ onClose, onCreated }: CreateBoardModalProps) {
+export default function CreateBoardModal({ ownerId, onClose, onCreated }: CreateBoardModalProps) {
     // 보드 생성 실패 또는 입력 에러 메시지 상태
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -54,6 +56,7 @@ export default function CreateBoardModal({ onClose, onCreated }: CreateBoardModa
                 title: title.trim(),
                 width: selectedSize.width,
                 height: selectedSize.height,
+                ownerId: ownerId,
             }),
         });
         const data = await response.json();

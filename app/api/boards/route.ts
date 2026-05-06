@@ -20,8 +20,9 @@ export async function POST(request: NextRequest) {
     const title = String(body.title ?? "").trim();
     const width = Number(body.width);
     const height = Number(body.height);
+    const ownerId = String(body.ownerId).trim();
 
-    if (!title || !Number.isInteger(width) || !Number.isInteger(height)) {
+    if (!title || !Number.isInteger(width) || !Number.isInteger(height) || !ownerId) {
         return NextResponse.json({
             ok: false,
             message: "Board title and size are required.",
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
             title,
             width,
             height,
-            ownerId: 1,
+            ownerId,
             createdAt: now,
         })
         .returning();

@@ -184,6 +184,7 @@ export default function BoardList({ boards }: { boards: Board[] }) {
             {/* New Board 버튼을 눌렀을 때 보드 생성 모달을 표시 */}
             {createBoardOpen && (
                 <CreateBoardModal
+                    ownerId={currentUser?.email ?? null}
                     onClose={() => setCreateBoardOpen(false)}
                     onCreated={handleBoardCreated}
                 />
