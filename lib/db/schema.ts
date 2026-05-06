@@ -18,7 +18,7 @@ export const db_boards = pgTable("boards", {
     title: text("title").notNull(),
     width: integer("width").notNull(),
     height: integer("height").notNull(),
-    ownerId : integer("owner_id").notNull(),
+    ownerId : text("owner_id").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });

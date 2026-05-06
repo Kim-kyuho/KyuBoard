@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SignInModal from "./SignInModal";
 import SignUpModal from "./SignUpModal";
 import BoardZoomControl from "./BoardZoomControl"
@@ -65,10 +65,41 @@ export default function BoardClient(
     const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
     // 권한이 없을 때 사용자에게 보여줄 메시지
     const [permissionMessage, setPermissionMessage] = useState("");
+    // 메모 이동/탐색 관련 메시지 상태
+    const [memoMessage, setMemoMessage] = useState("");
     // Write 버튼 클릭 상태
     const [writeClicked, setWriteClicked] = useState(false);
+    // 현재 포커스된 메모 ID 상태
+    const [focusedMemoId, setFocusedMemoId] = useState<number | null>(null);
+    // 최초 진입 시 가장 ID가 빠른 메모로 이동했는지 저장
+    const initialMemoFocusRef = useRef(false);
     // 메모 조작 가능 상태 
     const canEditMemos = currentUser?.permissionFlg === true;
+    // 메모 ID를 오름차순으로 정렬한 리스트
+    const sortedMemoIds = useMemo(
+        () => memos.map((memo) => memo.id).sort((a, b) => a - b),
+        [memos]
+    );
+
+    // 메모 ID를 기준으로 해당 메모에 포커스를 주고 화면을 이동
+    const focusMemoById = useCallback((memoId: number | null) => {
+        if (memoId === null) {
+            setMemoMessage("This memo does not exist.");
+            return;
+        }
+
+        setMemoMessage("");
+        setFocusedMemoId(memoId);
+        window.setTimeout(() => {
+            document
+                .querySelector(`.memo-rnd-${memoId}`)
+                ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                    inline: "center",
+                });
+        }, 0);
+    }, []);
 
     // 현재의 유저 정보를 불러옴 (email, permissionFlg, role)
     useEffect(() => {
@@ -82,6 +113,62 @@ export default function BoardClient(
         loadCurrentUser();
     }, []);
 
+    // 보드 진입 시 가장 ID가 빠른 메모로 이동
+    useEffect(() => {
+        if (initialMemoFocusRef.current || sortedMemoIds.length === 0) {
+            return;
+        }
+
+        initialMemoFocusRef.current = true;
+        focusMemoById(sortedMemoIds[0]);
+    }, [focusMemoById, sortedMemoIds]);
+
+    // 이전 메모로 이동하기 위한 핸들러
+    const handleFocusPrevMemo = () => {
+        if (sortedMemoIds.length === 0) {
+            setMemoMessage("Prev memo does not exist.");
+            return;
+        }
+
+        const currentIndex = focusedMemoId === null
+            ? -1
+            : sortedMemoIds.indexOf(focusedMemoId);
+
+        if (currentIndex === -1) {
+            focusMemoById(sortedMemoIds[0]);
+            return;
+        }
+
+        const prevMemoId = currentIndex > 0
+            ? sortedMemoIds[currentIndex - 1]
+            : null;
+
+        focusMemoById(prevMemoId);
+    };
+
+    // 다음 메모로 이동하기 위한 핸들러
+    const handleFocusNextMemo = () => {
+        if (sortedMemoIds.length === 0) {
+            setMemoMessage("Next memo does not exist.");
+            return;
+        }
+
+        const currentIndex = focusedMemoId === null
+            ? -1
+            : sortedMemoIds.indexOf(focusedMemoId);
+
+        if (currentIndex === -1) {
+            focusMemoById(sortedMemoIds[0]);
+            return;
+        }
+
+        const nextMemoId = currentIndex >= 0 && currentIndex < sortedMemoIds.length - 1
+            ? sortedMemoIds[currentIndex + 1]
+            : null;
+
+        focusMemoById(nextMemoId);
+    };
+
     // SignOut을 위한 핸들러
     const handleSignOut = async() => {
         await fetch("/api/signout", {
@@ -89,6 +176,7 @@ export default function BoardClient(
         });
         setCurrentUser(null);
         setPermissionMessage("");
+        setMemoMessage("");
         setMenuOpen(false);
     };
     
@@ -251,6 +339,8 @@ export default function BoardClient(
         setMenuOpen={setMenuOpen}
         setWriteClicked={setWriteClicked}
         canEditMemos={canEditMemos}
+        onFocusPrevMemo={handleFocusPrevMemo}
+        onFocusNextMemo={handleFocusNextMemo}
         onZoomControlOpen={showZoomControl}
         onPermissionDenied={showPermissionMessage}
       />
@@ -281,6 +371,8 @@ export default function BoardClient(
       )}
       {/* Permission메시지가 존재할 떄 화면상에 표시 */}
       <BoardMessage type = "permission" message = {permissionMessage} />
+      {/* Memo메시지가 존재할 떄 화면상에 표시 */}
+      <BoardMessage type = "memo" message = {memoMessage} />
     
       <main className="h-screen w-screen overflow-auto bg-neutral-200">
         {/* 보드 영역: 사이즈 3840x2160, 그리드 배경, 메모 카드들이 배치되는 영역
@@ -309,6 +401,7 @@ export default function BoardClient(
                   }
                   // 보드위를 클릭할 시 허가 메시지 해제
                   setPermissionMessage("");
+                  setMemoMessage("");
               }}
               style={{
               width: `${boardWidth}px`,
@@ -327,6 +420,9 @@ export default function BoardClient(
                   memo={memo}
                   zoom={boardZoom}
                   canEdit={canEditMemos}
+                  isFocused={focusedMemoId === memo.id}
+                  onFocus={() => setFocusedMemoId(memo.id)}
+                  onFocusClear={() => setFocusedMemoId(null)}
                   onPermissionDenied={showPermissionMessage}
                   onInsert={handleInsertMemo}
                   onUpdate={handleUpdateMemo}
