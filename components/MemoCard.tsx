@@ -17,6 +17,14 @@ interface MemoCardProps {
     color : string;
     isPublic: boolean;
 }
+
+type MemoPointerArea = "inmemo" | "outmemo";
+
+type LastPointerAction = {
+    time: number;
+    area: MemoPointerArea;
+};
+
 export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFocusClear, onPermissionDenied, onInsert, onUpdate, onDelete}: { 
     memo: MemoCardProps; 
     zoom: number;
@@ -128,15 +136,32 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
     const memoRef = useRef<HTMLTextAreaElement | null>(null);
     // 저장 확인 다이얼로그 내부 클릭 감지를 위한 ref 
     const saveDialogRef = useRef<HTMLDivElement | null>(null);
-    // 삭제 확인 다이얼로그 내부 클릭 감지를 위한 ref
+    // 삭제 확인 다이얼로그 내부 클릭 감지를 위한 refㄴ
     const deleteDialogRef = useRef<HTMLDivElement | null>(null);
-    // 모바일에서 더블탭 이벤트 감지를 위한 ref - 직전의 탭 시간을 저장
-    const lastTapRef = useRef<number>(0);
-    // const outsideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
-    // 더블클릭 이벤트 감지를 위한 ref
-    const lastClickRef = useRef<number>(0);
+    // 모바일에서 더블탭 이벤트 감지를 위한 ref - 직전의 탭 시간과 영역을 저장
+    const lastTapRef = useRef<LastPointerAction>({ time: 0, area: "outmemo" });
+    const outsideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+    // 더블클릭 이벤트 감지를 위한 ref - 직전의 클릭 시간과 영역을 저장
+    const lastClickRef = useRef<LastPointerAction>({ time: 0, area: "outmemo" });
     // 더블클릭에서 첫번째 클릭시 두번클릭까지 걸리는 시간 감지를 위한 ref
     const clickTimerRef = useRef<number | null>(null);
+
+    // 외부 더블클릭/더블탭 처리 함수 - 더블액션이면 저장 다이얼로그, 단일 액션이면 수정 취소 타이머를 예약
+    const handleOutsideDraftAction = useCallback((isDoubleAction: boolean) => {
+        if (isDoubleAction) {
+            if (clickTimerRef.current) {
+                window.clearTimeout(clickTimerRef.current);
+                clickTimerRef.current = null;
+                setSaveDialogOpen(true);
+                return;
+            }
+        }
+        // 300ms 이내에 추가 클릭/탭이 없을시, 편집 불가 상태로 되돌림
+        clickTimerRef.current = window.setTimeout(() => {
+            cancelMemoDraft();
+            clickTimerRef.current = null;
+        }, 300);
+    }, [cancelMemoDraft]);
 
     // 터치 디바이스 여부를 판단하는 함수
     const isTouchDevice = () =>
@@ -149,8 +174,8 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
         // 현재시간
         const currentTime = event.timeStamp;
         // 300ms 이내의 두 번째 탭을 더블탭으로 인식
-        const isDoubleTap = currentTime - lastTapRef.current < 300;
-        lastTapRef.current = currentTime;
+        const isDoubleTap = lastTapRef.current.area === "inmemo" && currentTime - lastTapRef.current.time < 300;
+        lastTapRef.current = { time: currentTime, area: "inmemo" };
         // 더블탭이 감지되면 편집 모드로 전환
         if (isDoubleTap) {
             event.preventDefault();
@@ -205,32 +230,19 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
             if (!isClickInsideMemo && !isClickInsideMenu && isEditing){
                 /* 피드백 변경으로 인한 사용중지 - RND외부에서 원터치 원클릭으로 저장 다이얼로그를 호출했던 동작을 더블클릭으로 변경 */
                 // 터치기기의 경우 세이브 다이얼로그를 띄우지 않고 좌표를 저장
-                // if (event.pointerType === "touch") {
-                //     outsideTouchStartRef.current = {
-                //         x: event.clientX,
-                //         y: event.clientY,
-                //     };
-                //     return;
-                // }
-                const now = event.timeStamp;
-                const hasPreviousClick = lastClickRef.current !== 0;
-                const isDoubleClick = hasPreviousClick && now - lastClickRef.current < 300;
-                lastClickRef.current = now;
-                // 더블클릭시
-                if (isDoubleClick) {
-                    if (clickTimerRef.current) {
-                        window.clearTimeout(clickTimerRef.current);
-                        clickTimerRef.current = null;
-                        // PC의 경우 세이브 다이얼로그를 오픈
-                        setSaveDialogOpen(true);
-                        return;
-                    }
+                if (event.pointerType === "touch") {
+                    outsideTouchStartRef.current = {
+                        x: event.clientX,
+                        y: event.clientY,
+                    };
+                    return;
                 }
-                // 300ms 이내에 추가 클릭이 없을시, 편집 불가 상태로 되돌림
-                clickTimerRef.current = window.setTimeout(() => {
-                    cancelMemoDraft();
-                    clickTimerRef.current = null;
-                }, 300);
+                const now = event.timeStamp;
+                const hasPreviousClick = lastClickRef.current.time !== 0;
+                const isDoubleClick = hasPreviousClick && lastClickRef.current.area === "outmemo" && now - lastClickRef.current.time < 300;
+                lastClickRef.current = { time: now, area: "outmemo" };
+                // 외부 더블클릭/단일클릭 피드백을 처리
+                handleOutsideDraftAction(isDoubleClick);
                 return;
             }
             if (!isClickInsideMemo && !isClickInsideMenu && isFocused) {
@@ -238,49 +250,50 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                 return;
             }
 
-            // outsideTouchStartRef.current = null;
+            outsideTouchStartRef.current = null;
         }
 
         /* 피드백 변경으로 인한 사용중지 - RND외부에서 원터치 원클릭으로 저장 다이얼로그를 호출했던 동작을 더블클릭으로 변경 */
         // 터치 기기를 위한 핸들러 - 메모나 컨텍스트 메뉴 외부를 클릭한 경우 
-        // const handleTouchOutsideEnd = (event: PointerEvent) => {
+        const handleTouchOutsideEnd = (event: PointerEvent) => {
         //     // 터치가 아닐 경우 리턴
-        //     if (event.pointerType !== "touch" || !outsideTouchStartRef.current || !isEditing) {
-        //         return;
-        //     }
-        //     // 터치 누르는 점과 떼는 점의 거리를 계산함
-        //     // const deltaX = event.clientX - outsideTouchStartRef.current.x;
-        //     // const deltaY = event.clientY - outsideTouchStartRef.current.y;
-        //     // const moved = Math.hypot(deltaX, deltaY);
-        //     // outsideTouchStartRef.current = null;
+            if (event.pointerType !== "touch" || !outsideTouchStartRef.current || !isEditing) {
+                return;
+            }
+            // 터치 누르는 점과 떼는 점의 거리를 계산함
+            const deltaX = event.clientX - outsideTouchStartRef.current.x;
+            const deltaY = event.clientY - outsideTouchStartRef.current.y;
+            const moved = Math.hypot(deltaX, deltaY);
+            outsideTouchStartRef.current = null;
 
-        //     // 터치 누르는 점과 때는 점 거리가 10px미만인 경우 세이브 다이얼로그를 오픈
-        //     // if (moved < 10) {
-        //     //     setSaveDialogOpen(true);
-        //     // }
-        // }
+            // 터치 누르는 점과 때는 점 거리가 10px미만인 경우 외부 더블탭을 체크
+            if (moved < 10) {
+                const now = event.timeStamp;
+                const isDoubleTap = lastTapRef.current.area === "outmemo" && now - lastTapRef.current.time < 300;
+                lastTapRef.current = { time: now, area: "outmemo" };
+
+                // 외부 더블탭/단일탭 피드백을 처리
+                handleOutsideDraftAction(isDoubleTap);
+                return;
+            }
+        }
         // 외부 터치의 시작 좌표를 클리어
-        // const clearOutsideTouchStart = () => {
-        //     outsideTouchStartRef.current = null;
-        // }
+        const clearOutsideTouchStart = () => {
+            outsideTouchStartRef.current = null;
+        }
         // 누르기 동작은 handleClickOutside 함수에 적용, 떼기 동작은 handleTouchOutsideEnd에 적용, 취소는 clearOutsideTouchStart에 적용
-        // document.addEventListener("pointerdown", handleClickOutside);
-        // document.addEventListener("pointerup", handleTouchOutsideEnd);
-        // document.addEventListener("pointercancel", clearOutsideTouchStart);
-        // return () => {
-        //     document.removeEventListener("pointerdown", handleClickOutside);
-        //     document.removeEventListener("pointerup", handleTouchOutsideEnd);
-        //     document.removeEventListener("pointercancel", clearOutsideTouchStart);
-        // };
         document.addEventListener("pointerdown", handleClickOutside);
+        document.addEventListener("pointerup", handleTouchOutsideEnd);
+        document.addEventListener("pointercancel", clearOutsideTouchStart);
         return () => {
             document.removeEventListener("pointerdown", handleClickOutside);
+            document.removeEventListener("pointerup", handleTouchOutsideEnd);
+            document.removeEventListener("pointercancel", clearOutsideTouchStart);
             if (clickTimerRef.current) {
                 window.clearTimeout(clickTimerRef.current);
             }
         };
-
-    }, [cancelMemoDraft, isEditing, isFocused, memo.id, onFocusClear]);
+    }, [handleOutsideDraftAction, isEditing, isFocused, memo.id, onFocusClear]);
     
     // 메모 수정에 대한 함수
     const editMemo = () => {
