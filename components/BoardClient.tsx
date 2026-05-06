@@ -83,10 +83,6 @@ export default function BoardClient(
 
     // 메모 ID를 기준으로 해당 메모에 포커스를 주고 화면을 이동
     const focusMemoById = useCallback((memoId: number | null) => {
-        if (memoId === null) {
-            setMemoMessage("This memo does not exist.");
-            return;
-        }
 
         setMemoMessage("");
         setFocusedMemoId(memoId);
@@ -126,7 +122,7 @@ export default function BoardClient(
     // 이전 메모로 이동하기 위한 핸들러
     const handleFocusPrevMemo = () => {
         if (sortedMemoIds.length === 0) {
-            setMemoMessage("Prev memo does not exist.");
+            setMemoMessage("No memos exist.");
             return;
         }
 
@@ -142,6 +138,11 @@ export default function BoardClient(
         const prevMemoId = currentIndex > 0
             ? sortedMemoIds[currentIndex - 1]
             : null;
+        
+        if (!prevMemoId) {
+            setMemoMessage("Prev memo does not exist.");
+            return;
+        }
 
         focusMemoById(prevMemoId);
     };
@@ -149,7 +150,7 @@ export default function BoardClient(
     // 다음 메모로 이동하기 위한 핸들러
     const handleFocusNextMemo = () => {
         if (sortedMemoIds.length === 0) {
-            setMemoMessage("Next memo does not exist.");
+            setMemoMessage("No memo exist.");
             return;
         }
 
@@ -165,6 +166,11 @@ export default function BoardClient(
         const nextMemoId = currentIndex >= 0 && currentIndex < sortedMemoIds.length - 1
             ? sortedMemoIds[currentIndex + 1]
             : null;
+        
+        if (!nextMemoId) {
+            setMemoMessage("Next memo does not exist.");
+            return;
+        }
 
         focusMemoById(nextMemoId);
     };
