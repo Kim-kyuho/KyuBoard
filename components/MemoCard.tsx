@@ -35,7 +35,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
     onPermissionDenied: () => void;
     onInsert:(
         tempId: number,
-        borderId: number,
+        boardId: number,
         content: string, 
         x: number, 
         y: number, 
@@ -60,6 +60,32 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
     ) => void; 
     })
    {
+    // 컨텍스트 메뉴 오픈: Edit, Delete 버튼이 있는 메뉴 - 메모 카드에서 우클릭 시 열림
+    const [contextMenuOpen, setContextMenuOpen] = useState(false);
+    // 메모 편집가능 상태
+    const [isEditing, setIsEditing] = useState(false);
+    // 메모 저장 확인 다이얼로그 오픈 상태
+    const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+    // 메모 삭제 확인 다이얼로그 오픈 상태
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    // 메모 수정 취소 확인 다이얼로그 오픈 상태
+    const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+    // 컨텍스트 메뉴 위치 상태
+    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+    // 컨텍스트 메뉴 외부 클릭 감지를 위한 ref - 메뉴 영역 외부 클릭 시 메뉴 닫기
+    const menuRef = useRef<HTMLDivElement | null>(null);
+    // 메모 전체 영역을 감싸는 div의 ref - closest(.memo-rnd-${memo.id})로 변경함에 따라 사용중지
+    // const divRef = useRef<HTMLDivElement | null>(null);
+    // 메모 내용 편집을 위한 ref - 편집 모드에서 텍스트 영역에 포커스 주기 위해 사용
+    const memoRef = useRef<HTMLTextAreaElement | null>(null);
+    // 모바일에서 더블탭 이벤트 감지를 위한 ref - 직전의 탭 시간과 영역을 저장
+    const lastTapRef = useRef<LastPointerAction>({ time: 0, area: "outmemo" });
+    const outsideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+    // 더블클릭 이벤트 감지를 위한 ref - 직전의 클릭 시간과 영역을 저장
+    const lastClickRef = useRef<LastPointerAction>({ time: 0, area: "outmemo" });
+    // 더블클릭에서 첫번째 클릭시 두번클릭까지 걸리는 시간 감지를 위한 ref
+    const clickTimerRef = useRef<number | null>(null);
+
     // 메모 카드의 위치, 크기, 내용, 색상, 공개/비공개 상태
     const [memoState, setMemoState] = useState({
         x: memo.x,
@@ -103,7 +129,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
             memo.color,
             memo.isPublic
         );
-    },[memo.id, memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onInsert]);
+    },[memo.id, memo.boardId, memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onInsert]);
     // 메모 갱신 함수 - 메모 카드 이동, 크기 조절, 내용 변경 시 호출되어 변경된 메모 정보를 부모 컴포넌트로 전달
     const updateMemo = useCallback(() => {
         onUpdate(
@@ -117,34 +143,8 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
             memo.color,
             memo.isPublic
         );
-    },[ memo.id, memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onUpdate]);
-    // 컨텍스트 메뉴 오픈: Edit, Delete 버튼이 있는 메뉴 - 메모 카드에서 우클릭 시 열림
-    const [contextMenuOpen, setContextMenuOpen] = useState(false);
-    // 메모 편집가능 상태
-    const [isEditing, setIsEditing] = useState(false);
-    // 메모 저장 확인 다이얼로그 오픈 상태
-    const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-    // 메모 삭제 확인 다이얼로그 오픈 상태
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    // 컨텍스트 메뉴 위치 상태
-    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-    // 컨텍스트 메뉴 외부 클릭 감지를 위한 ref - 메뉴 영역 외부 클릭 시 메뉴 닫기
-    const menuRef = useRef<HTMLDivElement | null>(null);
-    // 메모 전체 영역을 감싸는 div의 ref - closest(.memo-rnd-${memo.id})로 변경함에 따라 사용중지
-    // const divRef = useRef<HTMLDivElement | null>(null);
-    // 메모 내용 편집을 위한 ref - 편집 모드에서 텍스트 영역에 포커스 주기 위해 사용
-    const memoRef = useRef<HTMLTextAreaElement | null>(null);
-    // 저장 확인 다이얼로그 내부 클릭 감지를 위한 ref 
-    const saveDialogRef = useRef<HTMLDivElement | null>(null);
-    // 삭제 확인 다이얼로그 내부 클릭 감지를 위한 refㄴ
-    const deleteDialogRef = useRef<HTMLDivElement | null>(null);
-    // 모바일에서 더블탭 이벤트 감지를 위한 ref - 직전의 탭 시간과 영역을 저장
-    const lastTapRef = useRef<LastPointerAction>({ time: 0, area: "outmemo" });
-    const outsideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
-    // 더블클릭 이벤트 감지를 위한 ref - 직전의 클릭 시간과 영역을 저장
-    const lastClickRef = useRef<LastPointerAction>({ time: 0, area: "outmemo" });
-    // 더블클릭에서 첫번째 클릭시 두번클릭까지 걸리는 시간 감지를 위한 ref
-    const clickTimerRef = useRef<number | null>(null);
+    },[ memo.id, memo.boardId, memoContent, memoState.x, memoState.y, memoState.width, memoState.height, memo.color, memo.isPublic, onUpdate]);
+    
 
     // 외부 더블클릭/더블탭 처리 함수 - 더블액션이면 저장 다이얼로그, 단일 액션이면 수정 취소 타이머를 예약
     const handleOutsideDraftAction = useCallback((isDoubleAction: boolean) => {
@@ -156,12 +156,12 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                 return;
             }
         }
-        // 300ms 이내에 추가 클릭/탭이 없을시, 편집 불가 상태로 되돌림
+        // 300ms 이내에 추가 클릭/탭이 없을시, 수정 취소 확인 다이얼로그를 오픈
         clickTimerRef.current = window.setTimeout(() => {
-            cancelMemoDraft();
+            setCancelDialogOpen(true);
             clickTimerRef.current = null;
         }, 300);
-    }, [cancelMemoDraft]);
+    }, []);
 
     // 터치 디바이스 여부를 판단하는 함수
     const isTouchDevice = () =>
@@ -210,16 +210,14 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
             const targetElement = target instanceof Element ? target : null;
             // 컨텍스트 메뉴 안쪽에서 이벤트가 발생했는지 체크
             const isClickInsideMenu = menuRef.current?.contains(target);
-            // 저장 다이얼로그 안쪽에서 이벤트가 발생했는지 체크
-            const isClickInsideSaveDialog = saveDialogRef.current?.contains(target);
-            // 삭제 다이얼로그 안쪽에서 이벤트가 발생했는지 체크
-            const isClickInsideDeleteDialog = deleteDialogRef.current?.contains(target);
             // 보드 툴바 안쪽에서 이벤트가 발생했는지 체크
             const isClickInsideBoardToolBar = targetElement?.closest(".board-toolbar");
+            // Portal로 표시되는 확인 다이얼로그 안쪽에서 이벤트가 발생했는지 체크
+            const isClickInsideConfirmDialog = targetElement?.closest(".confirm-dialog");
             // 메모 안쪽에서 이벤가 발생헀는지 체크 (해당하는 클래스가 존재할 때, 그 엘리멘트 요소를 반환)
             const isClickInsideMemo = targetElement?.closest(`.memo-rnd-${memo.id}`);
             // 다이얼로그 안쪽에 클릭 이벤트가 발생한 경우 리턴
-            if (isClickInsideSaveDialog || isClickInsideDeleteDialog || isClickInsideBoardToolBar) {
+            if (isClickInsideBoardToolBar || isClickInsideConfirmDialog) {
                 return;
             }
             // 컨텍스트 메뉴 안쪽에 클릭 이벤트가 발생하지 않았을 경우 Context메모를 닫음
@@ -306,6 +304,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
         setIsEditing(true);
         onFocus();
         setSaveDialogOpen(false);
+        setCancelDialogOpen(false);
         window.setTimeout(() => {memoRef.current?.focus();
     }, 0);
         
@@ -470,6 +469,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                         onClick={() => {
                             setContextMenuOpen(false);
                             setSaveDialogOpen(false);
+                            setCancelDialogOpen(false);
                             setIsEditing(false);
                             setDeleteDialogOpen(true);
                         }}>    
@@ -494,6 +494,19 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                     onCancel={() => {
                         cancelMemoDraft();
                         setSaveDialogOpen(false);
+                    }}
+                />
+            )}
+            {/* 수정 취소 확인 다이얼로그 - Yes 클릭 시 메모 수정 취소 */}
+            {cancelDialogOpen && (
+                <ConfirmDialog
+                    message="Discard changes?"
+                    onConfirm={() => {
+                        setCancelDialogOpen(false);
+                        cancelMemoDraft();
+                    }}
+                    onCancel={() => {
+                        setCancelDialogOpen(false);
                     }}
                 />
             )}

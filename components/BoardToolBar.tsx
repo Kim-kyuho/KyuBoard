@@ -11,6 +11,7 @@ type BoardToolBarProps = {
     onFocusPrevMemo: () => void;
     onFocusNextMemo: () => void;
     onZoomControlOpen: () => void;
+    onImageUploadClick: () => void;
     onPermissionDenied: () => void;
 };
 
@@ -21,6 +22,7 @@ export default function BoardToolBar({
     onFocusPrevMemo,
     onFocusNextMemo,
     onZoomControlOpen,
+    onImageUploadClick,
     onPermissionDenied
 }: BoardToolBarProps){
     return (
@@ -62,7 +64,10 @@ export default function BoardToolBar({
             {/* ScreenShot버튼: 사진을 올리는 기능 */}
             <PressableButton 
                 variant="menu"
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                    onImageUploadClick();
+                    setMenuOpen(false);
+                }}
             >
                 <Camera />
             </PressableButton>

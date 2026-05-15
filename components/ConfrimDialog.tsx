@@ -11,6 +11,7 @@ export default function ConfirmDialog({ message, onConfirm, onCancel }: ConfirmD
     return createPortal(
         <>
             <div
+                className="confirm-dialog"
                 style={{
                     position: "fixed",
                     inset: 0,
@@ -19,6 +20,7 @@ export default function ConfirmDialog({ message, onConfirm, onCancel }: ConfirmD
                 }}
             />
             <div
+                className="confirm-dialog"
                 style={{
                     position: "fixed",
                     left: "50vw",

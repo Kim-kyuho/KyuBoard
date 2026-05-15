@@ -36,3 +36,20 @@ export const db_memos = pgTable("memos", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const db_images = pgTable("images", {
+    imageId: serial("image_id").primaryKey(),
+    boardId: integer("board_id")
+        .notNull()
+        .references(() => db_boards.boardId, { onDelete: "cascade" }),
+    publicId: text("public_id").notNull().unique(),
+    secureUrl: text("secure_url").notNull(),
+    fileName: text("filename"),
+    x: integer("x").notNull().default(0),
+    y: integer("y").notNull().default(0),
+    width: integer("width").notNull().default(300),
+    height: integer("height").notNull().default(200),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
