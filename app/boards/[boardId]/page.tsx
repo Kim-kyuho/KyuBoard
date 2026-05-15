@@ -2,7 +2,7 @@
 
 import BoardClient from "@/components/BoardClient";
 import { getDb } from "@/lib/db";
-import { db_boards, db_memos } from "@/lib/db/schema";
+import { db_boards, db_images, db_memos } from "@/lib/db/schema";
 import { eq, asc, desc } from "drizzle-orm";
 
 export default async function BoardPage({
@@ -30,6 +30,11 @@ export default async function BoardPage({
         .from(db_memos)
         .where(eq(db_memos.boardId, boardIdNumber));
 
+    const allImages = await db
+        .select()
+        .from(db_images)
+        .where(eq(db_images.boardId, boardIdNumber));
+
     const mappedMemos = allMemos.map((memo) => ({
         id: memo.id,
         boardId: memo.boardId,
@@ -42,10 +47,23 @@ export default async function BoardPage({
         isPublic: memo.isPublic ?? false,
     }));
 
+    const mappedImages = allImages.map((image) => ({
+        imageId: image.imageId,
+        boardId: image.boardId,
+        publicId: image.publicId,
+        secureUrl: image.secureUrl,
+        fileName: image.fileName,
+        x: image.x,
+        y: image.y,
+        width: image.width,
+        height: image.height,
+    }));
+
     return (
         <BoardClient
             boardIds={allBoards.map((board) => board.boardId)}
             currentBoard={currentBoard[0]}
+            mappedImages={mappedImages}
             mappedMemos={mappedMemos}
         />
     );
