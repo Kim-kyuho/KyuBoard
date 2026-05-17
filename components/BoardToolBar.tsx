@@ -6,6 +6,7 @@ import { Camera, ChevronLeft, ChevronRight, Search, SquarePen, SlidersHorizontal
 
 type BoardToolBarProps = {
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
+    setSearchBarOpen: Dispatch<SetStateAction<boolean>>;
     setWriteClicked: Dispatch<SetStateAction<boolean>>;
     canEditMemos: boolean;
     onFocusPrevMemo: () => void;
@@ -17,6 +18,7 @@ type BoardToolBarProps = {
 
 export default function BoardToolBar({ 
     setMenuOpen,
+    setSearchBarOpen,
     setWriteClicked, 
     canEditMemos,
     onFocusPrevMemo,
@@ -42,7 +44,12 @@ export default function BoardToolBar({
             {/* Search버튼: 메모를 검색하는 기능 */}
             <PressableButton 
                 variant="menu"
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                    setMenuOpen(false);
+                    setSearchBarOpen(prev => !prev);
+                    }    
+                }
+
             >
                 <Search />
             </PressableButton>
