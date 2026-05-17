@@ -171,27 +171,27 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
         ("ontouchstart" in window || navigator.maxTouchPoints > 0);
         // 모바일에서 더블탭 이벤트 감지를 위한 함수 - 터치 디바이스에서 텍스트 영역을 더블탭하면 편집 모드로 전환  
         const handleDoubleTap = (event: ReactPointerEvent<HTMLDivElement>) => {
-        if (event.pointerType !== "touch") { return; }
-        // 현재시간
-        const currentTime = event.timeStamp;
-        // 300ms 이내의 두 번째 탭을 더블탭으로 인식
-        const isDoubleTap = lastTapRef.current.area === "inmemo" && currentTime - lastTapRef.current.time < 300;
-        lastTapRef.current = { time: currentTime, area: "inmemo" };
-        // 더블탭이 감지되면 편집 모드로 전환
-        if (isDoubleTap) {
-            event.preventDefault();
-            editMemo();
+            if (event.pointerType !== "touch") { return; }
+            // 현재시간
+            const currentTime = event.timeStamp;
+            // 300ms 이내의 두 번째 탭을 더블탭으로 인식
+            const isDoubleTap = lastTapRef.current.area === "inmemo" && currentTime - lastTapRef.current.time < 300;
+            lastTapRef.current = { time: currentTime, area: "inmemo" };
+            // 더블탭이 감지되면 편집 모드로 전환
+            if (isDoubleTap) {
+                event.preventDefault();
+                editMemo();
+            }
         }
-    }
 
-    const getBoardPoint = (clientX: number, clientY:number) => {
-        const board = document.querySelector(".kyu-board");
-        const boardRect = board?.getBoundingClientRect();
+        const getBoardPoint = (clientX: number, clientY:number) => {
+            const board = document.querySelector(".kyu-board");
+            const boardRect = board?.getBoundingClientRect();
 
-        return {
-            x: boardRect ? (clientX - boardRect.left) / zoom : clientX,
-            y: boardRect ? (clientY - boardRect.top) / zoom : clientY,
-        };
+            return {
+                x: boardRect ? (clientX - boardRect.left) / zoom : clientX,
+                y: boardRect ? (clientY - boardRect.top) / zoom : clientY,
+            };
     }
     // 화면 전체 클릭 감지 & React 컴포넌트 바깥클릭을 감지하기 위해 글로벌 마우스이벤트 사용(안정성 확보)
     // 수정중인 메모에 대한 피드백
@@ -435,9 +435,9 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                                 onDoubleClick={editMemo}
                                 onPointerDown={handleDoubleTap}
                             >
-                                <MemoEditor
-                                    content={memoContent}
-                                    onChange={setMemoContent}
+                                <div
+                                    className="memo-editor-content"
+                                    dangerouslySetInnerHTML={{ __html: memoContent }}
                                 />
                             </div>
                         )
