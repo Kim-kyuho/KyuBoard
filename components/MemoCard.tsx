@@ -81,8 +81,6 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
     const memoFocusRef = useRef<HTMLDivElement | null>(null);
     // 모바일에서 더블탭 이벤트 감지를 위한 ref - 직전의 탭 시간과 영역을 저장
     const lastTapRef = useRef<LastPointerAction>({ time: 0, area: "outmemo" });
-    // 모바일에서 메모 안쪽 터치 시작 좌표를 저장 - 드래그와 탭을 구분하기 위해 사용
-    const insideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
     const outsideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
     // 더블클릭 이벤트 감지를 위한 ref - 직전의 클릭 시간과 영역을 저장
     const lastClickRef = useRef<LastPointerAction>({ time: 0, area: "outmemo" });
@@ -171,45 +169,20 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
         // 브라우저 환경에서 윈도우 존재 확인, 터치 이벤트 및 최대 터치 포인트 지원 여부를 통해 터치 디바이스를 판별
         typeof window !== "undefined" && 
         ("ontouchstart" in window || navigator.maxTouchPoints > 0);
-        // 모바일에서 메모 안쪽 터치 시작 좌표를 저장 - 이동 터치와 탭을 구분하기 위해 사용
-        const handleMemoTouchStart = (event: ReactPointerEvent<HTMLDivElement>) => {
+        // 모바일에서 더블탭 이벤트 감지를 위한 함수 - 터치 디바이스에서 텍스트 영역을 더블탭하면 편집 모드로 전환  
+        const handleDoubleTap = (event: ReactPointerEvent<HTMLDivElement>) => {
             if (event.pointerType !== "touch") { return; }
-
-            insideTouchStartRef.current = {
-                x: event.clientX,
-                y: event.clientY,
-            };
-        };
-
-        // 모바일에서 메모 안쪽 터치 종료를 감지 - 이동거리가 작은 두 번의 탭이면 편집 모드로 전환
-        const handleMemoTouchEnd = (event: ReactPointerEvent<HTMLDivElement>) => {
-            if (event.pointerType !== "touch" || !insideTouchStartRef.current) { return; }
-
-            const deltaX = event.clientX - insideTouchStartRef.current.x;
-            const deltaY = event.clientY - insideTouchStartRef.current.y;
-            const moved = Math.hypot(deltaX, deltaY);
-            insideTouchStartRef.current = null;
-
-            if (moved >= 10) {
-                lastTapRef.current = { time: 0, area: "inmemo" };
-                return;
-            }
-
-            const now = event.timeStamp;
-            const isDoubleTap = lastTapRef.current.area === "inmemo" && now - lastTapRef.current.time < 350;
-            lastTapRef.current = { time: now, area: "inmemo" };
-
+            // 현재시간
+            const currentTime = event.timeStamp;
+            // 300ms 이내의 두 번째 탭을 더블탭으로 인식
+            const isDoubleTap = lastTapRef.current.area === "inmemo" && currentTime - lastTapRef.current.time < 300;
+            lastTapRef.current = { time: currentTime, area: "inmemo" };
+            // 더블탭이 감지되면 편집 모드로 전환
             if (isDoubleTap) {
                 event.preventDefault();
-                lastTapRef.current = { time: 0, area: "inmemo" };
                 editMemo();
             }
-        };
-
-        // 모바일에서 메모 안쪽 터치가 취소되었을 때 시작 좌표를 초기화
-        const clearMemoTouchStart = () => {
-            insideTouchStartRef.current = null;
-        };
+        }
 
         const getBoardPoint = (clientX: number, clientY:number) => {
             const board = document.querySelector(".kyu-board");
@@ -352,7 +325,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                     WebkitTouchCallout: "none",
                     WebkitUserSelect: isEditing ? "text" : "none",
                     userSelect: isEditing ? "text" : "none",
-                    touchAction: "none",
+                    touchAction: isEditing ? "auto" : "none",
                 }}
                 default={{
                     x: memo.x,
@@ -371,7 +344,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                 bounds="parent"
                 scale={zoom}
                 // 텍스트가 활성화되어 있을 때만 드래그 가능
-                disableDragging={ !isEditing }
+                disableDragging={ !isEditing || canEdit }
                 // 텍스트가 활성화되어 있을 때만 크기 조절 가능
                 enableResizing={ isEditing } 
                 /* 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시 */
@@ -460,9 +433,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                                     touchAction: "none",
                                 }}
                                 onDoubleClick={editMemo}
-                                onPointerDown={handleMemoTouchStart}
-                                onPointerUp={handleMemoTouchEnd}
-                                onPointerCancel={clearMemoTouchStart}
+                                onPointerDown={handleDoubleTap}
                             >
                                 <div
                                     className="memo-editor-content"
