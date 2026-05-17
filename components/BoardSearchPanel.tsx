@@ -25,7 +25,7 @@ export default function BoardSearchPanel({
                 <input
                     value={searchText}
                     onChange={(event) => onTextChange(event.target.value)}
-                    className="w-48 bg-transparent text-sm text-neutral-900 outline-none"
+                    className="w-48 bg-transparent text-[16px] text-neutral-900 outline-none"
                     placeholder="Search memos"
 
                 />
