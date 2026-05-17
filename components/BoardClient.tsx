@@ -10,6 +10,7 @@ import BoardMenu from "./BoardMenu"
 import BoardNavigator from "./BoardNavigator";
 import BoardToolBar from "./BoardToolBar";
 import BoardMessage from "./BoardMessage";
+import BoardSearchPanel from "./BoardSearchPanel";
 
 interface Board {
   boardId: number;
@@ -54,6 +55,12 @@ export default function BoardClient(
     // 보드 기본 크기 - 실제 메모 좌표계 기준으로 사용
     const boardWidth = currentBoard.width;
     const boardHeight = currentBoard.height;
+    // 검색바 오픈 상태
+    const [searchBarOpen, setSearchBarOpen] = useState(false); 
+    // 검색어 상태
+    const [searchText, setSearchText] = useState("");
+    // 현재 검색 결과 인덱스
+    const [searchIndex, setSearchIndex] = useState(0);
     // 보드 줌 상태 - 보드 영역만 확대/축소하고 메뉴와 로고는 고정
     const [boardZoom, setBoardZoom] = useState(0.75);
     // 보드 줌 컨트롤러 오픈 상태 - 보드 영역을 확대/축소 하는 컨트롤러
@@ -104,7 +111,6 @@ export default function BoardClient(
 
     // 메모 ID를 기준으로 해당 메모에 포커스를 주고 화면을 이동
     const focusMemoById = useCallback((memoId: number | null) => {
-
         setMemoMessage("");
         setFocusedMemoId(memoId);
         window.setTimeout(() => {
@@ -117,6 +123,80 @@ export default function BoardClient(
                 });
         }, 0);
     }, []);
+
+    // 검색어에 해당하는 메모 리스트
+    const searchResults = useMemo(() => {
+        const query = searchText.trim().toLowerCase();
+
+        if (!query) {
+            return [];
+        }
+
+        return memos.filter((memo) =>
+            memo.content.toLowerCase().includes(query)
+        );
+    }, [memos, searchText]);
+
+    // 검색 결과 메모로 이동
+    const focusSearchResult = (index: number) => {
+        const targetMemo = searchResults[index];
+
+        if (!targetMemo) {
+            setMemoMessage("No search results.");
+            return;
+        }
+
+        setSearchIndex(index);
+        focusMemoById(targetMemo.id);
+    };
+
+    // 다음 검색 결과 이동
+    const handleSearchNext = () => {
+        if (searchResults.length === 0) {
+            setMemoMessage("No search results.");
+            return;
+        }
+
+        const nextIndex = searchIndex >= searchResults.length - 1
+            ? 0
+            : searchIndex + 1;
+
+        focusSearchResult(nextIndex);
+    };
+
+    // 이전 검색 결과 이동
+    const handleSearchPrev = () => {
+        if (searchResults.length === 0) {
+            setMemoMessage("No search results.");
+            return;
+        }
+
+        const prevIndex = searchIndex <= 0
+            ? searchResults.length - 1
+            : searchIndex - 1;
+
+        focusSearchResult(prevIndex);
+    };
+
+    // 검색어 변경
+    const handleSearchTextChange = (query: string) => {
+        setSearchText(query);
+        setSearchIndex(0);
+
+        const normalizedQuery = query.trim().toLowerCase();
+
+        if (!normalizedQuery) {
+            return;
+        }
+
+        const firstMemo = memos.find((memo) =>
+            memo.content.toLowerCase().includes(normalizedQuery)
+        );
+
+        if (firstMemo) {
+            focusMemoById(firstMemo.id);
+        }
+    };
 
     // 현재의 유저 정보를 불러옴 (email, permissionFlg, role)
     useEffect(() => {
@@ -522,57 +602,72 @@ export default function BoardClient(
   return (
     <>
       <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleUploadImage}
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleUploadImage}
       />
       {/* 보드메뉴를 위한 컴포넌트 */}
       <BoardMenu
-        menuOpen={menuOpen}
-        setMenuOpen={setMenuOpen}
-        setSignInOpen={setSignInOpen}
-        setSignUpOpen={setSignUpOpen}
-        onSignOut={handleSignOut}
-        currentUser={currentUser}
+            menuOpen={menuOpen}
+            setMenuOpen={setMenuOpen}
+            setSignInOpen={setSignInOpen}
+            setSignUpOpen={setSignUpOpen}
+            onSignOut={handleSignOut}
+            currentUser={currentUser}
       />
       <BoardNavigator boardIds={boardIds} currentBoardId={currentBoard.boardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/>
       {/* 보드툴바를 위한 컴포넌트 */}
       <BoardToolBar 
-        setMenuOpen={setMenuOpen}
-        setWriteClicked={setWriteClicked}
-        canEditMemos={canEditMemos}
-        onFocusPrevMemo={handleFocusPrevMemo}
-        onFocusNextMemo={handleFocusNextMemo}
-        onZoomControlOpen={showZoomControl}
-        onImageUploadClick={handleImageUploadClick}
-        onPermissionDenied={showPermissionMessage}
+            setMenuOpen={setMenuOpen}
+            setSearchBarOpen={setSearchBarOpen}
+            setWriteClicked={setWriteClicked}
+            canEditMemos={canEditMemos}
+            onFocusPrevMemo={handleFocusPrevMemo}
+            onFocusNextMemo={handleFocusNextMemo}
+            onZoomControlOpen={showZoomControl}
+            onImageUploadClick={handleImageUploadClick}
+            onPermissionDenied={showPermissionMessage}
       />
+      {/* 검색바를 위한 컴포넌트 */}
+      {searchBarOpen && (
+        <BoardSearchPanel
+            searchText={searchText}
+            currentIndex={searchResults.length > 0 ? searchIndex + 1 : 0}
+            searchCount={searchResults.length}
+            onTextChange={handleSearchTextChange}
+            onPrev={handleSearchPrev}
+            onNext={handleSearchNext}
+
+         
+        
+        />
+      )}
 
       {/* Zoom컨트롤을 위한 컴포넌트 */}
       <BoardZoomControl
-        boardZoom={boardZoom}
-        setBoardZoom={setBoardZoom}
-        zoomOpen={zoomOpen}
-        zoomClosing={zoomClosing}
-        onZoomControlOpen={showZoomControl}
-        onZoomControlStart={handleZoomControlStart}
-        onZoomControlEnd={handleZoomControlEnd}
+            boardZoom={boardZoom}
+            setBoardZoom={setBoardZoom}
+            zoomOpen={zoomOpen}
+            zoomClosing={zoomClosing}
+            onZoomControlOpen={showZoomControl}
+            onZoomControlStart={handleZoomControlStart}
+            onZoomControlEnd={handleZoomControlEnd}
       />
 
       {/* Sign-in 버튼을 눌렀을 떄 Sign-in모달을 표시 */}
       {signInOpen && (
       <SignInModal
-          onClose={() => setSignInOpen(false)}
-          onSignIn={(user) => setCurrentUser(user)}
+            onClose={() => setSignInOpen(false)}
+            onSignIn={(user) => setCurrentUser(user)}
       />
       )}
       {/* Sign-up 버튼을 눌렀을 떄 Sign-in모달을 표시 */}
       {signUpOpen && (
         <SignUpModal 
-        onClose={() => setSignUpOpen(false)} 
-      />
+            onClose={() => setSignUpOpen(false)} 
+        />
       )}
       {/* Permission메시지가 존재할 떄 화면상에 표시 */}
       <BoardMessage type = "permission" message = {permissionMessage} />
@@ -592,63 +687,63 @@ export default function BoardClient(
           >
             {/* 실제 보드 영역 - transform scale로 보드만 확대/축소 */}
             <div
-              className="kyu-board relative bg-white"
-              onClick={(e)=>{
-                  if(writeClicked)
-                  {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    // 화면 좌표를 실제 보드 좌표로 변환하기 위해 줌 값을 나눔
-                    const x = (e.clientX - rect.left) / boardZoom;
-                    const y = (e.clientY - rect.top) / boardZoom; 
-                    console.log(`Clicked at: (${x}, ${y})`);
-                    handleCreateTempMemo(x, y);
-                    setWriteClicked(false);
-                  }
-                  // 보드위를 클릭할 시 허가 메시지 해제
-                  setPermissionMessage("");
-                  setMemoMessage("");
-              }}
-              style={{
-              width: `${boardWidth}px`,
-              height: `${boardHeight}px`,
-              transform: `scale(${boardZoom})`,
-              transformOrigin: "top left",
-              backgroundImage: "radial-gradient(#d4d4d8 1px, transparent 1px)",
-              backgroundSize: "24px 24px",             
-            }}
+                className="kyu-board relative bg-white"
+                onClick={(e)=>{
+                    if(writeClicked)
+                    {
+                        // 화면 좌표를 실제 보드 좌표로 변환하기 위해 줌 값을 나눔
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = (e.clientX - rect.left) / boardZoom;
+                        const y = (e.clientY - rect.top) / boardZoom; 
+                        console.log(`Clicked at: (${x}, ${y})`);
+                        handleCreateTempMemo(x, y);
+                        setWriteClicked(false);
+                    }
+                    // 보드위를 클릭할 시 허가 메시지 해제
+                    setPermissionMessage("");
+                    setMemoMessage("");
+                    }}
+                style={{
+                    width: `${boardWidth}px`,
+                    height: `${boardHeight}px`,
+                    transform: `scale(${boardZoom})`,
+                    transformOrigin: "top left",
+                    backgroundImage: "radial-gradient(#d4d4d8 1px, transparent 1px)",
+                    backgroundSize: "24px 24px",             
+                }}
             >
               {
               /* 이미지카드 리스트를 랜더링 */
               images.map((image) => (
                 <ImageCard
-                  key={image.imageId}
-                  image={image}
-                  zoom={boardZoom}
-                  canEdit={canEditMemos}
-                  isSelected={selectedImageId === image.imageId}
-                  onSelect={() => setSelectedImageId(image.imageId)}
-                  onSelectClear={() => setSelectedImageId(null)}
-                  onPermissionDenied={showPermissionMessage}
-                  onInsert={handleInsertImage}
-                  onUpdate={handleUpdateImage}
-                  onDelete={handleDeleteImage}
+                    key={image.imageId}
+                    image={image}
+                    zoom={boardZoom}
+                    canEdit={canEditMemos}
+                    isSelected={selectedImageId === image.imageId}
+                    onSelect={() => setSelectedImageId(image.imageId)}
+                    onSelectClear={() => setSelectedImageId(null)}
+                    onPermissionDenied={showPermissionMessage}
+                    onInsert={handleInsertImage}
+                    onUpdate={handleUpdateImage}
+                    onDelete={handleDeleteImage}
                 />
               ))}
               {
               /* 메모카드 리스트를 랜더링 */
               memos.map((memo) => (
                 <MemoCard
-                  key={memo.id}
-                  memo={memo}
-                  zoom={boardZoom}
-                  canEdit={canEditMemos}
-                  isFocused={focusedMemoId === memo.id}
-                  onFocus={() => setFocusedMemoId(memo.id)}
-                  onFocusClear={() => setFocusedMemoId(null)}
-                  onPermissionDenied={showPermissionMessage}
-                  onInsert={handleInsertMemo}
-                  onUpdate={handleUpdateMemo}
-                  onDelete={handleDeleteMemo}
+                    key={memo.id}
+                    memo={memo}
+                    zoom={boardZoom}
+                    canEdit={canEditMemos}
+                    isFocused={focusedMemoId === memo.id}
+                    onFocus={() => setFocusedMemoId(memo.id)}
+                    onFocusClear={() => setFocusedMemoId(null)}
+                    onPermissionDenied={showPermissionMessage}
+                    onInsert={handleInsertMemo}
+                    onUpdate={handleUpdateMemo}
+                    onDelete={handleDeleteMemo}
                 />
               ))}
             </div>
