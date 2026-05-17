@@ -674,7 +674,15 @@ export default function BoardClient(
       {/* Memo메시지가 존재할 떄 화면상에 표시 */}
       <BoardMessage type = "memo" message = {memoMessage} />
     
-      <main ref={boardScrollRef} className="h-screen w-screen overflow-auto bg-neutral-200">
+	      <main
+            ref={boardScrollRef}
+            className="h-screen w-screen select-none overflow-auto bg-neutral-200"
+            style={{
+                WebkitUserSelect: "none",
+                userSelect: "none",
+                WebkitTouchCallout: "none",
+            }}
+        >
         {/* 보드 영역: 사이즈 3840x2160, 그리드 배경, 메모 카드들이 배치되는 영역
           Wrtie버튼을 누르고 보드 영역을 클릭하면 해당 위치에 새로운 메모가 생성  
         */}
@@ -703,14 +711,17 @@ export default function BoardClient(
                     setPermissionMessage("");
                     setMemoMessage("");
                     }}
-                style={{
-                    width: `${boardWidth}px`,
-                    height: `${boardHeight}px`,
-                    transform: `scale(${boardZoom})`,
-                    transformOrigin: "top left",
-                    backgroundImage: "radial-gradient(#d4d4d8 1px, transparent 1px)",
-                    backgroundSize: "24px 24px",             
-                }}
+	                style={{
+	                    width: `${boardWidth}px`,
+	                    height: `${boardHeight}px`,
+	                    transform: `scale(${boardZoom})`,
+	                    transformOrigin: "top left",
+	                    backgroundImage: "radial-gradient(#d4d4d8 1px, transparent 1px)",
+	                    backgroundSize: "24px 24px",
+                        WebkitUserSelect: "none",
+                        userSelect: "none",
+                        WebkitTouchCallout: "none",
+	                }}
             >
               {
               /* 이미지카드 리스트를 랜더링 */
