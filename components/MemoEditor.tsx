@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { Extension, markInputRule, markPasteRule } from "@tiptap/core";
 import Highlight from "@tiptap/extension-highlight";
+import HardBreak from "@tiptap/extension-hard-break";
 import StarterKit from "@tiptap/starter-kit";
 
 const InlineMarkdownInputRules = Extension.create({
@@ -89,10 +90,23 @@ export default function MemoEditor({
 }) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        hardBreak: false,
+      }),
+
+      HardBreak.extend({
+        addKeyboardShortcuts() {
+          return {
+            Enter: () => this.editor.commands.setHardBreak(),
+            "Shift-Enter": () => this.editor.commands.setHardBreak(),
+          };
+        },
+      }),
+
       Highlight.configure({
         multicolor: true,
       }),
+
       InlineMarkdownInputRules,
     ],
     content: content,
