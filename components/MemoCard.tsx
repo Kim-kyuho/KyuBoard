@@ -3,6 +3,7 @@ import { Rnd } from "react-rnd";
 import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import PressableButton from "@/components/PressableButton";
 import ConfirmDialog from "@/components/ConfrimDialog";
+import MemoEditor from "./MemoEditor";
 
 
 // 메모 카드 컴포넌트
@@ -76,8 +77,8 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
     const menuRef = useRef<HTMLDivElement | null>(null);
     // 메모 전체 영역을 감싸는 div의 ref - closest(.memo-rnd-${memo.id})로 변경함에 따라 사용중지
     // const divRef = useRef<HTMLDivElement | null>(null);
-    // 메모 내용 편집을 위한 ref - 편집 모드에서 텍스트 영역에 포커스 주기 위해 사용
-    const memoRef = useRef<HTMLTextAreaElement | null>(null);
+    // 메모 에디터 포커스용 ref - 편집 모드 진입 시 메모 에디터 영역에 포커스 주기 위해 사용
+    const memoFocusRef = useRef<HTMLDivElement | null>(null);
     // 모바일에서 더블탭 이벤트 감지를 위한 ref - 직전의 탭 시간과 영역을 저장
     const lastTapRef = useRef<LastPointerAction>({ time: 0, area: "outmemo" });
     const outsideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -305,7 +306,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
         onFocus();
         setSaveDialogOpen(false);
         setCancelDialogOpen(false);
-        window.setTimeout(() => {memoRef.current?.focus();
+        window.setTimeout(() => {memoFocusRef.current?.focus();
     }, 0);
         
     }
@@ -407,23 +408,25 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                     {memo.isPublic ? (
                         // 편집 모드에서는 텍스트 영역, 일반 모드에서는 div로 내용을 표시
                         isEditing ? (
-                            <textarea
-                                ref={memoRef}
-                                className="h-full w-full rounded-xl border p-4 shadow-md text-neutral-900"
-                                value={memoContent}
+                            <div
+                                className="h-full w-full rounded-xl p-4 shadow-md text-neutral-900"
+                                ref={memoFocusRef}
+                                tabIndex={-1}
                                 style={{
-                                    backgroundColor: memo.color,
-                                    borderColor: "#facc15",
-                                    resize: "none",
+                                    backgroundColor: "#fffadc",
                                 }}
-                                onChange={(event) => setMemoContent(event.target.value)}
-	                            />
+                            >
+                            <MemoEditor
+                                content={memoContent}
+                                onChange={setMemoContent}
+                            />
+                            </div>
+                            
                         ) : (
                             <div
-                                className="h-full w-full whitespace-pre-wrap rounded-xl border p-4 shadow-md text-neutral-900"
+                                className="h-full w-full rounded-xl p-4 shadow-md text-neutral-900"
                                 style={{
-                                    backgroundColor: memo.color,
-                                    borderColor: "#facc15",
+                                    backgroundColor: "#fffadc",
                                     WebkitTouchCallout: "none",
                                     WebkitUserSelect: "none",
                                     userSelect: "none",
@@ -432,15 +435,17 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                                 onDoubleClick={editMemo}
                                 onPointerDown={handleDoubleTap}
                             >
-                                {memoContent}
+                                <MemoEditor
+                                    content={memoContent}
+                                    onChange={setMemoContent}
+                                />
                             </div>
                         )
                     ) : (
                         <div
-                            className="h-full w-full rounded-xl border p-4 shadow-md text-neutral-900"
+                            className="h-full w-full rounded-xl p-4 shadow-md text-neutral-900"
                             style={{
-                                backgroundColor: memo.color,
-                                borderColor: "#facc15",
+                                backgroundColor: "#fffadc",
                                 WebkitTouchCallout: "none",
                                 WebkitUserSelect: "none",
                                 userSelect: "none",
