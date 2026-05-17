@@ -344,7 +344,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                 bounds="parent"
                 scale={zoom}
                 // 텍스트가 활성화되어 있을 때만 드래그 가능
-                disableDragging={ !isEditing || canEdit }
+                disableDragging={ !isEditing || !canEdit }
                 // 텍스트가 활성화되어 있을 때만 크기 조절 가능
                 enableResizing={ isEditing } 
                 /* 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시 */
