@@ -135,13 +135,13 @@ export default function MemoEditor({
     }, 0);
   }, [editor]);
 
-  const handleEditorPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const handleEditorPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!editor || (event.pointerType !== "touch" && event.pointerType !== "mouse")) {
       return;
     }
 
     if (!editor.isFocused) {
-      editor.commands.focus();
+      editor.commands.focus("end");
     }
   };
 
@@ -149,7 +149,7 @@ export default function MemoEditor({
     <EditorContent
       className="h-full w-full"
       editor={editor}
-      onPointerDown={handleEditorPointerDown}
+      onPointerUp={handleEditorPointerUp}
     />
   );
 }
