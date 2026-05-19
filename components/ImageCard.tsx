@@ -87,6 +87,8 @@ export default function ImageCard({ image, zoom, canEdit, isSelected, onSelect, 
     const lastClickRef = useRef<LastPointerAction>({ time: 0, area: "outimage" });
     // 더블클릭에서 첫번째 클릭시 두번클릭까지 걸리는 시간 감지를 위한 ref
     const clickTimerRef = useRef<number | null>(null);
+    // 보드 드래그 스크롤 여부 확인 전까지 외부 클릭 피드백을 잠시 지연하기 위한 ref
+    const pendingOutsideActionRef = useRef<number | null>(null);
     // 모바일에서 길게 누름 이벤트 감지를 위한 ref
     const longPressRef = useRef<number | null>(null);
 
@@ -221,6 +223,26 @@ export default function ImageCard({ image, zoom, canEdit, isSelected, onSelect, 
             if (isClickInsideBoardToolBar || isClickInsideConfirmDialog) {
                 return;
             }
+            // 보드 드래그 스크롤 중에는 이미지 외부 클릭 피드백을 실행하지 않음
+            if (document.documentElement.dataset.boardPanning === "true") {
+                return;
+            }
+            // 마우스 왼쪽 드래그 스크롤과 단순 외부 클릭을 구분하기 위해 외부 피드백 실행을 잠시 지연
+            const runAfterBoardPanCheck = (callback: () => void) => {
+                if (pendingOutsideActionRef.current) {
+                    window.clearTimeout(pendingOutsideActionRef.current);
+                }
+
+                pendingOutsideActionRef.current = window.setTimeout(() => {
+                    pendingOutsideActionRef.current = null;
+
+                    if (document.documentElement.dataset.boardPanning === "true") {
+                        return;
+                    }
+
+                    callback();
+                }, 90);
+            };
 
             if (!isClickInsideMenu) {
                 setContextMenuOpen(false);
@@ -241,7 +263,7 @@ export default function ImageCard({ image, zoom, canEdit, isSelected, onSelect, 
                 const isDoubleClick = hasPreviousClick && lastClickRef.current.area === "outimage" && now - lastClickRef.current.time < 300;
                 lastClickRef.current = { time: now, area: "outimage" };
                 // 외부 더블클릭/단일클릭 피드백을 처리
-                handleOutsideDraftAction(isDoubleClick);
+                runAfterBoardPanCheck(() => handleOutsideDraftAction(isDoubleClick));
                 return;
             }
 
@@ -282,6 +304,9 @@ export default function ImageCard({ image, zoom, canEdit, isSelected, onSelect, 
             document.removeEventListener("pointercancel", clearOutsideTouchStart);
             if (clickTimerRef.current) {
                 window.clearTimeout(clickTimerRef.current);
+            }
+            if (pendingOutsideActionRef.current) {
+                window.clearTimeout(pendingOutsideActionRef.current);
             }
         };
     }, [handleOutsideDraftAction, image.imageId, isSelected]);

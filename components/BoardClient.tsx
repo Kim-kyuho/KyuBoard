@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SignInModal from "./SignInModal";
 import SignUpModal from "./SignUpModal";
 import BoardZoomControl from "./BoardZoomControl"
@@ -47,6 +47,16 @@ type CurrentUser = {
     permissionFlg: boolean;
     role: string;
 };
+
+type BoardPanState = {
+    pointerId: number;
+    startX: number;
+    startY: number;
+    scrollLeft: number;
+    scrollTop: number;
+    isDragging: boolean;
+};
+
 // 보드 컴포넌트
 export default function BoardClient(
   {boardIds, currentBoard, mappedImages, mappedMemos}:{boardIds: number[], currentBoard:Board, mappedImages: Image[], mappedMemos: Memo[]}
@@ -63,6 +73,8 @@ export default function BoardClient(
     const [searchIndex, setSearchIndex] = useState(0);
     // 보드 줌 상태 - 보드 영역만 확대/축소하고 메뉴와 로고는 고정
     const [boardZoom, setBoardZoom] = useState(0.75);
+    // 보드 드래그 스크롤 상태 - 마우스 왼쪽 버튼으로 보드를 잡고 이동 중인지 체크
+    const [boardPanning, setBoardPanning] = useState(false);
     // 보드 줌 컨트롤러 오픈 상태 - 보드 영역을 확대/축소 하는 컨트롤러
     const [zoomOpen, setZoomOpen] = useState(false);
     // 줌이 자동으로 닫히는 상태 - 조작 중이 아닐때, 줌 컨트롤러를 사라지게 함
@@ -75,6 +87,12 @@ export default function BoardClient(
     const zoomInteractingRef = useRef(false);
     // 보드 스크롤 영역 ref - 이미지 업로드 위치 계산에 사용
     const boardScrollRef = useRef<HTMLElement | null>(null);
+    // 마우스 왼쪽 버튼으로 보드를 드래그 스크롤하기 위한 상태 ref
+    const boardPanRef = useRef<BoardPanState | null>(null);
+    // 보드 드래그 스크롤 직후 클릭 이벤트가 실행되는 것을 막기 위한 ref
+    const suppressBoardClickRef = useRef(false);
+    // 보드 드래그 스크롤 종료 후 외부 클릭 피드백을 잠시 막기 위한 타이머 ref
+    const boardPanClearTimerRef = useRef<number | null>(null);
     // 이미지 파일 업로드 input ref - 툴바 버튼 클릭 시 파일 선택창을 열기 위해 사용
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     // 메모 리스트 상태
@@ -108,6 +126,118 @@ export default function BoardClient(
         () => memos.map((memo) => memo.id).sort((a, b) => a - b),
         [memos]
     );
+
+    // 보드 드래그 스크롤 상태를 초기화
+    const clearBoardPanMode = () => {
+        if (boardPanClearTimerRef.current) {
+            window.clearTimeout(boardPanClearTimerRef.current);
+            boardPanClearTimerRef.current = null;
+        }
+
+        delete document.documentElement.dataset.boardPanning;
+    };
+
+    // 보드 드래그 스크롤이 시작될 수 있는 영역인지 체크
+    const canStartBoardPan = (target: EventTarget | null) => {
+        const targetElement = target instanceof Element ? target : null;
+
+        if (!targetElement) {
+            return false;
+        }
+
+        return !targetElement.closest(
+            "[class*='memo-rnd-'], [class*='image-rnd-'], .board-toolbar, .confirm-dialog, button, input, textarea, a, [contenteditable='true']"
+        );
+    };
+
+    // 마우스 왼쪽 버튼으로 보드 드래그 스크롤을 시작
+    const handleBoardPanStart = (event: ReactPointerEvent<HTMLElement>) => {
+        if (event.pointerType !== "mouse" || event.button !== 0 || writeClicked) {
+            return;
+        }
+
+        if (!canStartBoardPan(event.target)) {
+            return;
+        }
+
+        clearBoardPanMode();
+        boardPanRef.current = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            scrollLeft: event.currentTarget.scrollLeft,
+            scrollTop: event.currentTarget.scrollTop,
+            isDragging: false,
+        };
+
+        event.currentTarget.setPointerCapture(event.pointerId);
+    };
+
+    // 보드 드래그 스크롤 중 스크롤 위치를 갱신
+    const handleBoardPanMove = (event: ReactPointerEvent<HTMLElement>) => {
+        const panState = boardPanRef.current;
+
+        if (!panState || panState.pointerId !== event.pointerId) {
+            return;
+        }
+
+        const deltaX = event.clientX - panState.startX;
+        const deltaY = event.clientY - panState.startY;
+        const moved = Math.hypot(deltaX, deltaY);
+
+        if (!panState.isDragging) {
+            if (moved < 5) {
+                return;
+            }
+
+            panState.isDragging = true;
+            setBoardPanning(true);
+        }
+
+        document.documentElement.dataset.boardPanning = "true";
+        suppressBoardClickRef.current = true;
+        event.preventDefault();
+
+        event.currentTarget.scrollLeft = panState.scrollLeft - deltaX;
+        event.currentTarget.scrollTop = panState.scrollTop - deltaY;
+    };
+
+    // 보드 드래그 스크롤 종료
+    const handleBoardPanEnd = (event: ReactPointerEvent<HTMLElement>) => {
+        const panState = boardPanRef.current;
+
+        if (!panState || panState.pointerId !== event.pointerId) {
+            return;
+        }
+
+        boardPanRef.current = null;
+        setBoardPanning(false);
+
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+
+        if (panState.isDragging) {
+            boardPanClearTimerRef.current = window.setTimeout(() => {
+                clearBoardPanMode();
+                suppressBoardClickRef.current = false;
+            }, 160);
+            return;
+        }
+
+        clearBoardPanMode();
+    };
+
+    // 보드 드래그 스크롤 관련 전역 상태 정리
+    useEffect(() => {
+        return () => {
+            if (boardPanClearTimerRef.current) {
+                window.clearTimeout(boardPanClearTimerRef.current);
+            }
+
+            delete document.documentElement.dataset.boardPanning;
+        };
+    }, []);
 
     // 메모 ID를 기준으로 해당 메모에 포커스를 주고 화면을 이동
     const focusMemoById = useCallback((memoId: number | null) => {
@@ -677,7 +807,12 @@ export default function BoardClient(
 	      <main
             ref={boardScrollRef}
             className="h-screen w-screen select-none overflow-auto bg-neutral-200"
+            onPointerDown={handleBoardPanStart}
+            onPointerMove={handleBoardPanMove}
+            onPointerUp={handleBoardPanEnd}
+            onPointerCancel={handleBoardPanEnd}
             style={{
+                cursor: boardPanning ? "grabbing" : "grab",
                 WebkitUserSelect: "none",
                 userSelect: "none",
                 WebkitTouchCallout: "none",
@@ -697,6 +832,13 @@ export default function BoardClient(
             <div
                 className="kyu-board relative bg-white"
                 onClick={(e)=>{
+                    if (suppressBoardClickRef.current) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        suppressBoardClickRef.current = false;
+                        return;
+                    }
+
                     if(writeClicked)
                     {
                         // 화면 좌표를 실제 보드 좌표로 변환하기 위해 줌 값을 나눔
