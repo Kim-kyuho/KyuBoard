@@ -1,17 +1,17 @@
 # KyuBoard v1.0 Beta Release
----
+
 KyuBoard is a web-based board application for arranging memos and images in a free-form space.
 
 The project is built as a personal productivity and visual note board tool. Each board can contain movable/resizable memo cards and uploaded images. Editing features are protected by a simple sign-in and permission approval flow.
 
 ## Concept
----
+
 KyuBoard was designed for a more spatial style of expression, rather than the linear format of a typical blog.
 
 The goal is to make it possible to create varied expressions with a small set of core features. The board should feel free, but not directionless. Users should be able to arrange ideas, images, and written fragments freely while still having tools that help them find their way through the space.
 
 ## Core Features
----
+
 ### Boards and Memos
 
 Boards and memos are the foundation of KyuBoard. Memos support rich text editing, allowing simple cards to carry a wider range of expression.
@@ -33,7 +33,7 @@ Zoom controls let users adjust the board to a comfortable scale for different pl
 Sign-in and permission control are used to manage editing access efficiently. Since the app depends on limited external resources such as database and image storage services, write operations are restricted to approved users.
 
 ## Development
----
+
 KyuBoard is still being improved. Feature updates and usability refinements will continue over time.
 
 ## Tech Stack
