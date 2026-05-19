@@ -1,4 +1,4 @@
-# KyuBoard
+# KyuBoard v1.0 Beta Release
 ---
 KyuBoard is a web-based board application for arranging memos and images in a free-form space.
 
