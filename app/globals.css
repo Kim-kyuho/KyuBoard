@@ -9,8 +9,38 @@
   height: 100%;
   width: 100%;
   overflow: auto;
+  scrollbar-color: transparent transparent;
+  scrollbar-width: thin;
   word-break: break-word;
   outline: none;
+}
+
+.memo-editor-content:hover,
+.memo-editor-content:focus,
+.memo-editor-content:focus-within,
+.memo-editor-content:active {
+  scrollbar-color: #d6cda7 transparent;
+}
+
+.memo-editor-content::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.memo-editor-content::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+}
+
+.memo-editor-content:hover::-webkit-scrollbar-thumb,
+.memo-editor-content:focus::-webkit-scrollbar-thumb,
+.memo-editor-content:focus-within::-webkit-scrollbar-thumb,
+.memo-editor-content:active::-webkit-scrollbar-thumb {
+  background-color: #d6cda7;
+}
+
+.memo-editor-content::-webkit-scrollbar-track {
+  background-color: transparent;
 }
 
 .memo-editor-content p {

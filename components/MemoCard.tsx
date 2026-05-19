@@ -86,6 +86,8 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
     const lastClickRef = useRef<LastPointerAction>({ time: 0, area: "outmemo" });
     // 더블클릭에서 첫번째 클릭시 두번클릭까지 걸리는 시간 감지를 위한 ref
     const clickTimerRef = useRef<number | null>(null);
+    // 보드 드래그 스크롤 여부 확인 전까지 외부 클릭 피드백을 잠시 지연하기 위한 ref
+    const pendingOutsideActionRef = useRef<number | null>(null);
 
     // 메모 카드의 위치, 크기, 내용, 색상, 공개/비공개 상태
     const [memoState, setMemoState] = useState({
@@ -217,10 +219,32 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
             const isClickInsideConfirmDialog = targetElement?.closest(".confirm-dialog");
             // 메모 안쪽에서 이벤가 발생헀는지 체크 (해당하는 클래스가 존재할 때, 그 엘리멘트 요소를 반환)
             const isClickInsideMemo = targetElement?.closest(`.memo-rnd-${memo.id}`);
+            // 다른 메모를 포함한 RND 메모 영역에서 이벤트가 발생했는지 체크
+            const isClickInsideAnyMemo = targetElement?.closest("[class*='memo-rnd-']");
             // 다이얼로그 안쪽에 클릭 이벤트가 발생한 경우 리턴
             if (isClickInsideBoardToolBar || isClickInsideConfirmDialog) {
                 return;
             }
+            // 보드 드래그 스크롤 중에는 메모 외부 클릭 피드백을 실행하지 않음
+            if (document.documentElement.dataset.boardPanning === "true") {
+                return;
+            }
+            // 마우스 왼쪽 드래그 스크롤과 단순 외부 클릭을 구분하기 위해 외부 피드백 실행을 잠시 지연
+            const runAfterBoardPanCheck = (callback: () => void) => {
+                if (pendingOutsideActionRef.current) {
+                    window.clearTimeout(pendingOutsideActionRef.current);
+                }
+
+                pendingOutsideActionRef.current = window.setTimeout(() => {
+                    pendingOutsideActionRef.current = null;
+
+                    if (document.documentElement.dataset.boardPanning === "true") {
+                        return;
+                    }
+
+                    callback();
+                }, 90);
+            };
             // 컨텍스트 메뉴 안쪽에 클릭 이벤트가 발생하지 않았을 경우 Context메모를 닫음
             if (!isClickInsideMenu) {
                 setContextMenuOpen(false);
@@ -241,11 +265,11 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                 const isDoubleClick = hasPreviousClick && lastClickRef.current.area === "outmemo" && now - lastClickRef.current.time < 300;
                 lastClickRef.current = { time: now, area: "outmemo" };
                 // 외부 더블클릭/단일클릭 피드백을 처리
-                handleOutsideDraftAction(isDoubleClick);
+                runAfterBoardPanCheck(() => handleOutsideDraftAction(isDoubleClick));
                 return;
             }
-            if (!isClickInsideMemo && !isClickInsideMenu && isFocused) {
-                onFocusClear();
+            if (!isClickInsideMemo && !isClickInsideAnyMemo && !isClickInsideMenu && isFocused) {
+                runAfterBoardPanCheck(onFocusClear);
                 return;
             }
 
@@ -291,6 +315,9 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
             if (clickTimerRef.current) {
                 window.clearTimeout(clickTimerRef.current);
             }
+            if (pendingOutsideActionRef.current) {
+                window.clearTimeout(pendingOutsideActionRef.current);
+            }
         };
     }, [handleOutsideDraftAction, isEditing, isFocused, memo.id, onFocusClear]);
     
@@ -310,6 +337,11 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
     }, 0);
         
     }
+    // 메모 단일 클릭 시 해당 메모에 포커스를 적용
+    const handleMemoClick = (event: ReactMouseEvent<HTMLDivElement>) => {
+        event.stopPropagation();
+        onFocus();
+    };
     // 모바일에서 길게 누름 이벤트 감지를 위한 ref
     const longPressRef = useRef<number| null>(null);
     // const openContextMenu = (x: number, y: number) => {
@@ -404,7 +436,9 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
             >   
                 {/* 메모 카드 내용 영역 - 공개 메모는 내용 표시, 비공개 메모는 "비공개 메모입니다." 표시 */}
                 <div //ref={divRef} - closest(.memo-rnd-${memo.id})로 변경함에 따라 사용중지
-                    className="h-full w-full">
+                    className="h-full w-full"
+                    onClick={handleMemoClick}
+                >
                     {memo.isPublic ? (
                         // 편집 모드에서는 텍스트 영역, 일반 모드에서는 div로 내용을 표시
                         isEditing ? (
