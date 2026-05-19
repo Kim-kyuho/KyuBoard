@@ -8,7 +8,7 @@ export async function verifyPassword(password: string, passwordHash: string) {
     
     // DB에 저장된 패스워드의 겂("salt":"storedHash")를 ":"로 스플릿
     const [salt, storedHash] = passwordHash.split(":");
-
+    // ":"로 스플릿 한 값이 존재하지 않는 경우 false를 리턴
     if (!salt || !storedHash) {
         return false;
     }

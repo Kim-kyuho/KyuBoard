@@ -1,36 +1,116 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KyuBoard
+---
+KyuBoard is a web-based board application for arranging memos and images in a free-form space.
+
+The project is built as a personal productivity and visual note board tool. Each board can contain movable/resizable memo cards and uploaded images. Editing features are protected by a simple sign-in and permission approval flow.
+
+## Concept
+---
+KyuBoard was designed for a more spatial style of expression, rather than the linear format of a typical blog.
+
+The goal is to make it possible to create varied expressions with a small set of core features. The board should feel free, but not directionless. Users should be able to arrange ideas, images, and written fragments freely while still having tools that help them find their way through the space.
+
+## Core Features
+---
+### Boards and Memos
+
+Boards and memos are the foundation of KyuBoard. Memos support rich text editing, allowing simple cards to carry a wider range of expression.
+
+### Image Uploads
+
+Images are simple, but they make the board much richer. They add visual context and make the space feel less like a plain text list.
+
+### Search and Memo Order Navigation
+
+Search and memo order navigation act as guides inside a large, free-form board. They help users avoid getting lost while moving through many scattered memos.
+
+### Zoom Controls
+
+Zoom controls let users adjust the board to a comfortable scale for different platforms and screen sizes.
+
+### Sign-in and Permission Control
+
+Sign-in and permission control are used to manage editing access efficiently. Since the app depends on limited external resources such as database and image storage services, write operations are restricted to approved users.
+
+## Development
+---
+KyuBoard is still being improved. Feature updates and usability refinements will continue over time.
+
+## Tech Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Drizzle ORM
+- Neon PostgreSQL
+- Tiptap
+- react-rnd
+- Cloudinary
+- Vercel Analytics
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open the app:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create a local environment file and set the required values:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```env
+NEON_CONNECTION_STRING=
+AUTH_SECRET=
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+```
 
-## Deploy on Vercel
+`AUTH_SECRET` is used to sign the local session token. Use a strong secret value in production.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Database
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The app uses Neon PostgreSQL through Drizzle ORM.
+
+Main tables:
+
+- `users`
+- `boards`
+- `memos`
+- `images`
+
+User accounts have a `permission_flg` field. A user can sign up, but editing is blocked until approval is granted. Board creation is restricted to users with the `admin` role.
+
+## Current Notes
+
+KyuBoard is still in active development. Mobile touch behavior, rich text editing, and board/image workflows are being refined.
+
+## Deployment
+
+The project is intended to run on Vercel.
+
+Set the same environment variables in the Vercel project settings before deploying.
