@@ -39,6 +39,7 @@ export default function BoardZoomControl({
         >
             <Minus className="w-5 h-5 text-neutral-900" />
         </PressableButton> */}
+        {/* 줌 메뉴 클릭시 표시되는 중 컨트롤러 */}
         {zoomOpen && (
             <div className={`fixed right-5 bottom-25 z-50 flex items-center gap-2 transition-opacity duration-300 ${zoomClosing ? "opacity-0" : "opacity-100"}`}>
             <span className="text-xs font-semibold text-neutral-700">

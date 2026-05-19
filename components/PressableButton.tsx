@@ -29,7 +29,8 @@ export default function PressableButton({
         variant === "menu"
             ? "scale-[0.98] bg-white/90 pl-4 shadow-md"
             : "scale-[0.96] bg-white/80 shadow-lg";
-
+    
+    // 버튼 랜더링 - onTouchStart, onTouchEnd, onTouchCancel 이벤트 핸들러를 통해 터치 시 눌리는 효과 적용
     return (
         <button
             {...props}
