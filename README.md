@@ -4,6 +4,7 @@ KyuBoard is a web-based board application for arranging memos and images in a fr
 
 The project is built as a personal productivity and visual note board tool. Each board can contain movable/resizable memo cards and uploaded images. Editing features are protected by a simple sign-in and permission approval flow.
 
+![KyuBoard screenshot](screenshot/ReadMe.png)
 ## Concept
 
 KyuBoard was designed for a more spatial style of expression, rather than the linear format of a typical blog.
