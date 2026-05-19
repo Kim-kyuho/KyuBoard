@@ -222,30 +222,16 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
             // 다른 메모를 포함한 RND 메모 영역에서 이벤트가 발생했는지 체크
             const isClickInsideAnyMemo = targetElement?.closest("[class*='memo-rnd-']");
 
-            // 메모가 수정 가능한 상태에서는 현재 메모와 확인 다이얼로그 이외의 이벤트를 제한
-            if (isEditing && !isClickInsideMemo && !isClickInsideConfirmDialog) {
-                event.preventDefault();
-                event.stopPropagation();
-                event.stopImmediatePropagation();
-                setContextMenuOpen(false);
+            // 보드 빈 영역에서 발생한 이벤트인지 체크
+            const isClickInsideBoard = targetElement?.closest(".kyu-board");
+            const isClickInsideEmptyBoard = Boolean(
+                isClickInsideBoard &&
+                !isClickInsideAnyMemo &&
+                !isClickInsideMenu &&
+                !isClickInsideBoardToolBar &&
+                !isClickInsideConfirmDialog
+            );
 
-                const now = event.timeStamp;
-                const hasPreviousClick = lastClickRef.current.time !== 0;
-                const isDoubleClick = hasPreviousClick && lastClickRef.current.area === "outmemo" && now - lastClickRef.current.time < 300;
-                lastClickRef.current = { time: now, area: "outmemo" };
-
-                handleOutsideDraftAction(isDoubleClick);
-                return;
-            }
-
-            // 다이얼로그 안쪽에 클릭 이벤트가 발생한 경우 리턴
-            if (isClickInsideBoardToolBar || isClickInsideConfirmDialog) {
-                return;
-            }
-            // 보드 드래그 스크롤 중에는 메모 외부 클릭 피드백을 실행하지 않음
-            if (document.documentElement.dataset.boardPanning === "true") {
-                return;
-            }
             // 마우스 왼쪽 드래그 스크롤과 단순 외부 클릭을 구분하기 위해 외부 피드백 실행을 잠시 지연
             const runAfterBoardPanCheck = (callback: () => void) => {
                 if (pendingOutsideActionRef.current) {
@@ -262,6 +248,42 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                     callback();
                 }, 90);
             };
+
+            // 메모가 수정 가능한 상태에서는 현재 메모와 확인 다이얼로그 이외의 이벤트를 제한
+            if (isEditing && !isClickInsideMemo && !isClickInsideConfirmDialog) {
+                setContextMenuOpen(false);
+
+                const now = event.timeStamp;
+                const hasPreviousClick = lastClickRef.current.time !== 0;
+                const isDoubleClick = hasPreviousClick && lastClickRef.current.area === "outmemo" && now - lastClickRef.current.time < 300;
+                lastClickRef.current = { time: now, area: "outmemo" };
+
+                // 보드 빈 영역은 드래그 스크롤을 위해 pointerdown 이벤트를 막지 않음
+                if (isClickInsideEmptyBoard) {
+                    if (event.pointerType === "touch") {
+                        outsideTouchStartRef.current = { x: event.clientX, y: event.clientY };
+                        return;
+                    }
+
+                    runAfterBoardPanCheck(() => handleOutsideDraftAction(isDoubleClick));
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                handleOutsideDraftAction(isDoubleClick);
+                return;
+            }
+
+            // 다이얼로그 안쪽에 클릭 이벤트가 발생한 경우 리턴
+            if (isClickInsideBoardToolBar || isClickInsideConfirmDialog) {
+                return;
+            }
+            // 보드 드래그 스크롤 중에는 메모 외부 클릭 피드백을 실행하지 않음
+            if (document.documentElement.dataset.boardPanning === "true") {
+                return;
+            }
             // 컨텍스트 메뉴 안쪽에 클릭 이벤트가 발생하지 않았을 경우 Context메모를 닫음
             if (!isClickInsideMenu) {
                 setContextMenuOpen(false);
@@ -310,6 +332,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
 
             const target = event.target as Node;
             const targetElement = target instanceof Element ? target : null;
+            // RND의 이벤트, 확인 다이얼로그의 경우 이벤트가 차단 되지 않도로 예외 설정
             const isClickInsideMemo = targetElement?.closest(`.memo-rnd-${memo.id}`);
             const isClickInsideConfirmDialog = targetElement?.closest(".confirm-dialog");
 
