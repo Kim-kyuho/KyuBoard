@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { PointerEvent as ReactPointerEvent, useEffect } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { Extension, markInputRule, markPasteRule } from "@tiptap/core";
 import Highlight from "@tiptap/extension-highlight";
@@ -81,6 +81,7 @@ const InlineMarkdownInputRules = Extension.create({
   },
 });
 
+// 메모 에디터 컴포넌트 - TipTap 리치 텍스트를 적용
 export default function MemoEditor({
   content,
   onChange,
@@ -126,5 +127,29 @@ export default function MemoEditor({
     editor.commands.setContent(content, { emitUpdate: false });
   }, [content, editor]);
 
-  return <EditorContent className="h-full w-full" editor={editor} />;
+  useEffect(() => {
+    if (!editor) return;
+
+    window.setTimeout(() => {
+      editor.commands.focus("end");
+    }, 0);
+  }, [editor]);
+
+  const handleEditorPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!editor || (event.pointerType !== "touch" && event.pointerType !== "mouse")) {
+      return;
+    }
+
+    if (!editor.isFocused) {
+      editor.commands.focus();
+    }
+  };
+
+  return (
+    <EditorContent
+      className="h-full w-full"
+      editor={editor}
+      onPointerDown={handleEditorPointerDown}
+    />
+  );
 }

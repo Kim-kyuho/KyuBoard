@@ -221,6 +221,23 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
             const isClickInsideMemo = targetElement?.closest(`.memo-rnd-${memo.id}`);
             // 다른 메모를 포함한 RND 메모 영역에서 이벤트가 발생했는지 체크
             const isClickInsideAnyMemo = targetElement?.closest("[class*='memo-rnd-']");
+
+            // 메모가 수정 가능한 상태에서는 현재 메모와 확인 다이얼로그 이외의 이벤트를 제한
+            if (isEditing && !isClickInsideMemo && !isClickInsideConfirmDialog) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                setContextMenuOpen(false);
+
+                const now = event.timeStamp;
+                const hasPreviousClick = lastClickRef.current.time !== 0;
+                const isDoubleClick = hasPreviousClick && lastClickRef.current.area === "outmemo" && now - lastClickRef.current.time < 300;
+                lastClickRef.current = { time: now, area: "outmemo" };
+
+                handleOutsideDraftAction(isDoubleClick);
+                return;
+            }
+
             // 다이얼로그 안쪽에 클릭 이벤트가 발생한 경우 리턴
             if (isClickInsideBoardToolBar || isClickInsideConfirmDialog) {
                 return;
@@ -248,25 +265,6 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
             // 컨텍스트 메뉴 안쪽에 클릭 이벤트가 발생하지 않았을 경우 Context메모를 닫음
             if (!isClickInsideMenu) {
                 setContextMenuOpen(false);
-            }
-            // 메모가 수정 가능한 상태 & 메모나 컨텍스트 메모의 외부를 클릭한 경우
-            if (!isClickInsideMemo && !isClickInsideMenu && isEditing){
-                /* 피드백 변경으로 인한 사용중지 - RND외부에서 원터치 원클릭으로 저장 다이얼로그를 호출했던 동작을 더블클릭으로 변경 */
-                // 터치기기의 경우 세이브 다이얼로그를 띄우지 않고 좌표를 저장
-                if (event.pointerType === "touch") {
-                    outsideTouchStartRef.current = {
-                        x: event.clientX,
-                        y: event.clientY,
-                    };
-                    return;
-                }
-                const now = event.timeStamp;
-                const hasPreviousClick = lastClickRef.current.time !== 0;
-                const isDoubleClick = hasPreviousClick && lastClickRef.current.area === "outmemo" && now - lastClickRef.current.time < 300;
-                lastClickRef.current = { time: now, area: "outmemo" };
-                // 외부 더블클릭/단일클릭 피드백을 처리
-                runAfterBoardPanCheck(() => handleOutsideDraftAction(isDoubleClick));
-                return;
             }
             if (!isClickInsideMemo && !isClickInsideAnyMemo && !isClickInsideMenu && isFocused) {
                 runAfterBoardPanCheck(onFocusClear);
@@ -304,12 +302,33 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
         const clearOutsideTouchStart = () => {
             outsideTouchStartRef.current = null;
         }
+        // 편집 중 외부 클릭이 다른 메모의 포커스/편집 이벤트로 이어지는 것을 차단
+        const blockOutsideClickWhileEditing = (event: MouseEvent) => {
+            if (!isEditing) {
+                return;
+            }
+
+            const target = event.target as Node;
+            const targetElement = target instanceof Element ? target : null;
+            const isClickInsideMemo = targetElement?.closest(`.memo-rnd-${memo.id}`);
+            const isClickInsideConfirmDialog = targetElement?.closest(".confirm-dialog");
+
+            if (isClickInsideMemo || isClickInsideConfirmDialog) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+        };
         // 누르기 동작은 handleClickOutside 함수에 적용, 떼기 동작은 handleTouchOutsideEnd에 적용, 취소는 clearOutsideTouchStart에 적용
-        document.addEventListener("pointerdown", handleClickOutside);
+        document.addEventListener("pointerdown", handleClickOutside, true);
+        document.addEventListener("click", blockOutsideClickWhileEditing, true);
         document.addEventListener("pointerup", handleTouchOutsideEnd);
         document.addEventListener("pointercancel", clearOutsideTouchStart);
         return () => {
-            document.removeEventListener("pointerdown", handleClickOutside);
+            document.removeEventListener("pointerdown", handleClickOutside, true);
+            document.removeEventListener("click", blockOutsideClickWhileEditing, true);
             document.removeEventListener("pointerup", handleTouchOutsideEnd);
             document.removeEventListener("pointercancel", clearOutsideTouchStart);
             if (clickTimerRef.current) {
@@ -358,6 +377,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                     WebkitUserSelect: isEditing ? "text" : "none",
                     userSelect: isEditing ? "text" : "none",
                     touchAction: isEditing ? "auto" : "none",
+                    cursor: isEditing ? "text" : "default",
                 }}
                 default={{
                     x: memo.x,
@@ -395,7 +415,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                     setContextMenuOpen(true);
                 }}
 
-                 /* 모바일에서 길게 누름 이벤트 - 터치한 좌표에 컨텍스트 메뉴를 표시 */      
+                /* 모바일에서 길게 누름 이벤트 - 터치한 좌표에 컨텍스트 메뉴를 표시 */      
                 onPointerDown={(e: PointerEvent) => {
                     if (e.pointerType !== "touch") return;
                     if (!canEdit) {
@@ -448,6 +468,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                                 tabIndex={-1}
                                 style={{
                                     backgroundColor: "#fffadc",
+                                    cursor: "text",
                                 }}
                             >
                             <MemoEditor
