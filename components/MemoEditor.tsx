@@ -98,7 +98,6 @@ export default function MemoEditor({
       HardBreak.extend({
         addKeyboardShortcuts() {
           return {
-            Enter: () => this.editor.commands.setHardBreak(),
             "Shift-Enter": () => this.editor.commands.setHardBreak(),
           };
         },

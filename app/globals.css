@@ -1,8 +1,117 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedSans_W_Th.woff2") format("woff2");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0100-024F, U+2000-206F;
+}
+
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedSans_W_Rg.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0100-024F, U+2000-206F;
+}
+
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedSans_W_Bd.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0100-024F, U+2000-206F;
+}
+
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedSans_W_He.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0100-024F, U+2000-206F;
+}
+
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedSans_W_XBd.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0100-024F, U+2000-206F;
+}
+
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedKR-Th.woff2") format("woff2");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+1100-11FF, U+3130-318F, U+AC00-D7AF;
+}
+
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedKR-Rg.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+1100-11FF, U+3130-318F, U+AC00-D7AF;
+}
+
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedKR-Bd.woff2") format("woff2");
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+1100-11FF, U+3130-318F, U+AC00-D7AF;
+}
+
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedJP_OTF_Th.woff2") format("woff2");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+3040-309F, U+30A0-30FF, U+31F0-31FF, U+3000-303F, U+4E00-9FFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedJP_OTF_Rg.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+3040-309F, U+30A0-30FF, U+31F0-31FF, U+3000-303F, U+4E00-9FFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedJP_OTF_Bd.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+3040-309F, U+30A0-30FF, U+31F0-31FF, U+3000-303F, U+4E00-9FFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "LINE Seed";
+  src: url("/font/LINESeedJP_OTF_Eb.woff2") format("woff2");
+  font-weight: 800 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+3040-309F, U+30A0-30FF, U+31F0-31FF, U+3000-303F, U+4E00-9FFF, U+FF00-FFEF;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-line-seed: "LINE Seed", "Apple SD Gothic Neo", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
 }
 
 .memo-editor-content {
@@ -94,8 +203,10 @@
 
 .memo-editor-content blockquote {
   margin: 0.5rem 0;
-  padding-left: 0.75rem;
+  padding: 0.5rem 0.75rem;
   border-left: 4px solid #d4d4d8;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
   color: #404040;
 }
 
@@ -143,8 +254,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-line-seed);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -157,7 +268,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-line-seed);
 }
 
 @layer components {
