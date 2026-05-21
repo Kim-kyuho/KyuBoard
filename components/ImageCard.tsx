@@ -3,7 +3,7 @@
 import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import ConfirmDialog from "@/components/ConfrimDialog";
-import PressableButton from "@/components/PressableButton";
+import ContextMenu from "./ContextMenu";
 
 // 이미지 카드 정보
 interface ImageCardProps {
@@ -406,26 +406,15 @@ export default function ImageCard({ image, zoom, canEdit, isSelected, onSelect, 
 
             {/* 컨텍스트 메뉴: Delete 버튼이 있는 메뉴 - 이미지 카드에서 우클릭 시 열림 */}
             {contextMenuOpen && (
-                <div
+                <ContextMenu
                     ref={menuRef}
-                    className="fixed bg-white px-3 py-4 shadow-md"
-                    style={{
-                        left: `${contextMenuPosition.x}px`,
-                        top: `${contextMenuPosition.y}px`,
+                    contextMenuPosition={contextMenuPosition}
+                    onDelete={() => {
+                        setContextMenuOpen(false);
+                        setSaveDialogOpen(false);
+                        setDeleteDialogOpen(true);
                     }}
-                >
-                    {/* Delete 버튼 */}
-                    <PressableButton
-                        variant="menu"
-                        onClick={() => {
-                            setContextMenuOpen(false);
-                            setSaveDialogOpen(false);
-                            setDeleteDialogOpen(true);
-                        }}
-                    >
-                        Delete
-                    </PressableButton>
-                </div>
+                />
             )}
 
             {/* 저장 확인 다이얼로그 - 이미지 카드 영역 외부 더블클릭/더블탭 시 열림 */}
