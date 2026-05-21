@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
-import PressableButton from "@/components/PressableButton";
+import ContextMenu from "./ContextMenu";
 import ConfirmDialog from "@/components/ConfrimDialog";
 import MemoEditor from "./MemoEditor";
 
@@ -71,6 +71,10 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     // 메모 수정 취소 확인 다이얼로그 오픈 상태
     const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+    // 메모 이동 핸들을 누르고 있는 상태
+    const [dragHandlePressed, setDragHandlePressed] = useState(false);
+    // 메모 리사이즈 중 상태
+    const [isResizing, setIsResizing] = useState(false);
     // 컨텍스트 메뉴 위치 상태
     const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
     // 컨텍스트 메뉴 외부 클릭 감지를 위한 ref - 메뉴 영역 외부 클릭 시 메뉴 닫기
@@ -418,7 +422,9 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                 }}
                 bounds="parent"
                 scale={zoom}
-                // 텍스트가 활성화되어 있을 때만 드래그 가능
+                // 메모 하단의 드래그 핸들 영역에서만 드래그 가능
+                dragHandleClassName="memo-drag-handle"
+                // 텍스트가 활성화되어 있고 메모 수정 권한이 있을 때만 드래그 가능
                 disableDragging={ !isEditing || !canEdit }
                 // 텍스트가 활성화되어 있을 때만 크기 조절 가능
                 enableResizing={ isEditing } 
@@ -467,8 +473,13 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
                 onDragStop={(e, d) => {
                     setMemoState((prev) => ({ ...prev, x: d.x, y: d.y }));
                 }}
+                // 메모 카드 크기 조절 시작 시 피드백 표시
+                onResizeStart={() => {
+                    setIsResizing(true);
+                }}
                 // 메모 카드 크기 조절 완료 시 사이즈 정보 저장
                 onResizeStop={(e, direction, ref, delta, position) => {
+                    setIsResizing(false);
                     setMemoState({
                         x: position.x,
                         y: position.y,
@@ -479,7 +490,7 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
             >   
                 {/* 메모 카드 내용 영역 - 공개 메모는 내용 표시, 비공개 메모는 "비공개 메모입니다." 표시 */}
                 <div //ref={divRef} - closest(.memo-rnd-${memo.id})로 변경함에 따라 사용중지
-                    className="h-full w-full"
+                    className="relative h-full w-full"
                     onClick={handleMemoClick}
                 >
                     {memo.isPublic ? (
@@ -533,32 +544,35 @@ export default function MemoCard({ memo, zoom, canEdit, isFocused, onFocus, onFo
 	                            This memo is private.
 	                        </div>
                     )}
+                    {/* 메모 이동 핸들: 수정 중일 때 이 바를 잡고 드래그하면 메모를 이동 */}
+                    {isEditing && (
+                        <div
+                            className="memo-drag-handle absolute bottom-2 left-1/2 z-10 flex h-5 w-24 -translate-x-1/2 cursor-grab items-center justify-center rounded-full active:cursor-grabbing"
+                            onPointerDown={() => setDragHandlePressed(true)}
+                            onPointerUp={() => setDragHandlePressed(false)}
+                            onPointerCancel={() => setDragHandlePressed(false)}
+                            onPointerLeave={() => setDragHandlePressed(false)}
+                        >
+                            <div className={`h-1.5 w-24 rounded-full transition duration-150 ${dragHandlePressed ? "bg-black/70" : "bg-black/25"}`} />
+                        </div>
+                    )}
+                    {/* 메모 리사이즈 피드백 */}
+                    {isResizing && (
+                        <div className="pointer-events-none absolute inset-0 z-20 animate-pulse rounded-xl border-2 border-dashed border-pink-500" />
+                    )}
                 </div>
             </Rnd>
         
 	        {/* 컨텍스트 메뉴: Edit, Delete 버튼이 있는 메뉴 - 메모 카드에서 우클릭 시 열림 */}
             {contextMenuOpen && (
-                <div 
+                <ContextMenu
                     ref={menuRef}
-                    className=" fixed bg-white px-3 py-4 shadow-md"
-                    style={{
-                        left: `${contextMenuPosition.x}px`,
-                        top: `${contextMenuPosition.y}px`,
+                    contextMenuPosition={contextMenuPosition}
+                    onDelete={() => {
+                        setContextMenuOpen(false);
+                        setDeleteDialogOpen(true);
                     }}
-                >
-                    {/* Delete 버튼 */}
-                    <PressableButton 
-                        variant="menu"
-                        onClick={() => {
-                            setContextMenuOpen(false);
-                            setSaveDialogOpen(false);
-                            setCancelDialogOpen(false);
-                            setIsEditing(false);
-                            setDeleteDialogOpen(true);
-                        }}>    
-                        Delete
-                    </PressableButton>
-                </div>
+                />
                 )
             }
             {/* 저장 확인 다이얼로그 - 메모 카드 영역 외부 클릭 시 열림, Yes 클릭 시 메모 저장, No 클릭 시 페이지 새로고침하여 변경사항 무시 */}
