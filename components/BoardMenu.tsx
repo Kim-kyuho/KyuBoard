@@ -4,12 +4,7 @@ import PressableButton from "./PressableButton";
 import { Dispatch, SetStateAction } from "react";
 import { Menu } from "lucide-react";
 import Link from "next/link";
-
-type CurrentUser = {
-    email: string;
-    permissionFlg: boolean;
-    role: string;
-}
+import { CurrentUser } from "@/hooks/useBoardAuth";
 
 type BoardMenuProps = {
     menuOpen: boolean;
