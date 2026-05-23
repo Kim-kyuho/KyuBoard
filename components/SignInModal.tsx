@@ -4,12 +4,7 @@ import PressableButton from "@/components/PressableButton";
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useState } from "react";
-
-type CurrentUser = {
-    email: string;
-    permissionFlg: boolean;
-    role: string;
-};
+import { CurrentUser } from "@/hooks/useBoardAuth";
 
 type SignInModalProps = {
     onClose: () => void;
