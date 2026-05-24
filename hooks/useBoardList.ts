@@ -22,7 +22,7 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
     // 보드 생성 모달 열기/닫기 상태
     const [createBoardOpen, setCreateBoardOpen] = useState(false);
     // 보드 리스트 화면에 출력할 메시지 상태
-    const [permissionMessage, setBoardListMessage] = useState("");
+    const [boardListMessage, setBoardListMessage] = useState("");
     // 보드 컨텍스트 메뉴 열기/닫기 상태
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
     // 보드 컨텍스트 메뉴 위치 상태
@@ -152,7 +152,8 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
         boardList,
         createBoardOpen,
         setCreateBoardOpen,
-        permissionMessage,
+        boardListMessage,
+        setBoardListMessage,
         contextMenuOpen,
         contextMenuPosition,
         deleteDialogOpen,
