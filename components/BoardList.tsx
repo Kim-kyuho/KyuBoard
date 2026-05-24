@@ -33,7 +33,8 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
         boardList,
         createBoardOpen,
         setCreateBoardOpen,
-        permissionMessage,
+        boardListMessage,
+        setBoardListMessage,
         contextMenuOpen,
         contextMenuPosition,
         deleteDialogOpen,
@@ -89,76 +90,83 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
             )}
 
             {/* 보드 권한/삭제 관련 메시지가 존재할 떄 화면상에 표시 */}
-            <BoardMessage type = "permission" message = {permissionMessage} />
+            <BoardMessage type = "permission" message = {boardListMessage} />
 
             {/* 보드 리스트 영역 */}
-            <main className="min-h-screen bg-neutral-100 px-6 py-24">
+            <main className="min-h-screen bg-neutral-100 px-6 py-24" 
+                onClick={() => 
+                {
+                    if (boardListMessage) {
+                        setBoardListMessage("");
+                    }
+                }}
+            >
                 <div className="mx-auto max-w-4xl">
-                <div className="grid grid-cols-2 gap-5">
-                    {/* 보드 리스트를 카드 형태로 렌더링 */}
-                    {boardList.map((board) => (
-                        <Link
-                            key={board.boardId}
-                            href={`/boards/${board.boardId}`}
-                            className="group block select-none"
-                            draggable={false}
-                            style={{
-                                WebkitTouchCallout: "none",
-                                WebkitUserSelect: "none",
-                                userSelect: "none",
-                                touchAction: "manipulation",
-                            }}
-                            // 길게 누름으로 메뉴가 열린 경우 링크 이동을 방지
-                            onClick={handleBoardClick}
-                            // 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시
-                            onContextMenu={(event) => handleBoardContextMenu(board.boardId, event)}
-                            // 모바일에서 길게 누름 이벤트 - 터치한 좌표에 컨텍스트 메뉴를 표시
-                            onPointerDown={(event) => handleBoardLongPressStart(board.boardId, event)}
-                            onPointerUp={clearLongPress}
-                            onPointerMove={clearLongPress}
-                            onPointerCancel={clearLongPress}
-                        >
-                            {/* 보드 카드 */}
-                            <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-neutral-200 transition group-hover:-translate-y-0.5 group-hover:shadow-md">
-                                {/* 보드 미리보기 영역 */}
-                                <div className="aspect-video bg-white">
-                                    <div
-                                        className="flex h-full w-full items-center justify-center text-2xl font-bold text-neutral-300"
-                                        style={{
-                                            backgroundImage:
-                                                "radial-gradient(#d4d4d8 1px, transparent 1px)",
-                                            backgroundSize: "12px 12px",
-                                        }}
-                                    />
+                    <div className="grid grid-cols-2 gap-5" >
+                        {/* 보드 리스트를 카드 형태로 렌더링 */}
+                        {boardList.map((board) => (
+                            <Link
+                                key={board.boardId}
+                                href={`/boards/${board.boardId}`}
+                                className="group block select-none"
+                                draggable={false}
+                                style={{
+                                    WebkitTouchCallout: "none",
+                                    WebkitUserSelect: "none",
+                                    userSelect: "none",
+                                    touchAction: "manipulation",
+                                }}
+                                // 길게 누름으로 메뉴가 열린 경우 링크 이동을 방지
+                                onClick={handleBoardClick}
+                                // 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시
+                                onContextMenu={(event) => handleBoardContextMenu(board.boardId, event)}
+                                // 모바일에서 길게 누름 이벤트 - 터치한 좌표에 컨텍스트 메뉴를 표시
+                                onPointerDown={(event) => handleBoardLongPressStart(board.boardId, event)}
+                                onPointerUp={clearLongPress}
+                                onPointerMove={clearLongPress}
+                                onPointerCancel={clearLongPress}
+                            >
+                                {/* 보드 카드 */}
+                                <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-neutral-200 transition group-hover:-translate-y-0.5 group-hover:shadow-md">
+                                    {/* 보드 미리보기 영역 */}
+                                    <div className="aspect-video bg-white">
+                                        <div
+                                            className="flex h-full w-full items-center justify-center text-2xl font-bold text-neutral-300"
+                                            style={{
+                                                backgroundImage:
+                                                    "radial-gradient(#d4d4d8 1px, transparent 1px)",
+                                                backgroundSize: "12px 12px",
+                                            }}
+                                        />
+                                    </div>
+                                    {/* 보드 제목 영역 */}
+                                    <div className="border-t border-neutral-100 px-3 py-2">
+                                        <p className="truncate text-sm font-semibold text-neutral-900">
+                                            {board.title}
+                                        </p>
+                                    </div>
                                 </div>
-                                {/* 보드 제목 영역 */}
-                                <div className="border-t border-neutral-100 px-3 py-2">
-                                    <p className="truncate text-sm font-semibold text-neutral-900">
-                                        {board.title}
-                                    </p>
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
+                            </Link>
+                        ))}
 
-                    {/* New Board 버튼 - admin권한이 있는 경우 보드 생성 모달을 표시 */}
-                    <button
-                        type="button"
-                        onClick={handleCreateBoardClick}
-                        className="overflow-hidden rounded-lg bg-white text-left shadow-sm ring-1 ring-dashed ring-neutral-300 transition hover:-translate-y-0.5 hover:shadow-md"
-                    >
-                        <div className="flex aspect-video items-center justify-center bg-neutral-50">
-                            <Plus className="h-8 w-8 text-neutral-500" />
-                        </div>
-                        <div className="border-t border-neutral-100 px-3 py-2">
-                            <p className="truncate text-sm font-semibold text-neutral-700">
-                                New Board
-                            </p>
-                        </div>
-                    </button>
+                        {/* New Board 버튼 - admin권한이 있는 경우 보드 생성 모달을 표시 */}
+                        <button
+                            type="button"
+                            onClick={handleCreateBoardClick}
+                            className="overflow-hidden rounded-lg bg-white text-left shadow-sm ring-1 ring-dashed ring-neutral-300 transition hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                            <div className="flex aspect-video items-center justify-center bg-neutral-50">
+                                <Plus className="h-8 w-8 text-neutral-500" />
+                            </div>
+                            <div className="border-t border-neutral-100 px-3 py-2">
+                                <p className="truncate text-sm font-semibold text-neutral-700">
+                                    New Board
+                                </p>
+                            </div>
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </main>
+            </main>
             {/* 컨텍스트 메뉴: Delete 버튼이 있는 메뉴 - 보드 카드에서 우클릭 또는 길게 누름 시 열림 */}
             {contextMenuOpen && (
                 <div
