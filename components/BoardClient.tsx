@@ -248,6 +248,11 @@ export default function BoardClient(
                 userSelect: "none",
                 WebkitTouchCallout: "none",
             }}
+            onClick={() => {
+                // 보드위를 클릭할 시 허가 메시지 해제
+                setPermissionMessage("");
+                setMemoMessage("");
+            }}
         >
         {/* 보드 영역: 사이즈 3840x2160, 그리드 배경, 메모 카드들이 배치되는 영역
           Wrtie버튼을 누르고 보드 영역을 클릭하면 해당 위치에 새로운 메모가 생성  
@@ -269,7 +274,6 @@ export default function BoardClient(
                         suppressBoardClickRef.current = false;
                         return;
                     }
-
                     if(writeClicked)
                     {
                         // 화면 좌표를 실제 보드 좌표로 변환하기 위해 줌 값을 나눔
@@ -280,9 +284,6 @@ export default function BoardClient(
                         handleCreateTempMemo(x, y);
                         setWriteClicked(false);
                     }
-                    // 보드위를 클릭할 시 허가 메시지 해제
-                    setPermissionMessage("");
-                    setMemoMessage("");
                     }}
                     style={{
                         width: `${boardWidth}px`,

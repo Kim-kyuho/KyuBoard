@@ -118,7 +118,7 @@ export function useMemoCard({
         });
     }, [memo.content, memo.height, memo.width, memo.x, memo.y]);
 
-    // 메모 수정 취소 함수 - 기존 메모는 원래 상태로 되돌리고, 새로 만든 임시 메모는 화면에서 제거
+    // 메모 저장 취소 함수 - 기존 메모는 원래 상태로 되돌리고, 새로 만든 임시 메모는 화면에서 제거
     const cancelMemoDraft = useCallback(() => {
         if (memo.id < 0) {
             onDelete(memo.id);

@@ -14,10 +14,12 @@ type CreateBoardModalProps = {
 
 // 보드 크기 선택 옵션 - 보드 생성 시 width, height값으로 사용
 const boardSizeOptions = [
+    { label: "7680 x 4320", width: 7680, height: 4320 },
     { label: "3840 x 2160", width: 3840, height: 2160 },
     { label: "1920 x 1080", width: 1920, height: 1080 },
     { label: "1280 x 720", width: 1280, height: 720 },
     { label: "480 x 320", width: 480, height: 320 },
+    { label: "4320 x 7680", width: 4320, height: 7680 },
     { label: "2160 x 3840", width: 2160, height: 3840 },
     { label: "1080 x 1920", width: 1080, height: 1920 },
     { label: "720 x 1280", width: 720, height: 1280 },
