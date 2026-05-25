@@ -10,13 +10,10 @@ type BoardPanState = {
 };
 
 type UseBoardScrollOptions = {
-    boardZoom: number;
     writeClicked: boolean;
 };
 
-export function useBoardScroll({ boardZoom, writeClicked }: UseBoardScrollOptions) {
-    // 보드 스크롤 영역 ref - 이미지 업로드 위치 계산에 사용
-    const boardScrollRef = useRef<HTMLElement | null>(null);
+export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
     // 보드 드래그 스크롤 상태 - 마우스 왼쪽 버튼으로 보드를 잡고 이동 중인지 체크
     const [boardPanning, setBoardPanning] = useState(false);
     // 마우스 왼쪽 버튼으로 보드를 드래그 스크롤하기 위한 상태 ref
@@ -127,19 +124,6 @@ export function useBoardScroll({ boardZoom, writeClicked }: UseBoardScrollOption
         clearBoardPanMode();
     };
 
-    // 이미지 업로드 위치 계산 함수 - 현재 보이는 보드 화면의 중앙에 이미지를 생성
-    const getImageUploadPoint = () => {
-        const scrollElement = boardScrollRef.current;
-        if (!scrollElement) {
-            return { x: 0, y: 0 };
-        }
-
-        return {
-            x: Math.max(0, (scrollElement.scrollLeft + scrollElement.clientWidth / 2) / boardZoom - 200),
-            y: Math.max(0, (scrollElement.scrollTop + scrollElement.clientHeight / 2) / boardZoom - 150),
-        };
-    };
-
     // 보드 드래그 스크롤 관련 전역 상태 정리
     useEffect(() => {
         return () => {
@@ -152,12 +136,10 @@ export function useBoardScroll({ boardZoom, writeClicked }: UseBoardScrollOption
     }, []);
 
     return {
-        boardScrollRef,
         boardPanning,
         suppressBoardClickRef,
         handleBoardPanStart,
         handleBoardPanMove,
         handleBoardPanEnd,
-        getImageUploadPoint,
     };
 }
