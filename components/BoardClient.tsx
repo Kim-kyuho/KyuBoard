@@ -96,14 +96,12 @@ export default function BoardClient(
     });
     // 보드 스크롤과 패닝 상태를 관리하는 훅 - 보드 스크롤 위치, 패닝 상태, 보드 패닝을 위한 핸들러들을 관리 
     const {
-        boardScrollRef,
         boardPanning,
         suppressBoardClickRef,
         handleBoardPanStart,
         handleBoardPanMove,
         handleBoardPanEnd,
-        getImageUploadPoint,
-    } = useBoardScroll({ boardZoom, writeClicked });
+    } = useBoardScroll({ writeClicked });
     // 메모 상태와 핸들러를 관리하는 훅 - 보드의 메모 리스트, 메모 생성/업데이트/삭제 핸들러들을 관리
     const {
         memos,
@@ -145,6 +143,7 @@ export default function BoardClient(
     });
     // 이미지 업로드와 관리를 위한 훅 - 이미지 업로드 핸들러, 이미지 리스트, 선택된 이미지 id 상태 등을 관리
     const {
+        imageLocationRef,
         imageInputRef,
         images,
         selectedImageId,
@@ -157,10 +156,10 @@ export default function BoardClient(
     } = useBoardImages({
         initialImages: mappedImages,
         boardId: currentBoard.boardId,
+        boardZoom,
         canEditMemos,
         showPermissionMessage,
         setPermissionMessage,
-        getImageUploadPoint,
     });
 
   return (
@@ -236,7 +235,7 @@ export default function BoardClient(
       <BoardMessage type = "memo" message = {memoMessage} />
     
       <main
-            ref={boardScrollRef}
+            ref={imageLocationRef}
             className="h-screen w-screen select-none overflow-auto bg-neutral-200"
             onPointerDown={handleBoardPanStart}
             onPointerMove={handleBoardPanMove}

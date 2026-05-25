@@ -21,20 +21,22 @@ type BoardPoint = {
 type UseBoardImagesOptions = {
     initialImages: BoardImage[];
     boardId: number;
+    boardZoom: number;
     canEditMemos: boolean;
     showPermissionMessage: () => void;
     setPermissionMessage: (message: string) => void;
-    getImageUploadPoint: () => BoardPoint;
 };
 
 export function useBoardImages({
     initialImages,
     boardId,
+    boardZoom,
     canEditMemos,
     showPermissionMessage,
     setPermissionMessage,
-    getImageUploadPoint,
 }: UseBoardImagesOptions) {
+    // 이미지 자동 배치 위치 계산용 ref - 현재 보이는 보드 화면의 중앙 좌표 계산에 사용
+    const imageLocationRef = useRef<HTMLElement | null>(null);
     // 이미지 파일 업로드 input ref - 툴바 버튼 클릭 시 파일 선택창을 열기 위해 사용
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     // 이미지 리스트 상태
@@ -82,6 +84,19 @@ export function useBoardImages({
             image.src = imageUrl;
         });
 
+    // 이미지 자동 배치 위치 계산 함수 - 현재 보이는 보드 화면의 중앙에 이미지를 생성
+    const getImageAutoLocation = (): BoardPoint => {
+        const locationElement = imageLocationRef.current;
+        if (!locationElement) {
+            return { x: 0, y: 0 };
+        }
+
+        return {
+            x: Math.max(0, (locationElement.scrollLeft + locationElement.clientWidth / 2) / boardZoom - 200),
+            y: Math.max(0, (locationElement.scrollTop + locationElement.clientHeight / 2) / boardZoom - 150),
+        };
+    };
+
     // 이미지 업로드 핸들러 - 선택한 파일을 임시 이미지로 생성하고 저장은 ImageCard에서 처리
     const handleUploadImage = async (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -95,7 +110,7 @@ export function useBoardImages({
             return;
         }
 
-        const { x, y } = getImageUploadPoint();
+        const { x, y } = getImageAutoLocation();
         const { width, height } = await getImageDisplaySize(file);
         const tempImageUrl = URL.createObjectURL(file);
         const tempImage: BoardImage = {
@@ -200,6 +215,7 @@ export function useBoardImages({
     };
 
     return {
+        imageLocationRef,
         imageInputRef,
         images,
         selectedImageId,
