@@ -60,9 +60,7 @@ export default function MemoCard(props: MemoCardProps) {
         memoState,
         memoContent,
         setMemoContent,
-        saveDialogOpen,
         deleteDialogOpen,
-        cancelDialogOpen,
         dragHandlePressed,
         setDragHandlePressed,
         isResizing,
@@ -70,18 +68,14 @@ export default function MemoCard(props: MemoCardProps) {
         handleDoubleTap,
         handleMemoClick,
         handleContextMenu,
-        handleLongPressStart,
-        clearLongPress,
+        handleContextMenuTouch,
         handleDragStop,
         handleResizeStart,
         handleResizeStop,
         openDeleteDialog,
-        confirmSave,
-        cancelSave,
-        confirmCancel,
-        closeCancelDialog,
-        confirmDelete,
         closeDeleteDialog,
+        clearLongPress,
+        confirmDelete,
     } = useMemoCard({
         memo,
         zoom,
@@ -127,11 +121,11 @@ export default function MemoCard(props: MemoCardProps) {
                 // 텍스트가 활성화되어 있고 메모 수정 권한이 있을 때만 드래그 가능
                 disableDragging={!isEditing || !canEdit}
                 // 텍스트가 활성화되어 있을 때만 크기 조절 가능
-                enableResizing={isEditing}
-                /* 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시 */
+                enableResizing={isEditing || canEdit}
+                // 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시
                 onContextMenu={handleContextMenu}
-                /* 모바일에서 길게 누름 이벤트 - 터치한 좌표에 컨텍스트 메뉴를 표시 */      
-                onPointerDown={handleLongPressStart}
+                // 모바일에서 길게 누름 이벤트 - 터치한 좌표에 컨텍스트 메뉴를 표시
+                onPointerDown={handleContextMenuTouch}
                 onPointerUp={clearLongPress}
                 onPointerMove={clearLongPress}
                 // 메모 카드 이동 완료 시 좌표 저장
@@ -221,22 +215,6 @@ export default function MemoCard(props: MemoCardProps) {
                     ref={menuRef}
                     contextMenuPosition={contextMenuPosition}
                     onDelete={openDeleteDialog}
-                />
-            )}
-            {/* 저장 확인 다이얼로그 - 메모 카드 영역 외부 클릭 시 열림, Yes 클릭 시 메모 저장, No 클릭 시 페이지 새로고침하여 변경사항 무시 */}
-            {saveDialogOpen && (
-                <ConfirmDialog 
-                    message="Save changes?"
-                    onConfirm={confirmSave}
-                    onCancel={cancelSave}
-                />
-            )}
-            {/* 수정 취소 확인 다이얼로그 - Yes 클릭 시 메모 수정 취소 */}
-            {cancelDialogOpen && (
-                <ConfirmDialog
-                    message="Discard changes?"
-                    onConfirm={confirmCancel}
-                    onCancel={closeCancelDialog}
                 />
             )}
             {/* 저장 확인 다이얼로그와 삭제 확인 다이얼로그 - 각각의 다이얼로그에서 Yes 클릭 시 메모 저장 또는 삭제, No 클릭 시 다이얼로그 닫기 */}
