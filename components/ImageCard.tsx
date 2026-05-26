@@ -56,9 +56,7 @@ export default function ImageCard(props: ImageCardProps) {
     // 이미지 카드의 상태와 핸들러를 관리하는 커스텀 훅을 사용하여 필요한 상태와 이벤트 핸들러들을 가져옴
     const {
         imageState,
-        saveDialogOpen,
         deleteDialogOpen,
-        cancelDialogOpen,
         contextMenuOpen,
         contextMenuPosition,
         menuRef,
@@ -70,12 +68,8 @@ export default function ImageCard(props: ImageCardProps) {
         handleDragStop,
         handleResizeStop,
         openDeleteDialog,
-        confirmSave,
-        cancelSave,
         confirmDelete,
         closeDeleteDialog,
-        confirmCancel,
-        closeCancelDialog,
     } = useImageCard({
         image,
         zoom,
@@ -152,30 +146,12 @@ export default function ImageCard(props: ImageCardProps) {
                 />
             )}
 
-            {/* 저장 확인 다이얼로그 - 이미지 카드 영역 외부 더블클릭/더블탭 시 열림 */}
-            {saveDialogOpen && (
-                <ConfirmDialog
-                    message="Save changes?"
-                    onConfirm={confirmSave}
-                    onCancel={cancelSave}
-                />
-            )}
-
             {/* 삭제 확인 다이얼로그 - Yes 클릭 시 이미지 삭제 */}
             {deleteDialogOpen && (
                 <ConfirmDialog
                     message="Delete this image?"
                     onConfirm={confirmDelete}
                     onCancel={closeDeleteDialog}
-                />
-            )}
-
-            {/* 수정 취소 확인 다이얼로그 - Yes 클릭 시 이미지 수정 취소 */}
-            {cancelDialogOpen && (
-                <ConfirmDialog
-                    message="Discard changes?"
-                    onConfirm={confirmCancel}
-                    onCancel={closeCancelDialog}
                 />
             )}
         </>

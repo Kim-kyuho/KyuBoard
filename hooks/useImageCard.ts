@@ -74,12 +74,8 @@ export function useImageCard({
         width: image.width,
         height: image.height,
     });
-    // 저장 확인 다이얼로그 오픈 상태
-    const [saveDialogOpen, setSaveDialogOpen] = useState(false);
     // 삭제 확인 다이얼로그 오픈 상태
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    // 수정 취소 확인 다이얼로그 오픈 상태
-    const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
     // 컨텍스트 메뉴 오픈 상태
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
     // 컨텍스트 메뉴 위치 상태
@@ -90,36 +86,10 @@ export function useImageCard({
     const outsideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
     // 더블탭 이벤트 감지를 위한 ref
     const lastTapRef = useRef<LastPointerAction>({ time: 0, area: "outimage" });
-    // 더블클릭 이벤트 감지를 위한 ref
-    const lastClickRef = useRef<LastPointerAction>({ time: 0, area: "outimage" });
-    // 더블클릭에서 첫번째 클릭시 두번클릭까지 걸리는 시간 감지를 위한 ref
-    const clickTimerRef = useRef<number | null>(null);
     // 보드 드래그 스크롤 여부 확인 전까지 외부 클릭 피드백을 잠시 지연하기 위한 ref
     const pendingOutsideActionRef = useRef<number | null>(null);
     // 모바일에서 길게 누름 이벤트 감지를 위한 ref
     const longPressRef = useRef<number | null>(null);
-
-    // 이미지 수정 취소 함수 - 저장하지 않은 위치와 크기를 원래 이미지 정보로 되돌림
-    const resetImageDraft = useCallback(() => {
-        setImageState({
-            x: image.x,
-            y: image.y,
-            width: image.width,
-            height: image.height,
-        });
-    }, [image.height, image.width, image.x, image.y]);
-
-    // 이미지 수정 취소 함수 - 기존 이미지는 원래 상태로 되돌리고, 새로 만든 임시 이미지는 화면에서 제거
-    const cancelImageDraft = useCallback(() => {
-        if (image.imageId < 0) {
-            onDelete(image.imageId, image.publicId);
-            onSelectClear();
-            return;
-        }
-
-        resetImageDraft();
-        onSelectClear();
-    }, [image.imageId, image.publicId, onDelete, onSelectClear, resetImageDraft]);
 
     // 이미지 저장 함수 - 신규 이미지는 업로드/DB생성, 기존 이미지는 위치와 크기만 업데이트
     const saveImageDraft = useCallback(() => {
@@ -153,24 +123,6 @@ export function useImageCard({
         );
     }, [image.boardId, image.file, image.fileName, image.imageId, image.publicId, image.secureUrl, imageState.height, imageState.width, imageState.x, imageState.y, onInsert, onUpdate]);
 
-    // 외부 더블클릭/더블탭 처리 함수 - 더블액션이면 저장 다이얼로그, 단일 액션이면 수정 취소 타이머를 예약
-    const handleOutsideDraftAction = useCallback((isDoubleAction: boolean) => {
-        if (isDoubleAction) {
-            if (clickTimerRef.current) {
-                window.clearTimeout(clickTimerRef.current);
-                clickTimerRef.current = null;
-                setSaveDialogOpen(true);
-                return;
-            }
-        }
-
-        // 300ms 이내에 추가 클릭/탭이 없을시, 선택 상태를 해제하고 변경사항을 되돌림
-        clickTimerRef.current = window.setTimeout(() => {
-            setCancelDialogOpen(true);
-            clickTimerRef.current = null;
-        }, 300);
-    }, []);
-
     // 터치 디바이스 여부를 판단하는 함수
     const isTouchDevice = () =>
         typeof window !== "undefined" &&
@@ -195,7 +147,6 @@ export function useImageCard({
         }
 
         onSelect();
-        setSaveDialogOpen(false);
     };
 
     // 모바일에서 이미지 더블탭을 감지하기 위한 함수
@@ -265,12 +216,12 @@ export function useImageCard({
                     return;
                 }
 
-                const now = event.timeStamp;
-                const hasPreviousClick = lastClickRef.current.time !== 0;
-                const isDoubleClick = hasPreviousClick && lastClickRef.current.area === "outimage" && now - lastClickRef.current.time < 300;
-                lastClickRef.current = { time: now, area: "outimage" };
-                // 외부 더블클릭/단일클릭 피드백을 처리
-                runAfterBoardPanCheck(() => handleOutsideDraftAction(isDoubleClick));
+                // 외부 클릭 시 변경된 이미지 위치/크기를 저장하고 선택 상태를 해제
+                runAfterBoardPanCheck(() => {
+                    saveImageDraft();
+                    onSelectClear();
+                    setContextMenuOpen(false);
+                });
                 return;
             }
 
@@ -289,11 +240,9 @@ export function useImageCard({
             outsideTouchStartRef.current = null;
 
             if (moved < 10) {
-                const now = event.timeStamp;
-                const isDoubleTap = lastTapRef.current.area === "outimage" && now - lastTapRef.current.time < 300;
-                lastTapRef.current = { time: now, area: "outimage" };
-
-                handleOutsideDraftAction(isDoubleTap);
+                saveImageDraft();
+                onSelectClear();
+                setContextMenuOpen(false);
             }
         };
 
@@ -309,14 +258,11 @@ export function useImageCard({
             document.removeEventListener("pointerdown", handleClickOutside);
             document.removeEventListener("pointerup", handleTouchOutsideEnd);
             document.removeEventListener("pointercancel", clearOutsideTouchStart);
-            if (clickTimerRef.current) {
-                window.clearTimeout(clickTimerRef.current);
-            }
             if (pendingOutsideActionRef.current) {
                 window.clearTimeout(pendingOutsideActionRef.current);
             }
         };
-    }, [handleOutsideDraftAction, image.imageId, isSelected]);
+    }, [image.imageId, isSelected, onSelectClear, saveImageDraft]);
 
     const handleContextMenu = (event: ReactMouseEvent<HTMLElement>) => {
         event.preventDefault();
@@ -366,19 +312,7 @@ export function useImageCard({
 
     const openDeleteDialog = () => {
         setContextMenuOpen(false);
-        setSaveDialogOpen(false);
         setDeleteDialogOpen(true);
-    };
-
-    const confirmSave = () => {
-        saveImageDraft();
-        setSaveDialogOpen(false);
-        onSelectClear();
-    };
-
-    const cancelSave = () => {
-        cancelImageDraft();
-        setSaveDialogOpen(false);
     };
 
     const confirmDelete = () => {
@@ -391,21 +325,9 @@ export function useImageCard({
         setDeleteDialogOpen(false);
     };
 
-    const confirmCancel = () => {
-        setCancelDialogOpen(false);
-        cancelImageDraft();
-        onSelectClear();
-    };
-
-    const closeCancelDialog = () => {
-        setCancelDialogOpen(false);
-    };
-
     return {
         imageState,
-        saveDialogOpen,
         deleteDialogOpen,
-        cancelDialogOpen,
         contextMenuOpen,
         contextMenuPosition,
         menuRef,
@@ -417,11 +339,7 @@ export function useImageCard({
         handleDragStop,
         handleResizeStop,
         openDeleteDialog,
-        confirmSave,
-        cancelSave,
         confirmDelete,
         closeDeleteDialog,
-        confirmCancel,
-        closeCancelDialog,
     };
 }
