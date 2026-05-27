@@ -13,13 +13,6 @@ export interface MemoCardMemo {
     isPublic: boolean;
 }
 
-type MemoPointerArea = "inmemo" | "outmemo";
-
-type LastPointerAction = {
-    time: number;
-    area: MemoPointerArea;
-};
-
 type UseMemoCardOptions = {
     memo: MemoCardMemo;
     zoom: number;
@@ -81,11 +74,9 @@ export function useMemoCard({
     const menuRef = useRef<HTMLDivElement | null>(null);
     // 메모 에디터 포커스용 ref - 편집 모드 진입 시 메모 에디터 영역에 포커스 주기 위해 사용
     const memoFocusRef = useRef<HTMLDivElement | null>(null);
-    // 모바일에서 더블탭 이벤트 감지를 위한 ref - 직전의 탭 시간과 영역을 저장
-    const lastTapRef = useRef<LastPointerAction>({ time: 0, area: "outmemo" });
+    // 모바일에서 메모 내부 더블탭 이벤트 감지를 위한 ref - 직전의 탭 시간을 저장
+    const lastMemoTapRef = useRef(0);
     const outsideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
-    // 더블클릭에서 첫번째 클릭시 두번클릭까지 걸리는 시간 감지를 위한 ref
-    const clickTimerRef = useRef<number | null>(null);
     // 보드 드래그 스크롤 여부 확인 전까지 외부 클릭 피드백을 잠시 지연하기 위한 ref
     const pendingOutsideActionRef = useRef<number | null>(null);
     // 모바일에서 길게 누름 이벤트 감지를 위한 ref
@@ -156,8 +147,6 @@ export function useMemoCard({
         }
         setIsEditing(true);
         onFocus();
-        // setSaveDialogOpen(false);
-        // setCancelDialogOpen(false);
         window.setTimeout(() => {memoFocusRef.current?.focus();
     }, 0);
     }, [canEdit, onFocus, onPermissionDenied]);
@@ -168,8 +157,8 @@ export function useMemoCard({
         // 현재시간
         const currentTime = event.timeStamp;
         // 300ms 이내의 두 번째 탭을 더블탭으로 인식
-        const isDoubleTap = lastTapRef.current.area === "inmemo" && currentTime - lastTapRef.current.time < 300;
-        lastTapRef.current = { time: currentTime, area: "inmemo" };
+        const isDoubleTap = currentTime - lastMemoTapRef.current < 300;
+        lastMemoTapRef.current = currentTime;
         // 더블탭이 감지되면 편집 모드로 전환
         if (isDoubleTap) {
             event.preventDefault();
@@ -299,15 +288,13 @@ export function useMemoCard({
             const targetElement = target instanceof Element ? target : null;
             // RND의 이벤트, 확인 다이얼로그의 경우 이벤트가 차단 되지 않도로 예외 설정
             const isClickInsideMemo = targetElement?.closest(`.memo-rnd-${memo.id}`);
-            // const isClickInsideConfirmDialog = targetElement?.closest(".confirm-dialog");
 
             if (isClickInsideMemo) {
                 return;
             }
 
             event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
+            event.stopImmediatePropagation ();
         };
         // 누르기 동작은 handleClickOutside 함수에 적용, 떼기 동작은 handleTouchOutsideEnd에 적용, 취소는 clearOutsideTouchStart에 적용
         document.addEventListener("pointerdown", handleClickOutside, true);
@@ -319,15 +306,11 @@ export function useMemoCard({
             document.removeEventListener("click", blockOutsideClickWhileEditing, true); 
             document.removeEventListener("pointerup", handleTouchOutside);
             document.removeEventListener("pointercancel", clearOutsideTouchStart);
-            if (clickTimerRef.current) {
-                window.clearTimeout(clickTimerRef.current);
-            }
             if (pendingOutsideActionRef.current) {
                 window.clearTimeout(pendingOutsideActionRef.current);
             }
         };
     }, [
-        //handleOutsideDraftAction, 
         isEditing, isFocused, memo.id, saveMemo, onFocusClear]);
 
     // 메모 단일 클릭 시 해당 메모에 포커스를 적용
@@ -368,6 +351,7 @@ export function useMemoCard({
     const clearLongPress = () => {
         if (longPressRef.current) {
             clearTimeout(longPressRef.current);
+            longPressRef.current = null;
         }
     };
 
