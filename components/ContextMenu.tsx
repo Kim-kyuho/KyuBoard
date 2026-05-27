@@ -9,7 +9,7 @@ interface ContextMenuProps {
 
 }
 
-  export default function ContextMenu({ 
+export default function ContextMenu({ 
   ref, 
   contextMenuPosition, 
   onDelete 
