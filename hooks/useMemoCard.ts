@@ -279,7 +279,7 @@ export function useMemoCard({
             outsideTouchStartRef.current = null;
         };
         // 편집 중 외부 클릭이 다른 메모의 포커스/편집 이벤트로 이어지는 것을 차단
-        const blockOutsideClickWhileEditing = (event: MouseEvent) => {
+        const blockOutsideClickWhileEditing = (event: PointerEvent) => {
             if (!isEditing) {
                 return;
             }
