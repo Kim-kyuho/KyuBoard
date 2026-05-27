@@ -14,13 +14,6 @@ export interface ImageCardImage {
     height: number;
 }
 
-type ImagePointerArea = "inimage" | "outimage";
-
-type LastPointerAction = {
-    time: number;
-    area: ImagePointerArea;
-};
-
 type UseImageCardOptions = {
     image: ImageCardImage;
     zoom: number;
@@ -84,8 +77,8 @@ export function useImageCard({
     const menuRef = useRef<HTMLDivElement | null>(null);
     // 외부 터치 시작 좌표를 저장하기 위한 ref
     const outsideTouchStartRef = useRef<{ x: number; y: number } | null>(null);
-    // 더블탭 이벤트 감지를 위한 ref
-    const lastTapRef = useRef<LastPointerAction>({ time: 0, area: "outimage" });
+    // 모바일에서 이미지 내부 더블탭 이벤트 감지를 위한 ref - 직전의 탭 시간을 저장
+    const lastImageTapRef = useRef(0);
     // 보드 드래그 스크롤 여부 확인 전까지 외부 클릭 피드백을 잠시 지연하기 위한 ref
     const pendingOutsideActionRef = useRef<number | null>(null);
     // 모바일에서 길게 누름 이벤트 감지를 위한 ref
@@ -154,8 +147,8 @@ export function useImageCard({
         if (event.pointerType !== "touch") { return; }
 
         const currentTime = event.timeStamp;
-        const isDoubleTap = lastTapRef.current.area === "inimage" && currentTime - lastTapRef.current.time < 300;
-        lastTapRef.current = { time: currentTime, area: "inimage" };
+        const isDoubleTap = currentTime - lastImageTapRef.current < 300;
+        lastImageTapRef.current = currentTime;
 
         if (isDoubleTap) {
             event.preventDefault();
