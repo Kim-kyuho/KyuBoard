@@ -14,16 +14,11 @@ type UseBoardScrollOptions = {
 };
 
 export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
-    // 보드 드래그 스크롤 상태 - 마우스 왼쪽 버튼으로 보드를 잡고 이동 중인지 체크
     const [boardPanning, setBoardPanning] = useState(false);
-    // 마우스 왼쪽 버튼으로 보드를 드래그 스크롤하기 위한 상태 ref
     const boardPanRef = useRef<BoardPanState | null>(null);
-    // 보드 드래그 스크롤 직후 클릭 이벤트가 실행되는 것을 막기 위한 ref
     const suppressBoardClickRef = useRef(false);
-    // 보드 드래그 스크롤 종료 후 외부 클릭 피드백을 잠시 막기 위한 타이머 ref
     const boardPanClearTimerRef = useRef<number | null>(null);
 
-    // 보드 드래그 스크롤 상태를 초기화
     const clearBoardPanMode = () => {
         if (boardPanClearTimerRef.current) {
             window.clearTimeout(boardPanClearTimerRef.current);
@@ -33,7 +28,6 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
         delete document.documentElement.dataset.boardPanning;
     };
 
-    // 보드 드래그 스크롤이 시작될 수 있는 영역인지 체크
     const canStartBoardPan = (target: EventTarget | null) => {
         const targetElement = target instanceof Element ? target : null;
 
@@ -46,7 +40,6 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
         );
     };
 
-    // 마우스 왼쪽 버튼으로 보드 드래그 스크롤을 시작
     const handleBoardPanStart = (event: ReactPointerEvent<HTMLElement>) => {
         if (event.pointerType !== "mouse" || event.button !== 0 || writeClicked) {
             return;
@@ -69,7 +62,6 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
         event.currentTarget.setPointerCapture(event.pointerId);
     };
 
-    // 보드 드래그 스크롤 중 스크롤 위치를 갱신
     const handleBoardPanMove = (event: ReactPointerEvent<HTMLElement>) => {
         const panState = boardPanRef.current;
 
@@ -98,7 +90,6 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
         event.currentTarget.scrollTop = panState.scrollTop - deltaY;
     };
 
-    // 보드 드래그 스크롤 종료
     const handleBoardPanEnd = (event: ReactPointerEvent<HTMLElement>) => {
         const panState = boardPanRef.current;
 
@@ -124,7 +115,6 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
         clearBoardPanMode();
     };
 
-    // 보드 드래그 스크롤 관련 전역 상태 정리
     useEffect(() => {
         return () => {
             if (boardPanClearTimerRef.current) {

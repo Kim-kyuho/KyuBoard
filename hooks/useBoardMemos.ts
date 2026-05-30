@@ -27,10 +27,8 @@ export function useBoardMemos({
     showPermissionMessage,
     setPermissionMessage,
 }: UseBoardMemosOptions) {
-    // 메모 리스트 상태
     const [memos, setMemos] = useState(initialMemos);
 
-    // 메모 생성을 위한 핸들러 - 보드 영역 클릭 시 해당 위치에 임시 메모 생성
     const handleCreateTempMemo = (x: number, y: number) => {
         if (!canEditMemos) {
             showPermissionMessage();
@@ -51,7 +49,6 @@ export function useBoardMemos({
         setMemos((prev) => [...prev, tempMemo]);
     };
 
-    // 메모 생성을 위한 핸들러
     const handleInsertMemo = async (tempId: number, boardId: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
         const response = await fetch("/api/memos", {
             method: "POST",
@@ -75,7 +72,6 @@ export function useBoardMemos({
         );
     };
 
-    // 메모 갱신를 위한 핸들러 - 메모 카드 이동, 크기 조절, 내용 변경 시 호출
     const handleUpdateMemo = async (id: number, boardId: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
         const response = await fetch(`/api/memos/${id}`, {
             method: "PATCH",
@@ -96,7 +92,6 @@ export function useBoardMemos({
         );
     };
 
-    // 메모삭제를 위한 핸들러 - DB에 저장되기 전의 임시 메모일 경우 API리퀘스트를 하지 않고 삭제
     const handleDeleteMemo = async (id: number) => {
         if (id < 0) {
             setMemos((prev) =>

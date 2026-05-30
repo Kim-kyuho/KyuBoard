@@ -6,7 +6,7 @@ type ConfirmDialogProps = {
     onConfirm: () => void;
     onCancel: () => void;
 };
-// ConfirmDialog 컴포넌트 - 사용자에게 확인 메시지를 보여주고 Yes/No 버튼을 제공하여 사용자의 선택을 처리하는 모달 다이얼로그
+
 export default function ConfirmDialog({ message, onConfirm, onCancel }: ConfirmDialogProps) {
     return createPortal(
         <>

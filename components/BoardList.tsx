@@ -13,9 +13,7 @@ import ConfirmDialog from "./ConfrimDialog";
 import { useBoardAuth } from "@/hooks/useBoardAuth";
 import { BoardListBoard, useBoardList } from "@/hooks/useBoardList";
 
-// 보드 리스트 컴포넌트 - 메인 화면에서 보드 목록과 보드 생성/삭제 메뉴를 표시
 export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
-    // 메뉴 열기/닫기 상태
     const [menuOpen, setMenuOpen] = useState(false);
     const {
         signInOpen,
@@ -28,7 +26,7 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
     } = useBoardAuth({
         onSignOutComplete: () => setMenuOpen(false),
     });
-    // 보드 리스트와 보드 관련 상태/핸들러를 관리하는 훅 - 보드 리스트, 보드 생성/삭제 핸들러, 컨텍스트 메뉴 상태 등을 관리
+
     const {
         boardList,
         createBoardOpen,
@@ -55,7 +53,6 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
 
     return (
         <>
-            {/* 메뉴를 위한 컴포넌트 */}
             <BoardMenu
                 menuOpen={menuOpen}
                 setMenuOpen={setMenuOpen}
@@ -65,7 +62,6 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                 onSignOut={handleSignOut}
             />
 
-            {/* Sign-in 버튼을 눌렀을 떄 Sign-in모달을 표시 */}
             {signInOpen && (
                 <SignInModal
                     onClose={() => setSignInOpen(false)}
@@ -73,14 +69,12 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                 />
             )}
 
-            {/* Sign-up 버튼을 눌렀을 떄 Sign-up모달을 표시 */}
             {signUpOpen && (
                 <SignUpModal
                     onClose={() => setSignUpOpen(false)}
                 />
             )}
 
-            {/* New Board 버튼을 눌렀을 때 보드 생성 모달을 표시 */}
             {createBoardOpen && (
                 <CreateBoardModal
                     ownerId={currentUser?.email ?? null}
@@ -89,10 +83,8 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                 />
             )}
 
-            {/* 보드 권한/삭제 관련 메시지가 존재할 떄 화면상에 표시 */}
             <BoardMessage type = "permission" message = {boardListMessage} />
 
-            {/* 보드 리스트 영역 */}
             <main className="min-h-screen bg-neutral-100 px-6 py-24" 
                 onClick={() => 
                 {
@@ -103,7 +95,6 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
             >
                 <div className="mx-auto max-w-4xl">
                     <div className="grid grid-cols-2 gap-5" >
-                        {/* 보드 리스트를 카드 형태로 렌더링 */}
                         {boardList.map((board) => (
                             <Link
                                 key={board.boardId}
@@ -116,17 +107,13 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                                     userSelect: "none",
                                     touchAction: "manipulation",
                                 }}
-                                // 길게 누름으로 메뉴가 열린 경우 링크 이동을 방지
                                 onClick={handleBoardClick}
-                                // 마우스 우클릭 이벤트 - 클릭한 좌표에 컨텍스트 메뉴를 표시
                                 onContextMenu={(event) => handleBoardContextMenu(board.boardId, event)}
-                                // 모바일에서 길게 누름 이벤트 - 터치한 좌표에 컨텍스트 메뉴를 표시
                                 onPointerDown={(event) => handleBoardLongPressStart(board.boardId, event)}
                                 onPointerUp={clearLongPress}
                                 onPointerMove={clearLongPress}
                                 onPointerCancel={clearLongPress}
                             >
-                                {/* 보드 카드 */}
                                 <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-neutral-200 transition group-hover:-translate-y-0.5 group-hover:shadow-md">
                                     {/* 보드 미리보기 영역 */}
                                     <div className="aspect-video bg-white">
@@ -188,7 +175,6 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                 </div>
             )}
 
-            {/* 삭제 확인 다이얼로그 - Yes 클릭 시 보드와 연결된 메모를 삭제, No 클릭 시 다이얼로그 닫기 */}
             {deleteDialogOpen && (
                 <ConfirmDialog
                     message="Delete this board and all memos?"
