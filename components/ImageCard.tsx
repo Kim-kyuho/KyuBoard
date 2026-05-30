@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import { Rnd } from "react-rnd";
 import ConfirmDialog from "@/components/ConfrimDialog";
 import ContextMenu from "./ContextMenu";
@@ -129,7 +129,7 @@ export default function ImageCard(props: ImageCardProps) {
                     onDoubleClick={selectImage}
                     onPointerDown={handleDoubleTap}
                 >
-                    <img
+                    <Image
                         src={image.secureUrl}
                         alt={image.fileName ?? "Uploaded image"}
                         draggable={false}
