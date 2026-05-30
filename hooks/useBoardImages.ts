@@ -35,26 +35,19 @@ export function useBoardImages({
     showPermissionMessage,
     setPermissionMessage,
 }: UseBoardImagesOptions) {
-    // 이미지 자동 배치 위치 계산용 ref - 현재 보이는 보드 화면의 중앙 좌표 계산에 사용
     const imageLocationRef = useRef<HTMLElement | null>(null);
-    // 이미지 파일 업로드 input ref - 툴바 버튼 클릭 시 파일 선택창을 열기 위해 사용
     const imageInputRef = useRef<HTMLInputElement | null>(null);
-    // 이미지 리스트 상태
     const [images, setImages] = useState(initialImages);
-    // 현재 선택된 이미지 ID 상태
     const [selectedImageId, setSelectedImageId] = useState<number | null>(null);
 
-    // 이미지 업로드 버튼 클릭 핸들러 - 파일 선택 input을 실행
     const handleImageUploadClick = () => {
         if (!canEditMemos) {
             showPermissionMessage();
             return;
         }
-
         imageInputRef.current?.click();
     };
 
-    // 이미지 초기 표시 크기 계산 함수 - 400x300 안에 들어오도록 원본 비율을 유지해서 축소
     const getImageDisplaySize = (file: File) =>
         new Promise<{ width: number; height: number }>((resolve) => {
             const imageUrl = URL.createObjectURL(file);
@@ -84,7 +77,6 @@ export function useBoardImages({
             image.src = imageUrl;
         });
 
-    // 이미지 자동 배치 위치 계산 함수 - 현재 보이는 보드 화면의 중앙에 이미지를 생성
     const getImageAutoLocation = (): BoardPoint => {
         const locationElement = imageLocationRef.current;
         if (!locationElement) {
@@ -97,7 +89,6 @@ export function useBoardImages({
         };
     };
 
-    // 이미지 업로드 핸들러 - 선택한 파일을 임시 이미지로 생성하고 저장은 ImageCard에서 처리
     const handleUploadImage = async (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         event.target.value = "";
@@ -130,7 +121,6 @@ export function useBoardImages({
         setSelectedImageId(tempImage.imageId);
     };
 
-    // 이미지 생성을 위한 핸들러 - ImageCard에서 저장 확인 시 파일을 API로 전송하고 반환된 이미지 정보로 교체
     const handleInsertImage = async (tempId: number, file: File, boardId: number, x: number, y: number, width: number, height: number) => {
         const formData = new FormData();
         formData.append("file", file);
@@ -164,7 +154,6 @@ export function useBoardImages({
         setSelectedImageId(data.image.imageId);
     };
 
-    // 이미지 갱신을 위한 핸들러 - ImageCard에서 이동, 크기 조절 완료 시 호출
     const handleUpdateImage = async (imageId: number, boardId: number, publicId: string, secureUrl: string, fileName: string | null, x: number, y: number, width: number, height: number) => {
         const response = await fetch(`/api/images/${imageId}`, {
             method: "PATCH",
@@ -175,7 +164,7 @@ export function useBoardImages({
         });
         const data = await response.json();
 
-        if (!data.ok) {
+        if (!response.ok || !data.ok) {
             setPermissionMessage(data.message ?? "You do not have permission to edit images.");
             return;
         }
@@ -187,7 +176,6 @@ export function useBoardImages({
         );
     };
 
-    // 이미지 삭제를 위한 핸들러 - Cloudinary 이미지와 DB 데이터를 함께 삭제
     const handleDeleteImage = async (imageId: number) => {
         if (imageId < 0) {
             const tempImage = images.find((image) => image.imageId === imageId);
@@ -205,7 +193,7 @@ export function useBoardImages({
         });
         const data = await response.json();
 
-        if (!data.ok) {
+        if (!response.ok || !data.ok) {
             setPermissionMessage(data.message ?? "You do not have permission to delete images.");
             return;
         }

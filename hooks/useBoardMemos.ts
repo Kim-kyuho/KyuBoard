@@ -61,7 +61,7 @@ export function useBoardMemos({
         });
 
         const data = await response.json();
-        if (!data.ok) {
+        if (!response.ok || !data.ok) {
             setPermissionMessage(data.message ?? "You do not have permission to edit memos.");
             return;
         }

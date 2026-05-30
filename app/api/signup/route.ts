@@ -1,7 +1,7 @@
 import { getDb } from "@/lib/db";
 import { db_users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server";
 import { randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
 
@@ -16,50 +16,72 @@ async function hashPassword(password: string) {
 
 // SignUp을 위한 API - Users테이블에 유저 정보를 등록
 export async function POST(request: NextRequest) {
-    const db = getDb();
-    const body = await request.json();
-    const email = String(body.email ?? "");
-    const password = String(body.password ?? "");
+    try {
+        const db = getDb();
+        const body = await request.json();
+        const email = String(body.email ?? "").trim();
+        const password = String(body.password ?? "");
 
-    // 이메일 포멧 체크
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        return NextResponse.json({ error: "Invalid email" }, { status: 400 });
-    }
+        // 이메일 포멧 체크
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return NextResponse.json({ 
+                ok: false,
+                message: "Invalid email" 
+            }, { status: 400 });
+        }
 
-    // 패스워드 형식 체크
-    if (
-        password.length < 10 ||
-        !/[A-Za-z]/.test(password) ||
-        !/[0-9]/.test(password)
-    ) {
-        return NextResponse.json({ error: "Invalid password" }, { status: 400 });
-    }
+        // 패스워드 형식 체크
+        if (
+            password.length < 10 ||
+            !/[A-Za-z]/.test(password) ||
+            !/[0-9]/.test(password)
+        ) {
+            return NextResponse.json({ 
+                ok: false,
+                message: "Invalid password" 
+            }, { status: 400 });
+        }
 
-    // 이메일이 존재하는 지 체크
-    const existingUser = await db
-    .select({ id: db_users.id })
-    .from(db_users)
-    .where(eq(db_users.email, email))
-    .limit(1);
+        // 이메일이 존재하는 지 체크
+        const existingUser = await db
+        .select({ id: db_users.id })
+        .from(db_users)
+        .where(eq(db_users.email, email))
+        .limit(1);
 
-    if (existingUser.length > 0) {
-        return NextResponse.json({ error: "Email already exists" }, { status: 409 });
-    }
+        if (existingUser.length > 0) {
+            return NextResponse.json({ 
+                ok: false,
+                message: "Email already exists" 
+            }, { status: 409 });
+        }
 
-    const passwordHash = await hashPassword(password);
+        const passwordHash = await hashPassword(password);
 
-    // DB에 유저 정보를 Insert
-    const newUser = await db
-    .insert(db_users)
-    .values({
-        email,
-        passwordHash,
-        permissionFlg: false,
-        role: "user"
-    }).returning();
+        // DB에 유저 정보를 Insert
+        const newUser = await db
+        .insert(db_users)
+        .values({
+            email,
+            passwordHash,
+            permissionFlg: false,
+            role: "user"
+        }).returning();
 
-    return NextResponse.json({ user: newUser[0]})
-
-
+        return NextResponse.json({ 
+            ok: true,
+            user: {
+                email: newUser[0].email,
+                permissionFlg: newUser[0].permissionFlg,
+                role: newUser[0].role,
+            }
+        }, { status: 201 });
+    } catch (error) {
+        console.error("Error during sign up:", error);
+        return NextResponse.json({ 
+            ok: false,
+            message: "An error occurred during sign up" 
+        }, { status: 500 });   
     
+    }
 }
