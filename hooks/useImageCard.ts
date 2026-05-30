@@ -72,6 +72,7 @@ export function useImageCard({
     const menuRef = useRef<HTMLDivElement | null>(null);
     const lastImageTapRef = useRef(0);
     const longPressRef = useRef<number | null>(null);
+    const contextMenuOpenTimeRef = useRef<number>(0);
 
     const saveImageDraft = useCallback(() => {
         if (image.imageId < 0) {
@@ -152,13 +153,12 @@ export function useImageCard({
             if (isPressInsideBoardToolBar || isPressInsideConfirmDialog) {
                 return;
             }
-            if (!isPressInsideMenu) {
-                setContextMenuOpen(false);
-            }
 
-            if (!isPressInsideImage && !isPressInsideMenu && isSelected) {
-                saveImageDraft();
-                onSelectClear();
+            if (!isPressInsideImage && !isPressInsideMenu) {
+                if (isSelected) {
+                    saveImageDraft();
+                    onSelectClear();
+                }
                 setContextMenuOpen(false);
                 return;
             }
