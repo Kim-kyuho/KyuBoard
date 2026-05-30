@@ -16,14 +16,10 @@ export function useBoardSearch({
     focusMemoById,
     setMemoMessage,
 }: UseBoardSearchOptions) {
-    // 검색바 오픈 상태
     const [searchBarOpen, setSearchBarOpen] = useState(false);
-    // 검색어 상태
     const [searchText, setSearchText] = useState("");
-    // 현재 검색 결과 인덱스
     const [searchIndex, setSearchIndex] = useState(0);
 
-    // 검색어에 해당하는 메모 리스트
     const searchResults = useMemo(() => {
         const query = searchText.trim().toLowerCase();
 
@@ -36,7 +32,6 @@ export function useBoardSearch({
         );
     }, [memos, searchText]);
 
-    // 검색 결과 메모로 이동
     const focusSearchResult = (index: number) => {
         const targetMemo = searchResults[index];
 
@@ -49,7 +44,6 @@ export function useBoardSearch({
         focusMemoById(targetMemo.id);
     };
 
-    // 다음 검색 결과 이동
     const handleSearchNext = () => {
         if (searchResults.length === 0) {
             setMemoMessage("No search results.");
@@ -63,7 +57,6 @@ export function useBoardSearch({
         focusSearchResult(nextIndex);
     };
 
-    // 이전 검색 결과 이동
     const handleSearchPrev = () => {
         if (searchResults.length === 0) {
             setMemoMessage("No search results.");
@@ -77,7 +70,6 @@ export function useBoardSearch({
         focusSearchResult(prevIndex);
     };
 
-    // 검색어 변경
     const handleSearchTextChange = (query: string) => {
         setSearchText(query);
         setSearchIndex(0);

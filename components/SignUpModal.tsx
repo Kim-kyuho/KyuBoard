@@ -9,7 +9,6 @@ type SignUpModalProps = {
     onClose: () => void;
 };
 
-// 회원가입을 위한 모달을 추가
 export default function SignUpModal({ onClose }: SignUpModalProps) {
     const [errorMessages, setErrorMessages] = useState({
         email: "",
@@ -59,7 +58,6 @@ export default function SignUpModal({ onClose }: SignUpModalProps) {
 
     return createPortal(
         <>
-            {/*모달의 바깥영역: 클릭할 시 화면닫기*/}
             <div
                 className="fixed inset-0 bg-black/50"
                 style={{ zIndex: 70 }}

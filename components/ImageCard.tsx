@@ -62,6 +62,7 @@ export default function ImageCard(props: ImageCardProps) {
         menuRef,
         selectImage,
         handleDoubleTap,
+        handleImagePress,
         handleContextMenu,
         handleLongPressStart,
         clearLongPress,
@@ -124,7 +125,7 @@ export default function ImageCard(props: ImageCardProps) {
             >
                 <div
                     className="h-full w-full overflow-hidden rounded-xl bg-white shadow-md"
-                    onClick={(event) => event.stopPropagation()}
+                    onClick={handleImagePress}
                     onDoubleClick={selectImage}
                     onPointerDown={handleDoubleTap}
                 >
