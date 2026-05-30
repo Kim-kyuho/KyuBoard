@@ -1,4 +1,4 @@
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 
 // 세션을 위한 라이브러리
 export const sessionCookieName = "kyuboard_session";
@@ -15,6 +15,17 @@ function getSessionSecret() {
     }
 
     return sessionSecret;
+}
+// 서명 검증 - 입력된 서명과 예상 서명이 timingSafeEqual로 동일한지 체크
+function isValidSign(signature: string, expectedSignature: string) {
+    const signatureBuffer = Buffer.from(signature, "hex");
+    const expectedBuffer = Buffer.from(expectedSignature, "hex");
+
+    if (signatureBuffer.length !== expectedBuffer.length) {
+        return false;
+    }
+
+    return timingSafeEqual(signatureBuffer, expectedBuffer);
 }
 
 // 세션 쿠키용 서명 생성 - 유저 정보의 id를 HMAC-SHA256으로 계산한 서명값을 hex문자열로 출력
@@ -38,11 +49,11 @@ export function getUserIdFromSessionToken(token: string | undefined) {
     const [rawUserId, signature] = token.split(".");
     const userId = Number(rawUserId);
 
-    if (!Number.isInteger(userId) || !signature) {
+    if (!Number.isInteger(userId) || userId <=0 || !signature) {
         return null;
     }
 
-    if (signature !== signUserId(userId)) {
+    if (!isValidSign(signature, signUserId(userId))) {
         return null;
     }
 

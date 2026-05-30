@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 // 이미지 수정 API - PATCH 요청을 처리하여 특정 ID의 이미지 위치와 크기를 업데이트
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    try {
     const currentUser = await getCurrentUserFromRequest(request);
     const permissionMessage = getMemoPermissionMessage(currentUser);
 
@@ -14,13 +15,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         return NextResponse.json({
             ok: false,
             message: permissionMessage,
-        });
+        },{ status: 403 });
     }
 
     const db = getDb();
     const { id } = await params;
     const body = await request.json();
     const updates: Partial<typeof db_images.$inferInsert> = {};
+    const imageId = Number(id);
+    if (!Number.isInteger(imageId)) {
+        return NextResponse.json({
+            ok: false,
+            message: "Invalid image id.",
+        }, { status: 400 });
+    }
 
     // 업데이트할 필드가 요청 본문에 존재하는 경우에만 업데이트 객체에 추가
     if (body.boardId !== undefined) updates.boardId = body.boardId;
@@ -31,17 +39,41 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.y !== undefined) updates.y = body.y;
     if (body.width !== undefined) updates.width = body.width;
     if (body.height !== undefined) updates.height = body.height;
-
-    await db
+    
+    if (Object.keys(updates).length === 0) {
+        return NextResponse.json({
+            ok: false,
+            message: "No update fields were provided.",
+        }, { status: 400 });
+    }
+    
+    const updatedImage = await db
         .update(db_images)
         .set(updates)
-        .where(eq(db_images.imageId, parseInt(id)));
+        .where(eq(db_images.imageId, imageId))
+        .returning();
+
+    if (!updatedImage[0]) {
+    return NextResponse.json({
+        ok: false,
+        message: "Image does not exist.",
+    }, { status: 404 });
+    }
+        
 
     return NextResponse.json({ ok: true });
+    } catch (error) {
+        console.error("Error updating image:", error);
+        return NextResponse.json({
+            ok: false,
+            message: "An error occurred while updating the image.",
+        },{ status: 500 });
+    }
 }
 
 // 이미지 삭제 API - DELETE 요청을 처리하여 Cloudinary 이미지와 DB 데이터를 삭제
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    try {
     const currentUser = await getCurrentUserFromRequest(request);
     const permissionMessage = getMemoPermissionMessage(currentUser);
 
@@ -49,7 +81,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         return NextResponse.json({
             ok: false,
             message: permissionMessage,
-        });
+        },{ status: 403 });
     }
     if (
         !process.env.CLOUDINARY_CLOUD_NAME ||
@@ -70,7 +102,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     const db = getDb();
     const { id } = await params;
-    const imageId = parseInt(id);
+    const imageId = Number(id);
+    if (!Number.isInteger(imageId)) {
+        return NextResponse.json({
+            ok: false,
+            message: "Invalid image id.",
+        }, { status: 400 });
+    }
 
     const image = await db
         .select()
@@ -91,4 +129,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         .where(eq(db_images.imageId, imageId));
 
     return NextResponse.json({ ok: true });
+    } catch (error) {
+        console.error("Error deleting image:", error);
+        return NextResponse.json({
+            ok: false,
+            message: "An error occurred while deleting the image.",
+        }, { status: 500 });
+    }
 }
