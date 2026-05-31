@@ -1,4 +1,11 @@
-import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+    MouseEvent as ReactMouseEvent,
+    PointerEvent as ReactPointerEvent,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 import { DraggableData, RndDragEvent, RndResizeCallback } from "react-rnd";
 
 export interface ImageCardImage {
@@ -69,6 +76,7 @@ export function useImageCard({
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
     const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+
     const menuRef = useRef<HTMLDivElement | null>(null);
     const lastImageTapRef = useRef(0);
     const longPressRef = useRef<number | null>(null);
@@ -102,7 +110,20 @@ export function useImageCard({
             Math.round(imageState.width),
             Math.round(imageState.height),
         );
-    }, [image.boardId, image.file, image.fileName, image.imageId, image.publicId, image.secureUrl, imageState.height, imageState.width, imageState.x, imageState.y, onInsert, onUpdate]);
+    }, [
+        image.boardId,
+        image.file,
+        image.fileName,
+        image.imageId,
+        image.publicId,
+        image.secureUrl,
+        imageState.height,
+        imageState.width,
+        imageState.x,
+        imageState.y,
+        onInsert,
+        onUpdate,
+    ]);
 
     const isTouchDevice = () =>
         typeof window !== "undefined" &&
@@ -128,7 +149,9 @@ export function useImageCard({
     };
 
     const handleDoubleTap = (event: ReactPointerEvent<HTMLDivElement>) => {
-        if (event.pointerType !== "touch") { return; }
+        if (event.pointerType !== "touch") {
+            return;
+        }
 
         const currentTime = event.timeStamp;
         const isDoubleTap = currentTime - lastImageTapRef.current < 300;
@@ -141,30 +164,40 @@ export function useImageCard({
     };
 
     useEffect(() => {
+        const handlePressOutsideMenu = (event: PointerEvent) => {
+            const target = event.target as Node;
+            const isPressInsideMenu = menuRef.current?.contains(target);
+
+            if (!isPressInsideMenu) {
+                setContextMenuOpen(false);
+            }
+        };
+
         const handlePressOutside = (event: PointerEvent) => {
             const target = event.target as Node;
             const targetElement = target instanceof Element ? target : null;
+
             const isPressInsideMenu = menuRef.current?.contains(target);
             const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
-            const isPressInsideConfirmDialog = targetElement?.closest(".confirm-dialog");
             const isPressInsideImage = targetElement?.closest(`.image-rnd-${image.imageId}`);
 
-            if (isPressInsideBoardToolBar || isPressInsideConfirmDialog) {
+            if (isPressInsideBoardToolBar || isPressInsideMenu) {
                 return;
             }
 
-            if (!isPressInsideImage && !isPressInsideMenu) {
-                if (isSelected) {
-                    saveImageDraft();
-                    onSelectClear();
-                }
+            if (isSelected && !isPressInsideImage && !isPressInsideMenu) {
+                saveImageDraft();
+                onSelectClear();
                 setContextMenuOpen(false);
                 return;
             }
         };
 
+        document.addEventListener("pointerdown", handlePressOutsideMenu);
         document.addEventListener("pointerup", handlePressOutside);
+
         return () => {
+            document.removeEventListener("pointerdown", handlePressOutsideMenu);
             document.removeEventListener("pointerup", handlePressOutside);
         };
     }, [image.imageId, isSelected, onSelectClear, saveImageDraft]);
@@ -175,11 +208,15 @@ export function useImageCard({
 
     const handleContextMenu = (event: ReactMouseEvent<HTMLElement>) => {
         event.preventDefault();
+
         if (!canEdit) {
             onPermissionDenied();
             return;
         }
-        if (isTouchDevice()) { return; }
+
+        if (isTouchDevice()) {
+            return;
+        }
 
         const { x, y } = getBoardPoint(event.clientX, event.clientY);
         setContextMenuPosition({ x, y });
@@ -187,10 +224,17 @@ export function useImageCard({
     };
 
     const handleLongPressStart = (event: ReactPointerEvent<HTMLElement>) => {
-        if (event.pointerType !== "touch") { return; }
-        if (!canEdit) { return; }
+        if (!canEdit) {
+            onPermissionDenied();
+            return;
+        }
+
+        if (event.pointerType !== "touch") {
+            return;
+        }
 
         const { x, y } = getBoardPoint(event.clientX, event.clientY);
+
         longPressRef.current = window.setTimeout(() => {
             setContextMenuPosition({ x, y });
             setContextMenuOpen(true);
