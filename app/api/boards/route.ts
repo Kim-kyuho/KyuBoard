@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ 
             ok: true, 
             board: newBoard[0] 
-        });
+        }, { status: 200 });
     } catch (error) {
         console.error("Error creating board:", error);
         return NextResponse.json({

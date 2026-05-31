@@ -157,22 +157,20 @@ export function useMemoCard({
             const targetElement = target instanceof Element ? target : null;
             const isPressInsideMenu = menuRef.current?.contains(target);
             const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
-            const isPressInsideAnyMemo = targetElement?.closest("[class*='memo-rnd-']");
+            const isPressInsideMemo = targetElement?.closest(`[class*='memo-rnd-${memo.id}']`);
             const isPressInsideBoard = targetElement?.closest(".kyu-board");
-            const isPressInsideEmptyBoard = Boolean(isPressInsideBoard && !isPressInsideAnyMemo && !isPressInsideMenu && !isPressInsideBoardToolBar);
+            const isPressInsideEmptyBoard = Boolean(isPressInsideBoard && !isPressInsideMemo && !isPressInsideMenu && !isPressInsideBoardToolBar);
             
             if (isEditing && isPressInsideEmptyBoard) {
                 saveMemo();
                 setIsEditing(false);
                 setContextMenuOpen(false);
                 return;
-
             }
-
             if (isPressInsideBoardToolBar || isPressInsideMenu) {
                 return;
             }
-            if (!isPressInsideMenu) {
+            if (!isPressInsideMenu && !isPressInsideMemo) {
                 setContextMenuOpen(false);
             }
             if (isPressInsideEmptyBoard && isFocused) {
@@ -197,7 +195,7 @@ export function useMemoCard({
         event.stopPropagation();
         onFocus();
     };
-    // 
+
     const handleContextMenu = (event: ReactMouseEvent<HTMLElement>) => {
         event.preventDefault();
         if (!canEdit) {
@@ -213,7 +211,6 @@ export function useMemoCard({
     };
 
     const handleContextMenuTouch = (event: ReactPointerEvent<HTMLElement>) => {
-        event.preventDefault();
         if (!canEdit) {
             onPermissionDenied();
             return;

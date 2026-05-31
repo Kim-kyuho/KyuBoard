@@ -106,7 +106,10 @@ export async function POST(request: NextRequest) {
             height: Number.isFinite(requestedHeight) && requestedHeight > 0 ? requestedHeight : height,
         }).returning();
 
-        return NextResponse.json({ ok: true, image: newImage[0] });
+        return NextResponse.json({ 
+            ok: true, 
+            image: newImage[0] 
+        }, { status: 200 });
     } catch (error) {
         console.error("Error uploading image:", error);
         return NextResponse.json({

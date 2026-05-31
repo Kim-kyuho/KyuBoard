@@ -53,7 +53,10 @@ export async function POST(request: NextRequest) {
             isPublic: body.isPublic,
         }).returning();
         
-        return NextResponse.json({ ok: true, memo: newMemo[0] });
+        return NextResponse.json({ 
+            ok: true, 
+            memo: newMemo[0] 
+        }, { status: 200 });
     } catch (error) {
         console.error("Error creating memo:", error);
         return NextResponse.json({

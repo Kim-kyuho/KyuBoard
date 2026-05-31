@@ -55,7 +55,7 @@ export async function PATCH(request: NextRequest, {params}: { params: Promise<{ 
             }, { status: 404 });
         }
 
-        return NextResponse.json({ ok: true});
+        return NextResponse.json({ ok: true}, { status: 200 });
     } catch (error) {
         console.error("Error updating memo:", error);
         return NextResponse.json({
@@ -98,7 +98,9 @@ export async function DELETE(request: NextRequest, {params}: { params: Promise<{
             }, { status: 404 });
         }
 
-        return NextResponse.json({ ok: true});
+        return NextResponse.json({ 
+            ok: true
+        }, { status: 200 });
     } catch (error) {
         console.error("Error deleting memo:", error);
         return NextResponse.json({

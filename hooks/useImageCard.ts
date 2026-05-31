@@ -72,7 +72,6 @@ export function useImageCard({
     const menuRef = useRef<HTMLDivElement | null>(null);
     const lastImageTapRef = useRef(0);
     const longPressRef = useRef<number | null>(null);
-    const contextMenuOpenTimeRef = useRef<number>(0);
 
     const saveImageDraft = useCallback(() => {
         if (image.imageId < 0) {

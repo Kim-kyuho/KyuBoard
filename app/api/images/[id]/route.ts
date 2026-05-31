@@ -61,7 +61,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
         
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true }, { status: 200 });
     } catch (error) {
         console.error("Error updating image:", error);
         return NextResponse.json({
@@ -128,7 +128,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         .delete(db_images)
         .where(eq(db_images.imageId, imageId));
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({
+            ok: true 
+        }, { status: 200 });
     } catch (error) {
         console.error("Error deleting image:", error);
         return NextResponse.json({

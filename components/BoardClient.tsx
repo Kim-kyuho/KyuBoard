@@ -254,7 +254,6 @@ export default function BoardClient(
                             const rect = e.currentTarget.getBoundingClientRect();
                             const x = (e.clientX - rect.left) / boardZoom;
                             const y = (e.clientY - rect.top) / boardZoom; 
-                            console.log(`Clicked at: (${x}, ${y})`);
                             handleCreateTempMemo(x, y);
                             setWriteClicked(false);
                         }
