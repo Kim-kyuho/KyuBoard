@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Rnd } from "react-rnd";
 import ConfirmDialog from "@/components/ConfrimDialog";
-import ContextMenu from "./ContextMenu";
+import ImageContextMenu from "./ImageContextMenu";
 import { ImageCardImage, useImageCard } from "@/hooks/useImageCard";
 
 type ImageCardProps = {
@@ -140,7 +140,7 @@ export default function ImageCard(props: ImageCardProps) {
             </Rnd>
 
             {contextMenuOpen && (
-                <ContextMenu
+                <ImageContextMenu
                     ref={menuRef}
                     contextMenuPosition={contextMenuPosition}
                     onDelete={openDeleteDialog}

@@ -43,7 +43,7 @@ export function useBoardMemos({
             y,
             width: 300,
             height: 200,
-            color: "yellow",
+            color: "#fffadc",
             isPublic: true,
         };
         setMemos((prev) => [...prev, tempMemo]);
