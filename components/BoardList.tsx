@@ -8,8 +8,8 @@ import BoardMessage from "./BoardMessage";
 import SignInModal from "./SignInModal";
 import SignUpModal from "./SignUpModal";
 import CreateBoardModal from "./CreateBoardModal";
-import PressableButton from "./PressableButton";
 import ConfirmDialog from "./ConfrimDialog";
+import BoardContextMenu from "./BoardContextMenu";
 import { useBoardAuth } from "@/hooks/useBoardAuth";
 import { BoardListBoard, useBoardList } from "@/hooks/useBoardList";
 
@@ -156,23 +156,11 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
             </main>
             {/* 컨텍스트 메뉴: Delete 버튼이 있는 메뉴 - 보드 카드에서 우클릭 또는 길게 누름 시 열림 */}
             {contextMenuOpen && (
-                <div
+                <BoardContextMenu
                     ref={menuRef}
-                    className="fixed bg-white px-3 py-4 shadow-md"
-                    style={{
-                        left: `${contextMenuPosition.x}px`,
-                        top: `${contextMenuPosition.y}px`,
-                        zIndex: 65,
-                    }}
-                >
-                    {/* Delete 버튼 */}
-                    <PressableButton
-                        variant="menu"
-                        onClick={openDeleteDialog}
-                    >
-                        Delete
-                    </PressableButton>
-                </div>
+                    contextMenuPosition={contextMenuPosition}
+                    onDelete={openDeleteDialog}
+                />
             )}
 
             {deleteDialogOpen && (

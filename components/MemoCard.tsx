@@ -1,5 +1,5 @@
 import { Rnd } from "react-rnd";
-import ContextMenu from "./ContextMenu";
+import MemoContextMenu from "./MemoContextMenu";
 import ConfirmDialog from "@/components/ConfrimDialog";
 import MemoEditor from "./MemoEditor";
 import { MemoCardMemo, useMemoCard } from "@/hooks/useMemoCard";
@@ -53,7 +53,10 @@ export default function MemoCard(props: MemoCardProps) {
     } = props;
     const {
         contextMenuOpen,
+        setContextMenuOpen,
         contextMenuPosition,
+        memoColor,
+        setMemoColor,
         menuRef,
         isEditing,
         memoFocusRef,
@@ -138,7 +141,7 @@ export default function MemoCard(props: MemoCardProps) {
                                 ref={memoFocusRef}
                                 tabIndex={-1}
                                 style={{
-                                    backgroundColor: "#fffadc",
+                                    backgroundColor: memoColor,
                                     cursor: "text",
                                 }}
                             >
@@ -151,7 +154,7 @@ export default function MemoCard(props: MemoCardProps) {
                             <div
                                 className="h-full w-full rounded-xl p-4 shadow-md text-neutral-900"
                                 style={{
-                                    backgroundColor: "#fffadc",
+                                    backgroundColor: memoColor,
                                     WebkitTouchCallout: "none",
                                     WebkitUserSelect: "none",
                                     userSelect: "none",
@@ -170,7 +173,7 @@ export default function MemoCard(props: MemoCardProps) {
                         <div
                             className="h-full w-full rounded-xl p-4 shadow-md text-neutral-900"
                             style={{
-                                backgroundColor: "#fffadc",
+                                backgroundColor: memoColor,
                                 WebkitTouchCallout: "none",
                                 WebkitUserSelect: "none",
                                 userSelect: "none",
@@ -198,9 +201,14 @@ export default function MemoCard(props: MemoCardProps) {
             </Rnd>
         
             {contextMenuOpen && (
-                <ContextMenu
+                <MemoContextMenu
                     ref={menuRef}
                     contextMenuPosition={contextMenuPosition}
+                    isEditing={isEditing}
+                    onChangeColor={(color: string) => {
+                        setMemoColor(color);
+                        setContextMenuOpen(false);
+                    }}
                     onDelete={openDeleteDialog}
                 />
             )}

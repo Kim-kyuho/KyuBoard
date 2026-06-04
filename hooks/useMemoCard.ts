@@ -59,12 +59,11 @@ export function useMemoCard({
     onDelete,
 }: UseMemoCardOptions) {
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
+    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
     const [isEditing, setIsEditing] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
-    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-
     const menuRef = useRef<HTMLDivElement | null>(null);
     const memoFocusRef = useRef<HTMLDivElement | null>(null);
     const lastMemoTapRef = useRef(0);
@@ -79,6 +78,7 @@ export function useMemoCard({
     });
 
     const [memoContent, setMemoContent] = useState(memo.content);
+    const [memoColor, setMemoColor] = useState(memo.color);
 
     const insertMemo = useCallback(() => {
         onInsert(
@@ -89,7 +89,7 @@ export function useMemoCard({
             Math.round(memoState.y),
             Math.round(memoState.width),
             Math.round(memoState.height),
-            memo.color,
+            memoColor,
             memo.isPublic
         );
     }, [
@@ -100,7 +100,7 @@ export function useMemoCard({
         memoState.y,
         memoState.width,
         memoState.height,
-        memo.color,
+        memoColor,
         memo.isPublic,
         onInsert,
     ]);
@@ -114,7 +114,7 @@ export function useMemoCard({
             Math.round(memoState.y),
             Math.round(memoState.width),
             Math.round(memoState.height),
-            memo.color,
+            memoColor,
             memo.isPublic
         );
     }, [
@@ -125,7 +125,7 @@ export function useMemoCard({
         memoState.y,
         memoState.width,
         memoState.height,
-        memo.color,
+        memoColor,
         memo.isPublic,
         onUpdate,
     ]);
@@ -320,7 +320,10 @@ export function useMemoCard({
 
     return {
         contextMenuOpen,
+        setContextMenuOpen,
         contextMenuPosition,
+        memoColor,
+        setMemoColor,
         menuRef,
         isEditing,
         memoFocusRef,
