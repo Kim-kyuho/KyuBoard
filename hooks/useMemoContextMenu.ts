@@ -23,10 +23,15 @@ export function useMemoContextMenu({
     setOpenMemoColorMenu(false);
   };
 
+  const InputCodeBlock = () => {
+    // Code block input logic here
+  }
+
   return {
     memoColors,
     openMemoColorMenu,
     toggleColorMenu,
     handleColorSelect,
+    InputCodeBlock,
   };
 }
