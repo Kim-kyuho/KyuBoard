@@ -23,7 +23,7 @@ export default function ImageContextMenu({
             style={{
                 left: `${contextMenuPosition.x}px`,
                 top: `${contextMenuPosition.y}px`,
-                transform: `scale(${1 / zoom})`,
+                transform: `scale(${0.8 / zoom})`,
                 transformOrigin: "top left",
             }}
         >
