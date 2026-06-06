@@ -204,6 +204,7 @@ export default function MemoCard(props: MemoCardProps) {
                 <MemoContextMenu
                     ref={menuRef}
                     contextMenuPosition={contextMenuPosition}
+                    zoom={zoom}
                     isEditing={isEditing}
                     onChangeColor={(color: string) => {
                         setMemoColor(color);

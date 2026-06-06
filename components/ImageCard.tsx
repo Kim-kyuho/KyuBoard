@@ -143,6 +143,7 @@ export default function ImageCard(props: ImageCardProps) {
                 <ImageContextMenu
                     ref={menuRef}
                     contextMenuPosition={contextMenuPosition}
+                    zoom={zoom}
                     onDelete={openDeleteDialog}
                 />
             )}

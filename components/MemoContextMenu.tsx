@@ -7,6 +7,7 @@ import PressableButton from "./PressableButton";
 interface MemoContextMenuProps {
     ref?: Ref<HTMLDivElement>;
     contextMenuPosition: { x: number; y: number };
+    zoom: number;
     isEditing?: boolean;
     onChangeColor: (color: string) => void;
     onDelete: () => void;
@@ -15,6 +16,7 @@ interface MemoContextMenuProps {
 export default function MemoContextMenu({
     ref,
     contextMenuPosition,
+    zoom,
     isEditing,
     onChangeColor,
     onDelete,
@@ -24,6 +26,7 @@ export default function MemoContextMenu({
         openMemoColorMenu,
         toggleColorMenu,
         handleColorSelect,
+        // InputCodeBlock,
     } = useMemoContextMenu({ onChangeColor });
 
     return (
@@ -33,6 +36,8 @@ export default function MemoContextMenu({
             style={{
                 left: `${contextMenuPosition.x}px`,
                 top: `${contextMenuPosition.y}px`,
+                transform: `scale(${1 / zoom})`,
+                transformOrigin: "top left",
             }}
         >
             {isEditing && (
@@ -66,6 +71,9 @@ export default function MemoContextMenu({
                     ))}
                 </div>
             )}
+            {/* <PressableButton variant="menu" onClick={InputCodeBlock}>
+                Code Block
+            </PressableButton> */}
             <PressableButton variant="menu" onClick={onDelete}>
                 Delete
             </PressableButton>

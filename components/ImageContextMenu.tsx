@@ -6,12 +6,14 @@ import PressableButton from "./PressableButton";
 interface ImageContextMenuProps {
     ref?: Ref<HTMLDivElement>;
     contextMenuPosition: { x: number; y: number };
+    zoom: number;
     onDelete: () => void;
 }
 
 export default function ImageContextMenu({
     ref,
     contextMenuPosition,
+    zoom,
     onDelete,
 }: ImageContextMenuProps) {
     return (
@@ -21,6 +23,8 @@ export default function ImageContextMenu({
             style={{
                 left: `${contextMenuPosition.x}px`,
                 top: `${contextMenuPosition.y}px`,
+                transform: `scale(${1 / zoom})`,
+                transformOrigin: "top left",
             }}
         >
             <PressableButton variant="menu" onClick={onDelete}>
