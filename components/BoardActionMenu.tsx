@@ -3,24 +3,24 @@
 import { Ref } from "react";
 import PressableButton from "./PressableButton";
 
-interface BoardContextMenuProps {
+interface BoardActionMenuProps {
     ref?: Ref<HTMLDivElement>;
-    contextMenuPosition: { x: number; y: number };
+    actionMenuPosition: { x: number; y: number };
     onDelete: () => void;
 }
 
-export default function BoardContextMenu({
+export default function BoardActionMenu({
     ref,
-    contextMenuPosition,
+    actionMenuPosition,
     onDelete,
-}: BoardContextMenuProps) {
+}: BoardActionMenuProps) {
     return (
         <div
             ref={ref}
-            className="fixed bg-white px-3 py-4 shadow-md"
+            className="fixed rounded-md bg-white px-3.5 py-px shadow-md"
             style={{
-                left: `${contextMenuPosition.x}px`,
-                top: `${contextMenuPosition.y}px`,
+                left: `${actionMenuPosition.x-120}px`,
+                top: `${actionMenuPosition.y}px`,
                 zIndex: 65,
             }}
         >
