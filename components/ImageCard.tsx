@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { Rnd } from "react-rnd";
+import { EllipsisVertical } from "lucide-react";
 import ConfirmDialog from "@/components/ConfrimDialog";
-import ImageContextMenu from "./ImageContextMenu";
+import ImageActionMenu from "./ImageActionMenu";
 import { ImageCardImage, useImageCard } from "@/hooks/useImageCard";
 
 type ImageCardProps = {
@@ -58,15 +59,13 @@ export default function ImageCard(props: ImageCardProps) {
     const {
         imageState,
         deleteDialogOpen,
-        contextMenuOpen,
-        contextMenuPosition,
+        actionMenuOpen,
+        actionMenuPosition,
         menuRef,
         selectImage,
         handleDoubleTap,
         handleImagePress,
-        handleContextMenu,
-        handleLongPressStart,
-        clearLongPress,
+        openImageActionMenu,
         handleDragStop,
         handleResizeStop,
         openDeleteDialog,
@@ -115,10 +114,6 @@ export default function ImageCard(props: ImageCardProps) {
                 scale={zoom}
                 disableDragging={!isSelected}
                 enableResizing={isSelected}
-                onContextMenu={handleContextMenu}
-                onPointerDown={handleLongPressStart}
-                onPointerUp={clearLongPress}
-                onPointerMove={clearLongPress}
                 onDragStop={handleDragStop}
                 onResizeStop={handleResizeStop}
             >
@@ -128,6 +123,18 @@ export default function ImageCard(props: ImageCardProps) {
                     onDoubleClick={selectImage}
                     onPointerDown={handleDoubleTap}
                 >
+                    {isSelected && (
+                        <button
+                            type="button"
+                            aria-label="Image actions"
+                            className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-neutral-500 opacity-30 backdrop-blur-sm transition duration-150 hover:bg-white/80 hover:text-neutral-900 hover:opacity-100 hover:shadow-sm active:scale-95"
+                            onPointerUp={(event) => {
+                                openImageActionMenu(event.clientX, event.clientY);
+                            }}
+                        >
+                            <EllipsisVertical className="h-8 w-8" />
+                        </button>
+                    )}
                     <Image
                         src={image.secureUrl}
                         alt={image.fileName ?? "Uploaded image"}
@@ -139,10 +146,10 @@ export default function ImageCard(props: ImageCardProps) {
                 </div>
             </Rnd>
 
-            {contextMenuOpen && (
-                <ImageContextMenu
+            {actionMenuOpen && (
+                <ImageActionMenu
                     ref={menuRef}
-                    contextMenuPosition={contextMenuPosition}
+                    actionMenuPosition={actionMenuPosition}
                     zoom={zoom}
                     onDelete={openDeleteDialog}
                 />

@@ -58,8 +58,8 @@ export function useMemoCard({
     onUpdate,
     onDelete,
 }: UseMemoCardOptions) {
-    const [contextMenuOpen, setContextMenuOpen] = useState(false);
-    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+    const [actionMenuOpen, setActionMenuOpen] = useState(false);
+    const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
     const [isEditing, setIsEditing] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
@@ -68,7 +68,6 @@ export function useMemoCard({
     const memoFocusRef = useRef<HTMLDivElement | null>(null);
     const lastMemoTapRef = useRef(0);
     const outsidePressStartRef = useRef<{ x: number; y: number } | null>(null);
-    const longPressRef = useRef<number | null>(null);
 
     const [memoState, setMemoState] = useState({
         x: memo.x,
@@ -139,20 +138,6 @@ export function useMemoCard({
         updateMemo();
     }, [insertMemo, memo.id, updateMemo]);
 
-    const isTouchDevice = () =>
-        typeof window !== "undefined" &&
-        ("ontouchstart" in window || navigator.maxTouchPoints > 0);
-
-    const getBoardPoint = (clientX: number, clientY: number) => {
-        const board = document.querySelector(".kyu-board");
-        const boardRect = board?.getBoundingClientRect();
-
-        return {
-            x: boardRect ? (clientX - boardRect.left) / zoom : clientX,
-            y: boardRect ? (clientY - boardRect.top) / zoom : clientY,
-        };
-    };
-
     const editMemo = useCallback(() => {
         if (!canEdit) {
             onPermissionDenied();
@@ -188,7 +173,7 @@ export function useMemoCard({
             const isPressInsideMenu = menuRef.current?.contains(target);
 
             if (!isPressInsideMenu) {
-                setContextMenuOpen(false);
+                setActionMenuOpen(false);
             }
         };
 
@@ -244,46 +229,18 @@ export function useMemoCard({
         onFocus();
     };
 
-    const handleContextMenu = (event: ReactMouseEvent<HTMLElement>) => {
-        event.preventDefault();
+    const openMemoActionMenu = (clientX: number, clientY: number) => {
+        const board = document.querySelector(".kyu-board");
+        const rect = board?.getBoundingClientRect();
 
-        if (!canEdit) {
-            onPermissionDenied();
-            return;
+        if (rect) {
+            setActionMenuPosition({
+                x: (clientX - rect.left) / zoom - 190,
+                y: (clientY - rect.top) / zoom,
+            });
         }
 
-        if (isTouchDevice()) {
-            return;
-        }
-
-        const { x, y } = getBoardPoint(event.clientX, event.clientY);
-        setContextMenuPosition({ x, y });
-        setContextMenuOpen(true);
-    };
-
-    const handleContextMenuTouch = (event: ReactPointerEvent<HTMLElement>) => {
-        if (!canEdit) {
-            onPermissionDenied();
-            return;
-        }
-
-        if (event.pointerType !== "touch") {
-            return;
-        }
-
-        const { x, y } = getBoardPoint(event.clientX, event.clientY);
-
-        longPressRef.current = window.setTimeout(() => {
-            setContextMenuPosition({ x, y });
-            setContextMenuOpen(true);
-        }, 600);
-    };
-
-    const clearLongPress = () => {
-        if (longPressRef.current) {
-            clearTimeout(longPressRef.current);
-            longPressRef.current = null;
-        }
+        setActionMenuOpen((prev) => !prev);
     };
 
     const handleDragStop = (_event: RndDragEvent, data: DraggableData) => {
@@ -305,7 +262,7 @@ export function useMemoCard({
     };
 
     const openDeleteDialog = () => {
-        setContextMenuOpen(false);
+        setActionMenuOpen(false);
         setDeleteDialogOpen(true);
     };
 
@@ -319,9 +276,10 @@ export function useMemoCard({
     };
 
     return {
-        contextMenuOpen,
-        setContextMenuOpen,
-        contextMenuPosition,
+        actionMenuOpen,
+        setActionMenuOpen,
+        actionMenuPosition,
+        setActionMenuPosition,
         memoColor,
         setMemoColor,
         menuRef,
@@ -337,9 +295,7 @@ export function useMemoCard({
         editMemo,
         handleDoubleTap,
         handleMemoPress,
-        handleContextMenu,
-        handleContextMenuTouch,
-        clearLongPress,
+        openMemoActionMenu,
         handleDragStop,
         handleResizeStart,
         handleResizeStop,

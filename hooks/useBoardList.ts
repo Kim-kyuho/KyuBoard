@@ -1,4 +1,4 @@
-import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CurrentUser } from "@/hooks/useBoardAuth";
 
@@ -19,18 +19,16 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
     const [boardList, setBoardList] = useState(boards);
     const [createBoardOpen, setCreateBoardOpen] = useState(false);
     const [boardListMessage, setBoardListMessage] = useState("");
-    const [contextMenuOpen, setContextMenuOpen] = useState(false);
-    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+    const [actionMenuOpen, setActionMenuOpen] = useState(false);
+    const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
     const [selectedBoardId, setSelectedBoardId] = useState<number | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement | null>(null);
-    const longPressRef = useRef<number | null>(null);
-    const longPressedRef = useRef(false);
 
     useEffect(() => {
         const handleClickOutside = (event: PointerEvent) => {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setContextMenuOpen(false);
+                setActionMenuOpen(false);
             }
         };
 
@@ -54,7 +52,7 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
         setCreateBoardOpen(false);
         router.push(`/boards/${boardId}`);
     };
-    const openBoardContextMenu = (boardId: number, x: number, y: number) => {
+    const openBoardActionMenu = (boardId: number, x: number, y: number) => {
         if (currentUser?.role !== "admin") {
             setBoardListMessage("Only administrators can delete boards.");
             return;
@@ -62,44 +60,16 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
 
         setBoardListMessage("");
         setSelectedBoardId(boardId);
-        setContextMenuPosition({ x, y });
-        setContextMenuOpen(true);
+        setActionMenuPosition({ x, y });
+        setActionMenuOpen((prev) => selectedBoardId === boardId ? !prev : true);
     };
 
-    const clearLongPress = () => {
-        if (longPressRef.current) {
-            window.clearTimeout(longPressRef.current);
-            longPressRef.current = null;
-        }
-    };
-
-    const handleBoardClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
-        if (longPressedRef.current) {
-            event.preventDefault();
-            longPressedRef.current = false;
-        }
-    };
-
-    const handleBoardContextMenu = (boardId: number, event: ReactMouseEvent<HTMLAnchorElement>) => {
-        event.preventDefault();
-        openBoardContextMenu(boardId, event.clientX, event.clientY);
-    };
-
-    const handleBoardLongPressStart = (boardId: number, event: ReactPointerEvent<HTMLAnchorElement>) => {
-        if (event.pointerType !== "touch") {
-            return;
-        }
-
-        clearLongPress();
-        longPressedRef.current = false;
-        longPressRef.current = window.setTimeout(() => {
-            longPressedRef.current = true;
-            openBoardContextMenu(boardId, event.clientX, event.clientY);
-        }, 600);
+    const handleBoardClick = () => {
+        setActionMenuOpen(false);
     };
 
     const openDeleteDialog = () => {
-        setContextMenuOpen(false);
+        setActionMenuOpen(false);
         setDeleteDialogOpen(true);
     };
 
@@ -135,16 +105,14 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
         setCreateBoardOpen,
         boardListMessage,
         setBoardListMessage,
-        contextMenuOpen,
-        contextMenuPosition,
+        actionMenuOpen,
+        actionMenuPosition,
         deleteDialogOpen,
         menuRef,
         handleCreateBoardClick,
         handleBoardCreated,
         handleBoardClick,
-        handleBoardContextMenu,
-        handleBoardLongPressStart,
-        clearLongPress,
+        openBoardActionMenu,
         openDeleteDialog,
         handleDeleteBoard,
         closeDeleteDialog,

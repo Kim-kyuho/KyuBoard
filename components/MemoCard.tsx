@@ -1,7 +1,8 @@
 import { Rnd } from "react-rnd";
-import MemoContextMenu from "./MemoContextMenu";
+import MemoActionMenu from "./MemoActionMenu";
 import ConfirmDialog from "@/components/ConfrimDialog";
 import MemoEditor from "./MemoEditor";
+import { EllipsisVertical } from "lucide-react";
 import { MemoCardMemo, useMemoCard } from "@/hooks/useMemoCard";
 
 type MemoCardProps = {
@@ -52,9 +53,9 @@ export default function MemoCard(props: MemoCardProps) {
         onDelete,
     } = props;
     const {
-        contextMenuOpen,
-        setContextMenuOpen,
-        contextMenuPosition,
+        actionMenuOpen,
+        setActionMenuOpen,
+        actionMenuPosition,
         memoColor,
         setMemoColor,
         menuRef,
@@ -70,14 +71,12 @@ export default function MemoCard(props: MemoCardProps) {
         editMemo,
         handleDoubleTap,
         handleMemoPress,
-        handleContextMenu,
-        handleContextMenuTouch,
+        openMemoActionMenu,
         handleDragStop,
         handleResizeStart,
         handleResizeStop,
         openDeleteDialog,
         closeDeleteDialog,
-        clearLongPress,
         confirmDelete,
     } = useMemoCard({
         memo,
@@ -96,13 +95,6 @@ export default function MemoCard(props: MemoCardProps) {
         <>
             <Rnd 
                 className={`memo-rnd-${memo.id} select-none rounded-xl ${isFocused ? "ring-2 ring-indigo-700 ring-offset-2" : ""}`}
-                style={{
-                    WebkitTouchCallout: "none",
-                    WebkitUserSelect: isEditing ? "text" : "none",
-                    userSelect: isEditing ? "text" : "none",
-                    touchAction: isEditing ? "auto" : "none",
-                    cursor: isEditing ? "text" : "default",
-                }}
                 default={{
                     x: memo.x,
                     y: memo.y,
@@ -122,10 +114,6 @@ export default function MemoCard(props: MemoCardProps) {
                 dragHandleClassName="memo-drag-handle"
                 disableDragging={!isEditing || !canEdit}
                 enableResizing={isEditing}
-                onContextMenu={handleContextMenu}
-                onPointerDown={handleContextMenuTouch}
-                onPointerUp={clearLongPress}
-                onPointerMove={clearLongPress}
                 onDragStop={handleDragStop}
                 onResizeStart={handleResizeStart}
                 onResizeStop={handleResizeStop}
@@ -137,7 +125,7 @@ export default function MemoCard(props: MemoCardProps) {
                     {memo.isPublic ? (
                         isEditing ? (
                             <div
-                                className="h-full w-full rounded-xl p-4 shadow-md text-neutral-900"
+                                className="relative h-full w-full rounded-xl p-4 shadow-md text-neutral-900"
                                 ref={memoFocusRef}
                                 tabIndex={-1}
                                 style={{
@@ -145,10 +133,19 @@ export default function MemoCard(props: MemoCardProps) {
                                     cursor: "text",
                                 }}
                             >
-                            <MemoEditor
-                                content={memoContent}
-                                onChange={setMemoContent}
-                            />
+                                <button
+                                    type="button"
+                                    className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-neutral-500 opacity-30 backdrop-blur-sm transition duration-150 hover:bg-white/80 hover:text-neutral-900 hover:opacity-100 hover:shadow-sm active:scale-95"
+                                    onClick={(event) => {
+                                        openMemoActionMenu(event.clientX, event.clientY);
+                                    }}
+                                >
+                                    <EllipsisVertical className="h-8 w-8" />
+                                </button>
+                                <MemoEditor
+                                    content={memoContent}
+                                    onChange={setMemoContent}
+                                />
                             </div>
                         ) : (
                             <div
@@ -200,15 +197,15 @@ export default function MemoCard(props: MemoCardProps) {
                 </div>
             </Rnd>
         
-            {contextMenuOpen && (
-                <MemoContextMenu
+            {actionMenuOpen && (
+                <MemoActionMenu
                     ref={menuRef}
-                    contextMenuPosition={contextMenuPosition}
+                    actionMenuPosition={actionMenuPosition}
                     zoom={zoom}
                     isEditing={isEditing}
                     onChangeColor={(color: string) => {
                         setMemoColor(color);
-                        setContextMenuOpen(false);
+                        setActionMenuOpen(false);
                     }}
                     onDelete={openDeleteDialog}
                 />

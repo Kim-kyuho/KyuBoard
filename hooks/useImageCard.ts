@@ -74,12 +74,11 @@ export function useImageCard({
         height: image.height,
     });
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [contextMenuOpen, setContextMenuOpen] = useState(false);
-    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+    const [actionMenuOpen, setActionMenuOpen] = useState(false);
+    const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
 
     const menuRef = useRef<HTMLDivElement | null>(null);
     const lastImageTapRef = useRef(0);
-    const longPressRef = useRef<number | null>(null);
 
     const saveImageDraft = useCallback(() => {
         if (image.imageId < 0) {
@@ -125,10 +124,6 @@ export function useImageCard({
         onUpdate,
     ]);
 
-    const isTouchDevice = () =>
-        typeof window !== "undefined" &&
-        ("ontouchstart" in window || navigator.maxTouchPoints > 0);
-
     const getBoardPoint = (clientX: number, clientY: number) => {
         const board = document.querySelector(".kyu-board");
         const boardRect = board?.getBoundingClientRect();
@@ -169,7 +164,7 @@ export function useImageCard({
             const isPressInsideMenu = menuRef.current?.contains(target);
 
             if (!isPressInsideMenu) {
-                setContextMenuOpen(false);
+                setActionMenuOpen(false);
             }
         };
 
@@ -188,7 +183,7 @@ export function useImageCard({
             if (isSelected && !isPressInsideImage && !isPressInsideMenu) {
                 saveImageDraft();
                 onSelectClear();
-                setContextMenuOpen(false);
+                setActionMenuOpen(false);
                 return;
             }
         };
@@ -206,46 +201,15 @@ export function useImageCard({
         event.stopPropagation();
     };
 
-    const handleContextMenu = (event: ReactMouseEvent<HTMLElement>) => {
-        event.preventDefault();
-
+    const openImageActionMenu = (clientX: number, clientY: number) => {
         if (!canEdit) {
             onPermissionDenied();
             return;
         }
 
-        if (isTouchDevice()) {
-            return;
-        }
-
-        const { x, y } = getBoardPoint(event.clientX, event.clientY);
-        setContextMenuPosition({ x, y });
-        setContextMenuOpen(true);
-    };
-
-    const handleLongPressStart = (event: ReactPointerEvent<HTMLElement>) => {
-        if (!canEdit) {
-            onPermissionDenied();
-            return;
-        }
-
-        if (event.pointerType !== "touch") {
-            return;
-        }
-
-        const { x, y } = getBoardPoint(event.clientX, event.clientY);
-
-        longPressRef.current = window.setTimeout(() => {
-            setContextMenuPosition({ x, y });
-            setContextMenuOpen(true);
-        }, 600);
-    };
-
-    const clearLongPress = () => {
-        if (longPressRef.current) {
-            window.clearTimeout(longPressRef.current);
-            longPressRef.current = null;
-        }
+        const { x, y } = getBoardPoint(clientX, clientY);
+        setActionMenuPosition({ x, y });
+        setActionMenuOpen((prev) => !prev);
     };
 
     const handleDragStop = (_event: RndDragEvent, data: DraggableData) => {
@@ -262,7 +226,7 @@ export function useImageCard({
     };
 
     const openDeleteDialog = () => {
-        setContextMenuOpen(false);
+        setActionMenuOpen(false);
         setDeleteDialogOpen(true);
     };
 
@@ -279,15 +243,13 @@ export function useImageCard({
     return {
         imageState,
         deleteDialogOpen,
-        contextMenuOpen,
-        contextMenuPosition,
+        actionMenuOpen,
+        actionMenuPosition,
         menuRef,
         selectImage,
         handleDoubleTap,
         handleImagePress,
-        handleContextMenu,
-        handleLongPressStart,
-        clearLongPress,
+        openImageActionMenu,
         handleDragStop,
         handleResizeStop,
         openDeleteDialog,

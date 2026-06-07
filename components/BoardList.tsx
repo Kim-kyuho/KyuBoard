@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { EllipsisVertical, Plus } from "lucide-react";
 import { useState } from "react";
 import BoardMenu from "./BoardMenu";
 import BoardMessage from "./BoardMessage";
@@ -9,7 +9,7 @@ import SignInModal from "./SignInModal";
 import SignUpModal from "./SignUpModal";
 import CreateBoardModal from "./CreateBoardModal";
 import ConfirmDialog from "./ConfrimDialog";
-import BoardContextMenu from "./BoardContextMenu";
+import BoardActionMenu from "./BoardActionMenu";
 import { useBoardAuth } from "@/hooks/useBoardAuth";
 import { BoardListBoard, useBoardList } from "@/hooks/useBoardList";
 
@@ -33,16 +33,14 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
         setCreateBoardOpen,
         boardListMessage,
         setBoardListMessage,
-        contextMenuOpen,
-        contextMenuPosition,
+        actionMenuOpen,
+        actionMenuPosition,
         deleteDialogOpen,
         menuRef,
         handleCreateBoardClick,
         handleBoardCreated,
         handleBoardClick,
-        handleBoardContextMenu,
-        handleBoardLongPressStart,
-        clearLongPress,
+        openBoardActionMenu,
         openDeleteDialog,
         handleDeleteBoard,
         closeDeleteDialog,
@@ -96,44 +94,59 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                 <div className="mx-auto max-w-4xl">
                     <div className="grid grid-cols-2 gap-5" >
                         {boardList.map((board) => (
-                            <Link
+                            <div
                                 key={board.boardId}
-                                href={`/boards/${board.boardId}`}
-                                className="group block select-none"
-                                draggable={false}
+                                className="group relative select-none"
                                 style={{
                                     WebkitTouchCallout: "none",
                                     WebkitUserSelect: "none",
                                     userSelect: "none",
                                     touchAction: "manipulation",
                                 }}
-                                onClick={handleBoardClick}
-                                onContextMenu={(event) => handleBoardContextMenu(board.boardId, event)}
-                                onPointerDown={(event) => handleBoardLongPressStart(board.boardId, event)}
-                                onPointerUp={clearLongPress}
-                                onPointerMove={clearLongPress}
-                                onPointerCancel={clearLongPress}
                             >
-                                <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-neutral-200 transition group-hover:-translate-y-0.5 group-hover:shadow-md">
-                                    {/* 보드 미리보기 영역 */}
-                                    <div className="aspect-video bg-white">
-                                        <div
-                                            className="flex h-full w-full items-center justify-center text-2xl font-bold text-neutral-300"
-                                            style={{
-                                                backgroundImage:
-                                                    "radial-gradient(#d4d4d8 1px, transparent 1px)",
-                                                backgroundSize: "12px 12px",
-                                            }}
-                                        />
+                                <Link
+                                    href={`/boards/${board.boardId}`}
+                                    className="block"
+                                    draggable={false}
+                                    onClick={handleBoardClick}
+                                >
+                                    <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-neutral-200 transition group-hover:-translate-y-0.5 group-hover:shadow-md">
+                                        {/* 보드 미리보기 영역 */}
+                                        <div className="aspect-video bg-white">
+                                            <div
+                                                className="flex h-full w-full items-center justify-center text-2xl font-bold text-neutral-300"
+                                                style={{
+                                                    backgroundImage:
+                                                        "radial-gradient(#d4d4d8 1px, transparent 1px)",
+                                                    backgroundSize: "12px 12px",
+                                                }}
+                                            />
+                                        </div>
+                                        {/* 보드 제목 영역 */}
+                                        <div className="border-t border-neutral-100 px-3 py-2">
+                                            <p className="truncate text-sm font-semibold text-neutral-900">
+                                                {board.title}
+                                            </p>
+                                        </div>
                                     </div>
-                                    {/* 보드 제목 영역 */}
-                                    <div className="border-t border-neutral-100 px-3 py-2">
-                                        <p className="truncate text-sm font-semibold text-neutral-900">
-                                            {board.title}
-                                        </p>
-                                    </div>
-                                </div>
-                            </Link>
+                                </Link>
+                                <button
+                                    type="button"
+                                    aria-label="Board actions"
+                                    className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/70 text-neutral-500 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-neutral-900 active:scale-95"
+                                    onPointerDown={(event) => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                    }}
+                                    onClick={(event) => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        openBoardActionMenu(board.boardId, event.clientX, event.clientY);
+                                    }}
+                                >
+                                    <EllipsisVertical className="h-5 w-5" />
+                                </button>
+                            </div>
                         ))}
 
                         {/* New Board 버튼 - admin권한이 있는 경우 보드 생성 모달을 표시 */}
@@ -154,11 +167,11 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                     </div>
                 </div>
             </main>
-            {/* 컨텍스트 메뉴: Delete 버튼이 있는 메뉴 - 보드 카드에서 우클릭 또는 길게 누름 시 열림 */}
-            {contextMenuOpen && (
-                <BoardContextMenu
+            {/* 액션 메뉴: Delete 버튼이 있는 메뉴 - 보드 카드 우상단 버튼 클릭 시 열림 */}
+            {actionMenuOpen && (
+                <BoardActionMenu
                     ref={menuRef}
-                    contextMenuPosition={contextMenuPosition}
+                    actionMenuPosition={actionMenuPosition}
                     onDelete={openDeleteDialog}
                 />
             )}

@@ -135,6 +135,7 @@ export default function MemoEditor({
   }, [editor]);
 
   const handleEditorPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
     if (!editor || (event.pointerType !== "touch" && event.pointerType !== "mouse")) {
       return;
     }
