@@ -8,7 +8,7 @@ import BoardMessage from "./BoardMessage";
 import SignInModal from "./SignInModal";
 import SignUpModal from "./SignUpModal";
 import CreateBoardModal from "./CreateBoardModal";
-import ConfirmDialog from "./ConfrimDialog";
+import ConfirmDialog from "./ConfirmDialog";
 import BoardActionMenu from "./BoardActionMenu";
 import { useBoardAuth } from "@/hooks/useBoardAuth";
 import { BoardListBoard, useBoardList } from "@/hooks/useBoardList";

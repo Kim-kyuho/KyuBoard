@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Rnd } from "react-rnd";
 import { EllipsisVertical } from "lucide-react";
 import MemoActionMenu from "./MemoActionMenu";
-import ConfirmDialog from "@/components/ConfrimDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { MemoCardMemo, useMemoCard } from "@/hooks/useMemoCard";
 import MemoEditor from "./MemoEditor";
 import type { MemoEditorHandle } from "./MemoEditor";

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Rnd } from "react-rnd";
 import { EllipsisVertical } from "lucide-react";
-import ConfirmDialog from "@/components/ConfrimDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import ImageActionMenu from "./ImageActionMenu";
 import { ImageCardImage, useImageCard } from "@/hooks/useImageCard";
 
