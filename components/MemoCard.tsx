@@ -1,9 +1,11 @@
+import { useRef } from "react";
 import { Rnd } from "react-rnd";
+import { EllipsisVertical } from "lucide-react";
 import MemoActionMenu from "./MemoActionMenu";
 import ConfirmDialog from "@/components/ConfrimDialog";
-import MemoEditor from "./MemoEditor";
-import { EllipsisVertical } from "lucide-react";
 import { MemoCardMemo, useMemoCard } from "@/hooks/useMemoCard";
+import MemoEditor from "./MemoEditor";
+import type { MemoEditorHandle } from "./MemoEditor";
 
 type MemoCardProps = {
     memo: MemoCardMemo;
@@ -91,6 +93,8 @@ export default function MemoCard(props: MemoCardProps) {
         onDelete,
     });
 
+    const memoEditorRef = useRef<MemoEditorHandle>(null);
+
     return (
         <>
             <Rnd 
@@ -143,6 +147,7 @@ export default function MemoCard(props: MemoCardProps) {
                                     <EllipsisVertical className="h-8 w-8" />
                                 </button>
                                 <MemoEditor
+                                    ref={memoEditorRef}
                                     content={memoContent}
                                     onChange={setMemoContent}
                                 />
@@ -205,6 +210,14 @@ export default function MemoCard(props: MemoCardProps) {
                     isEditing={isEditing}
                     onChangeColor={(color: string) => {
                         setMemoColor(color);
+                        setActionMenuOpen(false);
+                    }}
+                    onCodeBlock={() => {
+                        memoEditorRef.current?.toggleCodeBlock();
+                        setActionMenuOpen(false);
+                    }}
+                    onBlockQuote={() => {
+                        memoEditorRef.current?.toggleBlockQuote();
                         setActionMenuOpen(false);
                     }}
                     onDelete={openDeleteDialog}

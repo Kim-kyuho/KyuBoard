@@ -1,6 +1,7 @@
 "use client";
 
 import { Ref } from "react";
+import { Trash2 } from "lucide-react";
 import PressableButton from "./PressableButton";
 
 interface BoardActionMenuProps {
@@ -25,7 +26,10 @@ export default function BoardActionMenu({
             }}
         >
             <PressableButton variant="menu" onClick={onDelete}>
-                Delete
+                <span className="flex w-full items-center gap-2 text-rose-600">
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete</span>
+                </span>
             </PressableButton>
         </div>
     );
