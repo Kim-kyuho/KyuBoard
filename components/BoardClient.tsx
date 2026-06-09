@@ -222,13 +222,20 @@ export default function BoardClient(
     
          <main
             ref={imageLocationRef}
-            className="h-screen w-screen select-none overflow-auto bg-neutral-200"
+            className="h-screen w-screen select-none bg-neutral-200"
             onClick={()=>{
                 setPermissionMessage("");
                 setMemoMessage("");
             }}
         >
             <div
+                className="board-scroll-layer h-full w-full overflow-auto"
+                onPointerDown={handleBoardPanStart}
+                onPointerMove={handleBoardPanMove}
+                onPointerUp={handleBoardPanEnd}
+            >
+            <div
+                className="board-size-layer"
                 style={{
                     width: `${boardWidth * boardZoom}px`,
                     height: `${boardHeight * boardZoom}px`,
@@ -236,9 +243,6 @@ export default function BoardClient(
             >
                 <div
                     className="kyu-board relative bg-white"
-                    onPointerDown={handleBoardPanStart}
-                    onPointerMove={handleBoardPanMove}
-                    onPointerUp={handleBoardPanEnd}
                     onClick={(e)=>{
                         setPermissionMessage("");
                         setMemoMessage("");
@@ -302,6 +306,7 @@ export default function BoardClient(
                         />
                     ))}
                 </div>
+            </div>
             </div>
         </main>
     </>
