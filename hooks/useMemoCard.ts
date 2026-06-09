@@ -67,7 +67,6 @@ export function useMemoCard({
     const menuRef = useRef<HTMLDivElement | null>(null);
     const memoFocusRef = useRef<HTMLDivElement | null>(null);
     const lastMemoTapRef = useRef(0);
-    const outsidePressStartRef = useRef<{ x: number; y: number } | null>(null);
 
     const [memoState, setMemoState] = useState({
         x: memo.x,
@@ -184,7 +183,7 @@ export function useMemoCard({
             const isPressInsideMenu = menuRef.current?.contains(target);
             const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
             const isPressInsideMemo = targetElement?.closest(`.memo-rnd-${memo.id}`);
-            const isPressInsideBoard = targetElement?.closest(".kyu-board");
+            const isPressInsideBoard = targetElement?.closest(".board-scroll-layer");
             const isPressInsideEmptyBoard = Boolean(
                 isPressInsideBoard &&
                 !isPressInsideMemo &&
@@ -206,21 +205,14 @@ export function useMemoCard({
                 onFocusClear();
             }
 
-            outsidePressStartRef.current = null;
-        };
-
-        const clearOutsidePressStart = () => {
-            outsidePressStartRef.current = null;
         };
 
         document.addEventListener("pointerdown", handlePressOutsideMenu);
         document.addEventListener("pointerup", handlePressOutside);
-        document.addEventListener("pointercancel", clearOutsidePressStart);
 
         return () => {
             document.removeEventListener("pointerdown", handlePressOutsideMenu);
             document.removeEventListener("pointerup", handlePressOutside);
-            document.removeEventListener("pointercancel", clearOutsidePressStart);
         };
     }, [isEditing, isFocused, memo.id, saveMemo, onFocusClear]);
 
