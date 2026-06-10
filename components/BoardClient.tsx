@@ -221,7 +221,6 @@ export default function BoardClient(
         <BoardMessage type = "memo" message = {memoMessage} />
     
          <main
-            ref={imageLocationRef}
             className="h-screen w-screen select-none bg-neutral-200"
             onClick={()=>{
                 setPermissionMessage("");
@@ -229,6 +228,7 @@ export default function BoardClient(
             }}
         >
             <div
+                ref={imageLocationRef}
                 className="board-scroll-layer h-full w-full overflow-auto"
                 onPointerDown={handleBoardPanStart}
                 onPointerMove={handleBoardPanMove}
