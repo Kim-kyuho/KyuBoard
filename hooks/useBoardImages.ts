@@ -26,53 +26,58 @@ type UseBoardImagesOptions = {
     showPermissionMessage: () => void;
     setPermissionMessage: (message: string) => void;
 };
-
+// FUNCTION_PAYLOAD_TOO_LARGE를 막기위해 이미지 업로드 전에 클라이언트에서 이미지를 압축하는 함수
 async function compressImage(file: File) {
-    const image = new Image();
-    const imageUrl = URL.createObjectURL(file);
+    try {
+        const image = new Image();
+        const imageUrl = URL.createObjectURL(file);
 
-    await new Promise<void>((resolve, reject) => {
-        image.onload = () => resolve();
-        image.onerror = reject;
-        image.src = imageUrl;
-    });
+        await new Promise<void>((resolve, reject) => {
+            image.onload = () => resolve();
+            image.onerror = reject;
+            image.src = imageUrl;
+        });
 
-    const maxSize = 2000;
-    const scale = Math.min(
-        maxSize / image.width,
-        maxSize / image.height,
-        1
-    );
-
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(image.width * scale);
-    canvas.height = Math.round(image.height * scale);
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-        throw new Error("Canvas context is not available.");
-    }
-
-    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-    const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-            (result) => {
-                if (!result) reject(new Error("Image compression failed."));
-                else resolve(result);
-            },
-            "image/jpeg",
-            0.82
+        const maxSize = 2000;
+        const scale = Math.min(
+            maxSize / image.width,
+            maxSize / image.height,
+            1
         );
-    });
 
-    URL.revokeObjectURL(imageUrl);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
 
-    return new File(
-        [blob],
-        file.name.replace(/\.[^.]+$/, ".jpg"),
-        { type: "image/jpeg" }
-    );
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+            throw new Error("Canvas context is not available.");
+        }
+
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+                (result) => {
+                    if (!result) reject(new Error("Image compression failed."));
+                    else resolve(result);
+                },
+                "image/jpeg",
+                0.82
+            );
+        });
+
+        URL.revokeObjectURL(imageUrl);
+
+        return new File(
+            [blob],
+            file.name.replace(/\.[^.]+$/, ".jpg"),
+            { type: "image/jpeg" }
+        );
+    }   catch (error) { 
+        console.error("Error compressing image:", error);
+        return file;
+    }
 }
 
 export function useBoardImages({
@@ -157,7 +162,7 @@ export function useBoardImages({
             boardId,
             publicId: "",
             secureUrl: tempImageUrl,
-            fileName: file.name,
+            fileName: compressedFile.name,
             file: compressedFile,
             x: Math.round(x),
             y: Math.round(y),
