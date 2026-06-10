@@ -35,7 +35,7 @@ export function useBoardImages({
     showPermissionMessage,
     setPermissionMessage,
 }: UseBoardImagesOptions) {
-    const imageLocationRef = useRef<HTMLElement | null>(null);
+    const imageLocationRef = useRef<HTMLDivElement | null>(null);
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const [images, setImages] = useState(initialImages);
     const [selectedImageId, setSelectedImageId] = useState<number | null>(null);
