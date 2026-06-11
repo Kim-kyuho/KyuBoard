@@ -84,6 +84,12 @@ const InlineMarkdownInputRules = Extension.create({
 export type MemoEditorHandle = {
   toggleCodeBlock: () => void;
   toggleBlockQuote: () => void;
+  toggleHeading: (level: 1 | 2 | 3 | 4 | 5 | 6) => void;
+  toggleBold: () => void;
+  toggleItalic: () => void;
+  toggleStrike: () => void;
+  setHorizontalRule: () => void;
+  toggleHighlight: () => void;
 };
 
 // 메모 에디터 컴포넌트 - TipTap 리치 텍스트를 적용
@@ -133,6 +139,24 @@ export default function MemoEditor({
     },
     toggleBlockQuote: () => {
       editor?.chain().focus().toggleBlockquote().run();
+    },
+    toggleHeading: (level) => {
+      editor?.chain().focus().toggleHeading({ level }).run();
+    },
+    toggleBold: () => {
+      editor?.chain().focus().toggleBold().run();
+    },
+    toggleItalic: () => {
+      editor?.chain().focus().toggleItalic().run();
+    },
+    toggleStrike: () => {
+      editor?.chain().focus().toggleStrike().run();
+    },
+    setHorizontalRule: () => {
+      editor?.chain().focus().setHorizontalRule().run();
+    },
+    toggleHighlight: () => {
+      editor?.chain().focus().toggleHighlight({ color: "#fce7f3" }).run();
     },
   }), [editor]);
 

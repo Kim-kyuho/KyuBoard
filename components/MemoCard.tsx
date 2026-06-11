@@ -57,7 +57,6 @@ export default function MemoCard(props: MemoCardProps) {
     const {
         actionMenuOpen,
         setActionMenuOpen,
-        actionMenuPosition,
         memoColor,
         setMemoColor,
         menuRef,
@@ -73,7 +72,6 @@ export default function MemoCard(props: MemoCardProps) {
         editMemo,
         handleDoubleTap,
         handleMemoPress,
-        openMemoActionMenu,
         handleDragStop,
         handleResizeStart,
         handleResizeStop,
@@ -82,7 +80,6 @@ export default function MemoCard(props: MemoCardProps) {
         confirmDelete,
     } = useMemoCard({
         memo,
-        zoom,
         canEdit,
         isFocused,
         onFocus,
@@ -140,8 +137,8 @@ export default function MemoCard(props: MemoCardProps) {
                                 <button
                                     type="button"
                                     className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-neutral-500 opacity-30 backdrop-blur-sm transition duration-150 hover:bg-white/80 hover:text-neutral-900 hover:opacity-100 hover:shadow-sm active:scale-95"
-                                    onClick={(event) => {
-                                        openMemoActionMenu(event.clientX, event.clientY);
+                                    onClick={() => {
+                                        setActionMenuOpen((prev) => !prev);
                                     }}
                                 >
                                     <EllipsisVertical className="h-8 w-8" />
@@ -151,6 +148,50 @@ export default function MemoCard(props: MemoCardProps) {
                                     content={memoContent}
                                     onChange={setMemoContent}
                                 />
+                                {actionMenuOpen && (
+                                    <MemoActionMenu
+                                        ref={menuRef}
+                                        zoom={zoom}
+                                        isEditing={isEditing}
+                                        onChangeColor={(color: string) => {
+                                            setMemoColor(color);
+                                            setActionMenuOpen(false);
+                                        }}
+                                        onHeading={(level) => {
+                                            memoEditorRef.current?.toggleHeading(level);
+                                            setActionMenuOpen(false);
+                                        }}
+                                        onBold={() => {
+                                            memoEditorRef.current?.toggleBold();
+                                            setActionMenuOpen(false);
+                                        }}
+                                        onItalic={() => {
+                                            memoEditorRef.current?.toggleItalic();
+                                            setActionMenuOpen(false);
+                                        }}
+                                        onStrike={() => {
+                                            memoEditorRef.current?.toggleStrike();
+                                            setActionMenuOpen(false);
+                                        }}
+                                        onHorizontalRule={() => {
+                                            memoEditorRef.current?.setHorizontalRule();
+                                            setActionMenuOpen(false);
+                                        }}
+                                        onHighlight={() => {
+                                            memoEditorRef.current?.toggleHighlight();
+                                            setActionMenuOpen(false);
+                                        }}
+                                        onCodeBlock={() => {
+                                            memoEditorRef.current?.toggleCodeBlock();
+                                            setActionMenuOpen(false);
+                                        }}
+                                        onBlockQuote={() => {
+                                            memoEditorRef.current?.toggleBlockQuote();
+                                            setActionMenuOpen(false);
+                                        }}
+                                        onDelete={openDeleteDialog}   
+                                    />
+                                )}
                             </div>
                         ) : (
                             <div
@@ -202,27 +243,6 @@ export default function MemoCard(props: MemoCardProps) {
                 </div>
             </Rnd>
         
-            {actionMenuOpen && (
-                <MemoActionMenu
-                    ref={menuRef}
-                    actionMenuPosition={actionMenuPosition}
-                    zoom={zoom}
-                    isEditing={isEditing}
-                    onChangeColor={(color: string) => {
-                        setMemoColor(color);
-                        setActionMenuOpen(false);
-                    }}
-                    onCodeBlock={() => {
-                        memoEditorRef.current?.toggleCodeBlock();
-                        setActionMenuOpen(false);
-                    }}
-                    onBlockQuote={() => {
-                        memoEditorRef.current?.toggleBlockQuote();
-                        setActionMenuOpen(false);
-                    }}
-                    onDelete={openDeleteDialog}
-                />
-            )}
             {deleteDialogOpen && (
                 <ConfirmDialog
                     message="Delete this memo?"

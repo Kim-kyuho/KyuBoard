@@ -23,7 +23,6 @@ export interface ImageCardImage {
 
 type UseImageCardOptions = {
     image: ImageCardImage;
-    zoom: number;
     canEdit: boolean;
     isSelected: boolean;
     onSelect: () => void;
@@ -57,7 +56,6 @@ type UseImageCardOptions = {
 
 export function useImageCard({
     image,
-    zoom,
     canEdit,
     isSelected,
     onSelect,
@@ -75,7 +73,6 @@ export function useImageCard({
     });
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [actionMenuOpen, setActionMenuOpen] = useState(false);
-    const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
 
     const menuRef = useRef<HTMLDivElement | null>(null);
     const lastImageTapRef = useRef(0);
@@ -123,16 +120,6 @@ export function useImageCard({
         onInsert,
         onUpdate,
     ]);
-
-    const getBoardPoint = (clientX: number, clientY: number) => {
-        const board = document.querySelector(".kyu-board");
-        const boardRect = board?.getBoundingClientRect();
-
-        return {
-            x: boardRect ? (clientX - boardRect.left) / zoom : clientX,
-            y: boardRect ? (clientY - boardRect.top) / zoom : clientY,
-        };
-    };
 
     const selectImage = () => {
         if (!canEdit) {
@@ -201,14 +188,12 @@ export function useImageCard({
         event.stopPropagation();
     };
 
-    const openImageActionMenu = (clientX: number, clientY: number) => {
+    const openImageActionMenu = () => {
         if (!canEdit) {
             onPermissionDenied();
             return;
         }
 
-        const { x, y } = getBoardPoint(clientX, clientY);
-        setActionMenuPosition({ x, y });
         setActionMenuOpen((prev) => !prev);
     };
 
@@ -244,7 +229,6 @@ export function useImageCard({
         imageState,
         deleteDialogOpen,
         actionMenuOpen,
-        actionMenuPosition,
         menuRef,
         selectImage,
         handleDoubleTap,
