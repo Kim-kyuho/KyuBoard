@@ -60,7 +60,6 @@ export default function ImageCard(props: ImageCardProps) {
         imageState,
         deleteDialogOpen,
         actionMenuOpen,
-        actionMenuPosition,
         menuRef,
         selectImage,
         handleDoubleTap,
@@ -73,7 +72,6 @@ export default function ImageCard(props: ImageCardProps) {
         closeDeleteDialog,
     } = useImageCard({
         image,
-        zoom,
         canEdit,
         isSelected,
         onSelect,
@@ -128,12 +126,19 @@ export default function ImageCard(props: ImageCardProps) {
                             type="button"
                             aria-label="Image actions"
                             className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-neutral-500 opacity-30 backdrop-blur-sm transition duration-150 hover:bg-white/80 hover:text-neutral-900 hover:opacity-100 hover:shadow-sm active:scale-95"
-                            onPointerUp={(event) => {
-                                openImageActionMenu(event.clientX, event.clientY);
+                            onPointerUp={() => {
+                                openImageActionMenu();
                             }}
                         >
                             <EllipsisVertical className="h-8 w-8" />
                         </button>
+                    )}
+                    {actionMenuOpen && (
+                        <ImageActionMenu
+                            ref={menuRef}
+                            zoom={zoom}
+                            onDelete={openDeleteDialog}
+                        />
                     )}
                     <Image
                         src={image.secureUrl}
@@ -145,15 +150,6 @@ export default function ImageCard(props: ImageCardProps) {
                     />
                 </div>
             </Rnd>
-
-            {actionMenuOpen && (
-                <ImageActionMenu
-                    ref={menuRef}
-                    actionMenuPosition={actionMenuPosition}
-                    zoom={zoom}
-                    onDelete={openDeleteDialog}
-                />
-            )}
 
             {deleteDialogOpen && (
                 <ConfirmDialog

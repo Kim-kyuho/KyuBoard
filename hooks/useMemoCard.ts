@@ -15,7 +15,6 @@ export interface MemoCardMemo {
 
 type UseMemoCardOptions = {
     memo: MemoCardMemo;
-    zoom: number;
     canEdit: boolean;
     isFocused: boolean;
     onFocus: () => void;
@@ -48,7 +47,6 @@ type UseMemoCardOptions = {
 
 export function useMemoCard({
     memo,
-    zoom,
     canEdit,
     isFocused,
     onFocus,
@@ -59,7 +57,6 @@ export function useMemoCard({
     onDelete,
 }: UseMemoCardOptions) {
     const [actionMenuOpen, setActionMenuOpen] = useState(false);
-    const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
     const [isEditing, setIsEditing] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
@@ -221,20 +218,6 @@ export function useMemoCard({
         onFocus();
     };
 
-    const openMemoActionMenu = (clientX: number, clientY: number) => {
-        const board = document.querySelector(".kyu-board");
-        const rect = board?.getBoundingClientRect();
-
-        if (rect) {
-            setActionMenuPosition({
-                x: (clientX - rect.left) / zoom - 190,
-                y: (clientY - rect.top) / zoom,
-            });
-        }
-
-        setActionMenuOpen((prev) => !prev);
-    };
-
     const handleDragStop = (_event: RndDragEvent, data: DraggableData) => {
         setMemoState((prev) => ({ ...prev, x: data.x, y: data.y }));
     };
@@ -270,8 +253,6 @@ export function useMemoCard({
     return {
         actionMenuOpen,
         setActionMenuOpen,
-        actionMenuPosition,
-        setActionMenuPosition,
         memoColor,
         setMemoColor,
         menuRef,
@@ -287,7 +268,6 @@ export function useMemoCard({
         editMemo,
         handleDoubleTap,
         handleMemoPress,
-        openMemoActionMenu,
         handleDragStop,
         handleResizeStart,
         handleResizeStop,
