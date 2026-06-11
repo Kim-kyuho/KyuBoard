@@ -156,7 +156,7 @@ export default function MemoEditor({
       editor?.chain().focus().setHorizontalRule().run();
     },
     toggleHighlight: () => {
-      editor?.chain().focus().toggleHighlight({ color: "#fce7f3" }).run();
+      editor?.chain().focus().toggleHighlight({ color: "#fbca93" }).run();
     },
   }), [editor]);
 
