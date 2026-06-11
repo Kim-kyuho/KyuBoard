@@ -1,6 +1,6 @@
 import { UIEvent, useEffect, useRef, useState } from "react";
 
-export function useMemoContextMenu({
+export function useMemoActionMenu({
   onChangeColor,
   onHeading,
 }: {

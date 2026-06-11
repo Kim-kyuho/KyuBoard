@@ -1,7 +1,7 @@
 "use client";
 
 import { Ref } from "react";
-import { useMemoContextMenu } from "@/hooks/useMemoActionMenu";
+import { useMemoActionMenu } from "@/hooks/useMemoActionMenu";
 import { Bold, ChevronDown, Highlighter, Italic, Minus, Palette, Heading, Code2, Quote, Strikethrough, Trash2 } from "lucide-react";
 import PressableButton from "./PressableButton";
 
@@ -48,7 +48,7 @@ export default function MemoActionMenu({
         handleColorSelect,
         handleHeadingSelect,
         handleMenuScroll,
-    } = useMemoContextMenu({ onChangeColor, onHeading });
+    } = useMemoActionMenu({ onChangeColor, onHeading });
 
     return (
         <div
