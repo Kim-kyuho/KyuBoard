@@ -116,21 +116,11 @@ export default function ImageCard(props: ImageCardProps) {
                 onResizeStop={handleResizeStop}
             >
                 <div
-                    className="relative h-full w-full"
+                    className="relative h-full w-full overflow-hidden rounded-xl bg-white shadow-md"
                     onClick={handleImagePress}
                     onDoubleClick={selectImage}
                     onPointerDown={handleDoubleTap}
                 >
-                    <div className="relative h-full w-full overflow-hidden rounded-xl bg-white shadow-md">
-                        <Image
-                            src={image.secureUrl}
-                            alt={image.fileName ?? "Uploaded image"}
-                            fill
-                            draggable={false}
-                            sizes={`${Math.round(imageState.width)}px`}
-                            className="object-contain"
-                        />
-                    </div>
                     {isSelected && (
                         <button
                             type="button"
@@ -150,6 +140,14 @@ export default function ImageCard(props: ImageCardProps) {
                             onDelete={openDeleteDialog}
                         />
                     )}
+                    <Image
+                        src={image.secureUrl}
+                        alt={image.fileName ?? "Uploaded image"}
+                        fill
+                        draggable={false}
+                        sizes={`${Math.round(imageState.width)}px`}
+                        className="object-contain"
+                    />
                 </div>
             </Rnd>
 
