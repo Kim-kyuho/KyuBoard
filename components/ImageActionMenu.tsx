@@ -24,7 +24,12 @@ export default function ImageActionMenu({
                 transformOrigin: "top right",
             }}
         >
-            <PressableButton variant="menu" onClick={onDelete}>
+            <PressableButton
+                variant="menu"
+                onPointerUp={() => {
+                    onDelete();
+                }}
+            >
                 <span className="flex w-full items-center gap-2 text-rose-600">
                     <Trash2 className="h-4 w-4" />
                     <span>Delete</span>
