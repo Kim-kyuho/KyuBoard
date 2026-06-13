@@ -76,6 +76,7 @@ export function useImageCard({
 
     const menuRef = useRef<HTMLDivElement | null>(null);
     const lastImageTapRef = useRef(0);
+    const imageStateRef = useRef(imageState);
     
     const saveImageDraft = useCallback(() => {
         if (image.imageId < 0) {
@@ -83,17 +84,21 @@ export function useImageCard({
                 return;
             }
 
+            const latestImageState = imageStateRef.current;
+
             onInsert(
                 image.imageId,
                 image.file,
                 image.boardId,
-                Math.round(imageState.x),
-                Math.round(imageState.y),
-                Math.round(imageState.width),
-                Math.round(imageState.height),
+                Math.round(latestImageState.x),
+                Math.round(latestImageState.y),
+                Math.round(latestImageState.width),
+                Math.round(latestImageState.height),
             );
             return;
         }
+
+        const latestImageState = imageStateRef.current;
 
         onUpdate(
             image.imageId,
@@ -101,10 +106,10 @@ export function useImageCard({
             image.publicId,
             image.secureUrl,
             image.fileName,
-            Math.round(imageState.x),
-            Math.round(imageState.y),
-            Math.round(imageState.width),
-            Math.round(imageState.height),
+            Math.round(latestImageState.x),
+            Math.round(latestImageState.y),
+            Math.round(latestImageState.width),
+            Math.round(latestImageState.height),
         );
     }, [
         image.boardId,
@@ -113,10 +118,6 @@ export function useImageCard({
         image.imageId,
         image.publicId,
         image.secureUrl,
-        imageState.height,
-        imageState.width,
-        imageState.x,
-        imageState.y,
         onInsert,
         onUpdate,
     ]);
@@ -168,9 +169,11 @@ export function useImageCard({
             }
 
             if (isSelected && !isPressInsideImage && !isPressInsideMenu) {
-                saveImageDraft();
-                onSelectClear();
-                setActionMenuOpen(false);
+                window.setTimeout(() => {
+                    saveImageDraft();
+                    onSelectClear();
+                    setActionMenuOpen(false);
+                }, 0);
                 return;
             }
         };
@@ -198,16 +201,20 @@ export function useImageCard({
     };
 
     const handleDragStop = (_event: RndDragEvent, data: DraggableData) => {
-        setImageState((prev) => ({ ...prev, x: data.x, y: data.y }));
+        const nextImageState = { ...imageStateRef.current, x: data.x, y: data.y };
+        imageStateRef.current = nextImageState;
+        setImageState(nextImageState);
     };
 
     const handleResizeStop: RndResizeCallback = (_event, _direction, ref, _delta, position) => {
-        setImageState({
+        const nextImageState = {
             x: position.x,
             y: position.y,
             width: ref.offsetWidth,
             height: ref.offsetHeight,
-        });
+        };
+        imageStateRef.current = nextImageState;
+        setImageState(nextImageState);
     };
 
     const openDeleteDialog = () => {
