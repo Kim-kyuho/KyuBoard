@@ -3,7 +3,7 @@
 import BoardClient from "@/components/BoardClient";
 import { getDb } from "@/lib/db";
 import { db_boards, db_images, db_memos } from "@/lib/db/schema";
-import { eq, asc, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 export default async function BoardPage({
     params,
@@ -13,11 +13,6 @@ export default async function BoardPage({
     const db = getDb();
     const { boardId } = await params;
     const boardIdNumber = Number(boardId);
-
-    const allBoards = await db
-        .select({ boardId: db_boards.boardId })
-        .from(db_boards)
-        .orderBy(asc(db_boards.boardId));
 
     const currentBoard = await db
         .select()
@@ -61,7 +56,6 @@ export default async function BoardPage({
 
     return (
         <BoardClient
-            boardIds={allBoards.map((board) => board.boardId)}
             currentBoard={currentBoard[0]}
             mappedImages={mappedImages}
             mappedMemos={mappedMemos}

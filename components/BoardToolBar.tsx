@@ -2,9 +2,11 @@
 
 import PressableButton from "./PressableButton";
 import { Dispatch, SetStateAction } from "react";
-import { Camera, ChevronLeft, ChevronRight, Search, SquarePen, SlidersHorizontal } from "lucide-react";
+import { Eye, EyeOff, Camera, ChevronLeft, ChevronRight, Search, SquarePen, SlidersHorizontal } from "lucide-react";
 
 type BoardToolBarProps = {
+    showBoardToolBar: boolean;
+    setShowBoardToolBar: Dispatch<SetStateAction<boolean>>;
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
     setSearchBarOpen: Dispatch<SetStateAction<boolean>>;
     setWriteClicked: Dispatch<SetStateAction<boolean>>;
@@ -17,6 +19,8 @@ type BoardToolBarProps = {
 };
 
 export default function BoardToolBar({ 
+    showBoardToolBar,
+    setShowBoardToolBar,
     setMenuOpen,
     setSearchBarOpen,
     setWriteClicked, 
@@ -29,8 +33,10 @@ export default function BoardToolBar({
 }: BoardToolBarProps){
     return (
         <>
-        <div 
-            className = "board-toolbar fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-xl px-4 py-3 shadow-md" >
+        {showBoardToolBar && (
+        <div
+            className="board-toolbar fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-0 rounded-xl px-2 py-1 shadow-md"
+        >
             <PressableButton 
                 variant="menu"
                 onClick={() => {
@@ -93,7 +99,16 @@ export default function BoardToolBar({
                 <ChevronRight />
             </PressableButton>
         </div>
+        )}
 
+        <button
+            type="button"
+            className="board-toolbar fixed bottom-7 right-5 z-50 text-neutral-700 transition hover:text-neutral-950 active:scale-95"
+            aria-label={showBoardToolBar ? "Hide board toolbar" : "Show board toolbar"}
+            onClick={() => setShowBoardToolBar((prev) => !prev)}
+        >
+            {showBoardToolBar ? <EyeOff /> : <Eye />}
+        </button>
         </>
     );
 }
