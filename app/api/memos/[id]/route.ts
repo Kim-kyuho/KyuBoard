@@ -4,7 +4,6 @@ import { db_memos } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-// 메모 수정 API - PATCH 요청을 처리하여 특정 ID의 메모를 업데이트
 export async function PATCH(request: NextRequest, {params}: { params: Promise<{ id: string }> }) {
     try {
         const currentUser = await getCurrentUserFromRequest(request);
@@ -28,7 +27,6 @@ export async function PATCH(request: NextRequest, {params}: { params: Promise<{ 
                 message: "Invalid memo id.",
             }, { status: 400 });
         }
-        // 업데이트할 필드가 요청 본문에 존재하는 경우에만 업데이트 객체에 추가 - undefined 체크를 통해 필요한 필드만 업데이트
         if (body.boardId !== undefined) updates.boardId = body.boardId;
         if (body.content !== undefined) updates.content = body.content;
         if (body.x !== undefined) updates.x = body.x;
@@ -64,7 +62,6 @@ export async function PATCH(request: NextRequest, {params}: { params: Promise<{ 
         },{ status: 500 });
     }
 }
-// 메모 삭제 API - DELETE 요청을 처리하여 특정 ID의 메모를 데이터베이스에서 삭제
 export async function DELETE(request: NextRequest, {params}: { params: Promise<{ id: string }> }) {
     try {
         const currentUser = await getCurrentUserFromRequest(request);
