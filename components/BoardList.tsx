@@ -8,6 +8,7 @@ import BoardMessage from "./BoardMessage";
 import SignInModal from "./SignInModal";
 import SignUpModal from "./SignUpModal";
 import CreateBoardModal from "./CreateBoardModal";
+import RenameBoardModal from "./RenameBoardModal";
 import ConfirmDialog from "./ConfirmDialog";
 import BoardActionMenu from "./BoardActionMenu";
 import { useBoardAuth } from "@/hooks/useBoardAuth";
@@ -31,14 +32,19 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
         boardList,
         createBoardOpen,
         setCreateBoardOpen,
+        renameBoardOpen,
+        setRenameBoardOpen,
         boardListMessage,
         setBoardListMessage,
         actionMenuOpen,
-        actionMenuPosition,
+        selectedBoardId,
+        selectedBoardTitle,
+        setSelectedBoardTitle,
         deleteDialogOpen,
         menuRef,
         handleCreateBoardClick,
         handleBoardCreated,
+        handleBoardRenamed,
         handleBoardClick,
         openBoardActionMenu,
         openDeleteDialog,
@@ -81,6 +87,15 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                 />
             )}
 
+            {renameBoardOpen && selectedBoardId !== null && selectedBoardTitle !== null &&(
+                <RenameBoardModal
+                    boardId={selectedBoardId}
+                    title={selectedBoardTitle}
+                    onClose={() => setRenameBoardOpen(false)}
+                    onRenamed={handleBoardRenamed}
+                />
+            )}
+
             <BoardMessage type = "permission" message = {boardListMessage} />
 
             <main className="min-h-screen bg-neutral-100 px-6 py-24" 
@@ -96,7 +111,7 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                         {boardList.map((board) => (
                             <div
                                 key={board.boardId}
-                                className="group relative select-none"
+                                className="group relative select-none rounded-lg bg-white shadow-sm ring-1 ring-neutral-200 transition hover:-translate-y-0.5 hover:shadow-md"
                                 style={{
                                     WebkitTouchCallout: "none",
                                     WebkitUserSelect: "none",
@@ -106,11 +121,11 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                             >
                                 <Link
                                     href={`/boards/${board.boardId}`}
-                                    className="block"
+                                    className="block overflow-hidden rounded-lg"
                                     draggable={false}
                                     onClick={handleBoardClick}
                                 >
-                                    <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-neutral-200 transition group-hover:-translate-y-0.5 group-hover:shadow-md">
+                                    <div>
                                         {/* 보드 미리보기 영역 */}
                                         <div className="aspect-video bg-white">
                                             <div
@@ -141,11 +156,22 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                                     onClick={(event) => {
                                         event.preventDefault();
                                         event.stopPropagation();
-                                        openBoardActionMenu(board.boardId, event.clientX, event.clientY);
+                                        openBoardActionMenu(board.boardId);
                                     }}
                                 >
                                     <EllipsisVertical className="h-5 w-5" />
                                 </button>
+                                {actionMenuOpen && selectedBoardId === board.boardId && (
+                                    <BoardActionMenu
+                                        ref={menuRef}
+                                        onRename={() => {
+                                            setRenameBoardOpen(true);
+                                            setSelectedBoardTitle(board.title);
+                                            
+                                        }}
+                                        onDelete={openDeleteDialog}
+                                    />
+                                )}
                             </div>
                         ))}
 
@@ -167,15 +193,6 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                     </div>
                 </div>
             </main>
-            {/* 액션 메뉴: Delete 버튼이 있는 메뉴 - 보드 카드 우상단 버튼 클릭 시 열림 */}
-            {actionMenuOpen && (
-                <BoardActionMenu
-                    ref={menuRef}
-                    actionMenuPosition={actionMenuPosition}
-                    onDelete={openDeleteDialog}
-                />
-            )}
-
             {deleteDialogOpen && (
                 <ConfirmDialog
                     message="Delete this board and all memos?"

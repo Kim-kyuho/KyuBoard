@@ -7,7 +7,6 @@ import BoardZoomControl from "./BoardZoomControl";
 import ImageCard from "./ImageCard";
 import MemoCard from "@/components/MemoCard";
 import BoardMenu from "./BoardMenu";
-import BoardNavigator from "./BoardNavigator";
 import BoardToolBar from "./BoardToolBar";
 import BoardMessage from "./BoardMessage";
 import BoardSearchPanel from "./BoardSearchPanel";
@@ -21,6 +20,7 @@ import { useBoardZoom } from "@/hooks/useBoardZoom";
 
 interface Board {
   boardId: number;
+  title: string;
   width: number;
   height: number;
 }
@@ -51,11 +51,12 @@ interface Memo {
 
 // 보드 컴포넌트
 export default function BoardClient(
-  {boardIds, currentBoard, mappedImages, mappedMemos}:{boardIds: number[], currentBoard:Board, mappedImages: Image[], mappedMemos: Memo[]}
+  {currentBoard, mappedImages, mappedMemos}:{currentBoard:Board, mappedImages: Image[], mappedMemos: Memo[]}
 ) {
     const boardWidth = currentBoard.width;
     const boardHeight = currentBoard.height;
     const [menuOpen, setMenuOpen] = useState(false);
+    const [showBoardToolBar, setShowBoardToolBar] = useState(true);
     const [writeClicked, setWriteClicked] = useState(false);
     const [permissionMessage, setPermissionMessage] = useState("");
     // **수정시 current-user.ts의 getMemoPermissionMessage를 함꼐 수정할 필요가 있음
@@ -169,14 +170,17 @@ export default function BoardClient(
         />
         <BoardMenu
             menuOpen={menuOpen}
+            currentBoard={currentBoard}
             setMenuOpen={setMenuOpen}
             setSignInOpen={setSignInOpen}
             setSignUpOpen={setSignUpOpen}
             onSignOut={handleSignOut}
             currentUser={currentUser}
         />
-        <BoardNavigator boardIds={boardIds} currentBoardId={currentBoard.boardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/>
+        {/* <BoardNavigator boardIds={boardIds} currentBoardId={currentBoard.boardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/> */}
         <BoardToolBar 
+            showBoardToolBar={showBoardToolBar}
+            setShowBoardToolBar={setShowBoardToolBar}
             setMenuOpen={setMenuOpen}
             setSearchBarOpen={setSearchBarOpen}
             setWriteClicked={setWriteClicked}

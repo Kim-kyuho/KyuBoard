@@ -18,10 +18,11 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
     const router = useRouter();
     const [boardList, setBoardList] = useState(boards);
     const [createBoardOpen, setCreateBoardOpen] = useState(false);
+    const [renameBoardOpen, setRenameBoardOpen] = useState(false);
     const [boardListMessage, setBoardListMessage] = useState("");
     const [actionMenuOpen, setActionMenuOpen] = useState(false);
-    const [actionMenuPosition, setActionMenuPosition] = useState({ x: 0, y: 0 });
     const [selectedBoardId, setSelectedBoardId] = useState<number | null>(null);
+    const [selectedBoardTitle, setSelectedBoardTitle] = useState<string | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -48,11 +49,21 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
         setCreateBoardOpen(true);
     };
 
+    const handleBoardRenamed = (boardId: number, title: string) => {
+        setRenameBoardOpen(false);
+        setBoardList((prev) =>
+        prev.map((board) =>
+            board.boardId === boardId
+                ? { ...board, title }
+                : board
+        ));
+    }
+
     const handleBoardCreated = (boardId: number) => {
         setCreateBoardOpen(false);
         router.push(`/boards/${boardId}`);
     };
-    const openBoardActionMenu = (boardId: number, x: number, y: number) => {
+    const openBoardActionMenu = (boardId: number) => {
         if (currentUser?.role !== "admin") {
             setBoardListMessage("Only administrators can delete boards.");
             return;
@@ -60,7 +71,6 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
 
         setBoardListMessage("");
         setSelectedBoardId(boardId);
-        setActionMenuPosition({ x, y });
         setActionMenuOpen((prev) => selectedBoardId === boardId ? !prev : true);
     };
 
@@ -103,14 +113,19 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
         boardList,
         createBoardOpen,
         setCreateBoardOpen,
+        renameBoardOpen,
+        setRenameBoardOpen,
         boardListMessage,
         setBoardListMessage,
         actionMenuOpen,
-        actionMenuPosition,
+        selectedBoardId,
+        selectedBoardTitle,
+        setSelectedBoardTitle,
         deleteDialogOpen,
         menuRef,
         handleCreateBoardClick,
         handleBoardCreated,
+        handleBoardRenamed,
         handleBoardClick,
         openBoardActionMenu,
         openDeleteDialog,
