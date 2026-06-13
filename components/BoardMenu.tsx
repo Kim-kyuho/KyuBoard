@@ -30,6 +30,11 @@ export default function BoardMenu(
             <Link
             href="/"
             className="transition duration-300 active:scale-105 active:rotate-1 text-sky-500 hover:text-pink-500 font-mono text-1xl sm:text-1xl font-extrabold"
+            style={{
+                WebkitTouchCallout: "none",
+                WebkitUserSelect: "none",
+                userSelect: "none",
+            }}
             >
                 •kyu.board
             </Link>
