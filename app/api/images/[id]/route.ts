@@ -5,7 +5,6 @@ import { eq } from "drizzle-orm";
 import { v2 as cloudinary } from "cloudinary";
 import { NextRequest, NextResponse } from "next/server";
 
-// 이미지 수정 API - PATCH 요청을 처리하여 특정 ID의 이미지 위치와 크기를 업데이트
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
     const currentUser = await getCurrentUserFromRequest(request);
@@ -30,7 +29,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         }, { status: 400 });
     }
 
-    // 업데이트할 필드가 요청 본문에 존재하는 경우에만 업데이트 객체에 추가
     if (body.boardId !== undefined) updates.boardId = body.boardId;
     if (body.publicId !== undefined) updates.publicId = body.publicId;
     if (body.secureUrl !== undefined) updates.secureUrl = body.secureUrl;
@@ -71,7 +69,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 }
 
-// 이미지 삭제 API - DELETE 요청을 처리하여 Cloudinary 이미지와 DB 데이터를 삭제
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
     const currentUser = await getCurrentUserFromRequest(request);

@@ -8,11 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
     try {
-        // 현재 접속한 유저 정보
         const currentUser = await getCurrentUserFromRequest(request);
-        // 유저 상태에 따른 메시지(미접속, 미허가)
         const permissionMessage = getMemoPermissionMessage(currentUser);
-        // 권한이 없는 경우 메시지와 함께 403 상태 코드 리턴// 유저 상태에 따른 메시지가 존재할 경우(유저 상태가 미접속 혹은 미허가의 경우), false와 메시지를 출력
         if (permissionMessage) {
             return NextResponse.json({
                 ok: false,
@@ -54,14 +51,12 @@ export async function POST(request: NextRequest) {
             }, { status: 500 });
         }
 
-        // Configuration
         cloudinary.config({ 
             cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
             api_key: process.env.CLOUDINARY_API_KEY, 
-            api_secret: process.env.CLOUDINARY_API_SECRET, // Click 'View API Keys' above to copy your API secret
+            api_secret: process.env.CLOUDINARY_API_SECRET,
         });
         
-        // Upload an image
         const uploadResult = await new Promise<UploadApiResponse>((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
                 {
@@ -80,7 +75,6 @@ export async function POST(request: NextRequest) {
             uploadStream.end(buffer);
         });
 
-        // 이미지 초기 표시 크기 - 400x300 안에 들어오도록 원본 비율을 유지해서 축소
         const maxWidth = 400;
         const maxHeight = 300;
         const scale = Math.min(
