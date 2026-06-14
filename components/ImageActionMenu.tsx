@@ -26,9 +26,7 @@ export default function ImageActionMenu({
         >
             <PressableButton
                 variant="menu"
-                onPointerUp={() => {
-                    onDelete();
-                }}
+                onClick={onDelete}
             >
                 <span className="flex w-full items-center gap-2 text-rose-600">
                     <Trash2 className="h-4 w-4" />
