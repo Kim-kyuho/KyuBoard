@@ -69,15 +69,15 @@ export default function BoardMenu(
                                 </span>
                             </p>
                             <PressableButton
-                                className="px-2 py-1 text-sm font-semibold text-sky-600 hover:text-sky-500"
+                                className="px-2 py-1 text-sm font-semibold text-red-500 hover:text-sky-500"
                                 onClick={onSignOut}>
                                 Sign-out
                             </PressableButton>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-between border-t border-white/50">
+                        <div className="flex items-center justify-baseline border-t border-white/50">
                             <PressableButton
-                                className="px-2 py-1 text-sm font-semibold text-sky-600 hover:text-sky-500"
+                                className="px-5 py-1 text-sm font-semibold text-sky-600 hover:text-rose-500"
                                 onClick={() => {
                                 setMenuOpen(false);
                                 setSignInOpen(true);
@@ -85,7 +85,7 @@ export default function BoardMenu(
                                 Sign-in
                             </PressableButton>
                             <PressableButton
-                                className="px-2 py-1 text-sm font-semibold text-sky-600 hover:text-sky-500"
+                                className="px-5 py-1 text-sm font-semibold text-indigo-500 hover:text-rose-500"
                                 onClick={() => {
                                 setMenuOpen(false);
                                 setSignUpOpen(true);
