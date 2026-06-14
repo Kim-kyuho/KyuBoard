@@ -141,7 +141,7 @@ export function useImageCard({
         lastImageTapRef.current = currentTime;
 
         if (isDoubleTap) {
-            event.preventDefault();
+            // event.preventDefault();
             selectImage();
         }
     };

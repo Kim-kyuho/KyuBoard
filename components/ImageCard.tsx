@@ -85,6 +85,9 @@ export default function ImageCard(props: ImageCardProps) {
     return (
         <>
             <Rnd
+                data-selected={isSelected}
+                // imageCard컴포넌트의 드래그 이벤트와 충돌을 막기 위한 cancel처리
+                cancel=".image-action-menu"
                 className={`image-rnd-${image.imageId} select-none ${
                     isSelected ? "rounded-xl border-2 border-dashed border-pink-500" : ""
                 }`}
@@ -92,7 +95,6 @@ export default function ImageCard(props: ImageCardProps) {
                     WebkitTouchCallout: "none",
                     WebkitUserSelect: "none",
                     userSelect: "none",
-                    touchAction: "none",
                 }}
                 default={{
                     x: image.x,
