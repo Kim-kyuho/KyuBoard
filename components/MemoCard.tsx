@@ -95,6 +95,7 @@ export default function MemoCard(props: MemoCardProps) {
     return (
         <>
             <Rnd 
+                data-editing={isEditing}
                 className={`memo-rnd-${memo.id} select-none rounded-xl ${isFocused ? "ring-2 ring-indigo-700 ring-offset-2" : ""}`}
                 default={{
                     x: memo.x,
@@ -201,7 +202,6 @@ export default function MemoCard(props: MemoCardProps) {
                                     WebkitTouchCallout: "none",
                                     WebkitUserSelect: "none",
                                     userSelect: "none",
-                                    touchAction: "none",
                                 }}
                                 onDoubleClick={editMemo}
                                 onPointerDown={handleDoubleTap}
@@ -220,7 +220,6 @@ export default function MemoCard(props: MemoCardProps) {
                                 WebkitTouchCallout: "none",
                                 WebkitUserSelect: "none",
                                 userSelect: "none",
-                                touchAction: "none",
                             }}
                         >
                             This memo is private.

@@ -6,6 +6,7 @@ type BoardPanState = {
     startY: number;
     scrollLeft: number;
     scrollTop: number;
+    pressedAt: number;
     isDragging: boolean;
 };
 
@@ -36,7 +37,7 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
         }
 
         return !targetElement.closest(
-            "[class*='memo-rnd-'], [class*='image-rnd-'], .board-toolbar, .confirm-dialog, button, input, textarea, a, [contenteditable='true']"
+            "[data-editing='true'], [data-selected='true'], .board-toolbar, .confirm-dialog, button, input, textarea, a, [contenteditable='true']"
         );
     };
 
@@ -56,16 +57,19 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
             startY: event.clientY,
             scrollLeft: event.currentTarget.scrollLeft,
             scrollTop: event.currentTarget.scrollTop,
+            pressedAt: event.timeStamp,
             isDragging: false,
         };
-
-        event.currentTarget.setPointerCapture(event.pointerId);
     };
 
     const handleBoardPanMove = (event: ReactPointerEvent<HTMLElement>) => {
         const panState = boardPanRef.current;
 
         if (!panState || panState.pointerId !== event.pointerId) {
+            return;
+        }
+        
+        if (event.timeStamp - panState.pressedAt < 160) {
             return;
         }
 
@@ -80,6 +84,7 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
 
             panState.isDragging = true;
             setBoardPanning(true);
+            event.currentTarget.setPointerCapture(event.pointerId);
         }
 
         document.documentElement.dataset.boardPanning = "true";
