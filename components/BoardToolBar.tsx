@@ -33,34 +33,39 @@ export default function BoardToolBar({
     onMermaidCreateClick,
     onPermissionDenied
 }: BoardToolBarProps){
+    const toolbarButtonClassName = "flex h-10 w-10 items-center justify-center px-0 py-0 hover:pl-0 hover:bg-white/80 hover:shadow-sm active:scale-90 active:bg-white active:shadow-inner";
+    const toolbarIconClassName = "h-5 w-5 transition duration-150 ease-out";
+
     return (
         <>
         {showBoardToolBar && (
         <div
-            className="board-toolbar fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-0 rounded-xl px-2 py-1 shadow-md"
+            className="board-toolbar fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-0 bg-white/75 rounded-xl px-2 py-1 shadow-md"
         >
             <PressableButton 
                 variant="menu"
+                className={toolbarButtonClassName}
                 onClick={() => {
                     onFocusPrevMemo();
                     setMenuOpen(false);
                 }}
             >
-                <ChevronLeft />
+                <ChevronLeft className={toolbarIconClassName} />
             </PressableButton>
             <PressableButton 
                 variant="menu"
+                className={toolbarButtonClassName}
                 onClick={() => {
                     setMenuOpen(false);
                     setSearchBarOpen(prev => !prev);
                     }    
                 }
-
             >
-                <Search />
+                <Search className={toolbarIconClassName} />
             </PressableButton>
             <PressableButton 
                 variant="menu"
+                className={toolbarButtonClassName}
                 onClick={() => { 
                     if (!canEditMemos) {
                         onPermissionDenied();
@@ -71,43 +76,47 @@ export default function BoardToolBar({
                     setMenuOpen(false);
                 }}
             >
-                <SquarePen />
+                <SquarePen className={toolbarIconClassName} />
             </PressableButton>
             <PressableButton 
                 variant="menu"
+                className={toolbarButtonClassName}
                 onClick={() => {
                     onImageUploadClick();
                     setMenuOpen(false);
                 }}
             >
-                <Camera />
+                <Camera className={toolbarIconClassName} />
             </PressableButton>
             <PressableButton
                 variant="menu"
+                className={toolbarButtonClassName}
                 onClick={() => {
                     onMermaidCreateClick();
                     setMenuOpen(false);
                 }}
             >
-                <Workflow />
+                <Workflow className={toolbarIconClassName} />
             </PressableButton>
             <PressableButton
                 variant="menu"
+                className={toolbarButtonClassName}
                 onClick={() => {
                     onZoomControlOpen();
                     setMenuOpen(false);
                 }}
             >
-                <SlidersHorizontal/>
+                <SlidersHorizontal className={toolbarIconClassName}/>
             </PressableButton>
             <PressableButton
                 variant="menu"
+                className={toolbarButtonClassName}
                 onClick={() => {
                     onFocusNextMemo();
                     setMenuOpen(false);
                 }}
             >
-                <ChevronRight />
+                <ChevronRight className={toolbarIconClassName} />
             </PressableButton>
         </div>
         )}
