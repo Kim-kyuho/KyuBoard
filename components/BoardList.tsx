@@ -130,14 +130,17 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                                         <div className="aspect-video overflow-hidden bg-white">
                                             <iframe
                                                 src={`/boards/${board.boardId}`}
+                                                sandbox=""
                                                 className="origin-top-left border-0"
                                                 style={{
-                                                    width: "1280px",
-                                                    height: "720px",
+                                                    width: "1920px",
+                                                    height: "1080px",
                                                     transform: "scale(0.5)",
                                                     pointerEvents: "none",
                                                 }}
+                                                
                                             />
+                                            <div className="absolute inset-0" />
                                         </div>
                                         {/* 보드 제목 영역 */}
                                         <div className="border-t border-neutral-100 px-3 py-2">
