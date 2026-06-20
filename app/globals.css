@@ -271,6 +271,13 @@
   padding: 0.0625rem 0.1875rem;
 }
 
+.mermaid-rendered svg {
+  display: block;
+  height: 100% !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

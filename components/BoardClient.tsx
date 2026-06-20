@@ -10,8 +10,10 @@ import BoardMenu from "./BoardMenu";
 import BoardToolBar from "./BoardToolBar";
 import BoardMessage from "./BoardMessage";
 import BoardSearchPanel from "./BoardSearchPanel";
+import MermaidCard from "./MermaidCard";
 import { useBoardAuth } from "@/hooks/useBoardAuth";
 import { useBoardImages } from "@/hooks/useBoardImages";
+import { useBoardMermaids } from "@/hooks/useBoardMermaids";
 import { useBoardMemoFocus } from "@/hooks/useBoardMemoFocus";
 import { useBoardMemos } from "@/hooks/useBoardMemos";
 import { useBoardScroll } from "@/hooks/useBoardScroll";
@@ -49,9 +51,19 @@ interface Memo {
     isPublic: boolean;
 }
 
+interface Mermaid {
+    id: number;
+    boardId: number;
+    source: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
 // 보드 컴포넌트
 export default function BoardClient(
-  {currentBoard, mappedImages, mappedMemos}:{currentBoard:Board, mappedImages: Image[], mappedMemos: Memo[]}
+  {currentBoard, mappedImages, mappedMemos, mappedMermaids}:{currentBoard:Board, mappedImages: Image[], mappedMemos: Memo[], mappedMermaids: Mermaid[]}
 ) {
     const boardWidth = currentBoard.width;
     const boardHeight = currentBoard.height;
@@ -159,6 +171,22 @@ export default function BoardClient(
         setPermissionMessage,
     });
 
+    const {
+        mermaids,
+        handleCreateTempMermaid,
+        handleInsertMermaid,
+        handleUpdateMermaid,
+        handleDeleteMermaid,
+    } = useBoardMermaids({
+        initialMermaids: mappedMermaids,
+        boardId: currentBoard.boardId,
+        boardZoom,
+        canEditMemos,
+        locationRef: imageLocationRef,
+        showPermissionMessage,
+        setPermissionMessage,
+    });
+
   return (
     <>
         <input
@@ -189,6 +217,7 @@ export default function BoardClient(
             onFocusNextMemo={handleFocusNextMemo}
             onZoomControlOpen={showZoomControl}
             onImageUploadClick={handleImageUploadClick}
+            onMermaidCreateClick={handleCreateTempMermaid}
             onPermissionDenied={showPermissionMessage}
         />
         {searchBarOpen && (
@@ -307,6 +336,18 @@ export default function BoardClient(
                             onInsert={handleInsertMemo}
                             onUpdate={handleUpdateMemo}
                             onDelete={handleDeleteMemo}
+                        />
+                    ))}
+                    {mermaids.map((mermaid) => (
+                        <MermaidCard
+                            key={mermaid.id}
+                            mermaid={mermaid}
+                            zoom={boardZoom}
+                            canEdit={canEditMemos}
+                            onPermissionDenied={showPermissionMessage}
+                            onInsert={handleInsertMermaid}
+                            onUpdate={handleUpdateMermaid}
+                            onDelete={handleDeleteMermaid}
                         />
                     ))}
                 </div>
