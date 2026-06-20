@@ -127,13 +127,15 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                                 >
                                     <div>
                                         {/* 보드 미리보기 영역 */}
-                                        <div className="aspect-video bg-white">
-                                            <div
-                                                className="flex h-full w-full items-center justify-center text-2xl font-bold text-neutral-300"
+                                        <div className="aspect-video overflow-hidden bg-white">
+                                            <iframe
+                                                src={`/boards/${board.boardId}`}
+                                                className="origin-top-left border-0"
                                                 style={{
-                                                    backgroundImage:
-                                                        "radial-gradient(#d4d4d8 1px, transparent 1px)",
-                                                    backgroundSize: "12px 12px",
+                                                    width: "1280px",
+                                                    height: "720px",
+                                                    transform: "scale(0.5)",
+                                                    pointerEvents: "none",
                                                 }}
                                             />
                                         </div>
