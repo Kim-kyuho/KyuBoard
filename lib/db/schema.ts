@@ -53,3 +53,16 @@ export const db_images = pgTable("images", {
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const db_mermaids = pgTable("mermaids", {
+    mermaidId: serial("mermaid_id").primaryKey(),
+    boardId: integer("board_id")
+        .notNull()
+        .references(() => db_boards.boardId, { onDelete: "cascade" }),
+    source: text("source").notNull(),
+    x: integer("x").notNull(),
+    y: integer("y").notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

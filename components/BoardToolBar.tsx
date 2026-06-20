@@ -2,7 +2,7 @@
 
 import PressableButton from "./PressableButton";
 import { Dispatch, SetStateAction } from "react";
-import { Eye, EyeOff, Camera, ChevronLeft, ChevronRight, Search, SquarePen, SlidersHorizontal } from "lucide-react";
+import { Eye, EyeOff, Camera, ChevronLeft, ChevronRight, Search, SquarePen, SlidersHorizontal, Workflow } from "lucide-react";
 
 type BoardToolBarProps = {
     showBoardToolBar: boolean;
@@ -15,6 +15,7 @@ type BoardToolBarProps = {
     onFocusNextMemo: () => void;
     onZoomControlOpen: () => void;
     onImageUploadClick: () => void;
+    onMermaidCreateClick: () => void;
     onPermissionDenied: () => void;
 };
 
@@ -29,6 +30,7 @@ export default function BoardToolBar({
     onFocusNextMemo,
     onZoomControlOpen,
     onImageUploadClick,
+    onMermaidCreateClick,
     onPermissionDenied
 }: BoardToolBarProps){
     return (
@@ -79,6 +81,15 @@ export default function BoardToolBar({
                 }}
             >
                 <Camera />
+            </PressableButton>
+            <PressableButton
+                variant="menu"
+                onClick={() => {
+                    onMermaidCreateClick();
+                    setMenuOpen(false);
+                }}
+            >
+                <Workflow />
             </PressableButton>
             <PressableButton
                 variant="menu"

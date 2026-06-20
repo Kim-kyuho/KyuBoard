@@ -1,6 +1,6 @@
 import { getCurrentUserFromRequest } from "@/lib/auth/current-user";
 import { getDb } from "@/lib/db";
-import { db_boards, db_memos } from "@/lib/db/schema";
+import { db_boards, db_memos, db_mermaids } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -99,6 +99,10 @@ export async function DELETE(
         await db
             .delete(db_memos)
             .where(eq(db_memos.boardId, boardIdNumber));
+
+        await db
+            .delete(db_mermaids)
+            .where(eq(db_mermaids.boardId, boardIdNumber));
 
         const deletedBoard = await db
             .delete(db_boards)
