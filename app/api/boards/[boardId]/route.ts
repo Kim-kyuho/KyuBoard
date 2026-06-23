@@ -1,7 +1,8 @@
 import { getCurrentUserFromRequest } from "@/lib/auth/current-user";
 import { getDb } from "@/lib/db";
-import { db_boards, db_memos, db_mermaids } from "@/lib/db/schema";
+import { db_boards, db_images, db_memos, db_mermaids } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { v2 as cloudinary } from "cloudinary";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -95,6 +96,38 @@ export async function DELETE(
                 message: "This board does not exist.",
             },{ status: 404 });
         }
+
+        if (
+            !process.env.CLOUDINARY_CLOUD_NAME ||
+            !process.env.CLOUDINARY_API_KEY ||
+            !process.env.CLOUDINARY_API_SECRET
+        ) {
+            return NextResponse.json({
+                ok: false,
+                message: "Cloudinary environment variables are not set.",
+            }, { status: 500 });
+        }
+
+        cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
+        });
+
+        const boardImages = await db
+            .select({
+                publicId: db_images.publicId,
+            })
+            .from(db_images)
+            .where(eq(db_images.boardId, boardIdNumber));
+
+        await Promise.all(
+            boardImages.map((image) => cloudinary.uploader.destroy(image.publicId))
+        );
+
+        await db
+            .delete(db_images)
+            .where(eq(db_images.boardId, boardIdNumber));
 
         await db
             .delete(db_memos)
