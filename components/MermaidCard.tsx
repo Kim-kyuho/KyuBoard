@@ -47,6 +47,11 @@ const makeMermaidSvgResponsive = (svg: string) =>
         .replace(/\sheight="[^"]*"/, "")
         .replace("<svg", "<svg preserveAspectRatio=\"xMidYMid meet\"");
 
+const removeMermaidRenderArtifacts = (renderId: string) => {
+    document.getElementById(renderId)?.remove();
+    document.getElementById(`d${renderId}`)?.remove();
+};
+
 export default function MermaidCard({
     mermaid,
     zoom,
@@ -104,8 +109,8 @@ export default function MermaidCard({
 
         const renderId = `kyuboard-mermaid-${Math.abs(mermaid.id)}-${mermaidRenderIndex++}`;
 
-        mermaidRenderer
-            .render(renderId, source)
+        Promise.resolve(mermaidRenderer.parse(source))
+            .then(() => mermaidRenderer.render(renderId, source))
             .then(({ svg }) => {
                 if (renderTicketRef.current !== renderTicket) {
                     return;
@@ -121,6 +126,9 @@ export default function MermaidCard({
 
                 setSvg("");
                 setRenderError(error instanceof Error ? error.message : "Mermaid syntax error.");
+            })
+            .finally(() => {
+                removeMermaidRenderArtifacts(renderId);
             });
     }, [mermaid.id, source]);
 
