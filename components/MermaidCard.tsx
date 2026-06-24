@@ -184,7 +184,7 @@ export default function MermaidCard({
                         <textarea
                             value={source}
                             onChange={(event) => setSource(event.target.value)}
-                            className="h-2/5 min-h-24 resize-none border-b border-neutral-200 bg-neutral-50 p-3 font-mono text-sm text-neutral-900 outline-none"
+                            className="h-2/5 min-h-24 resize-none border-b border-neutral-200 bg-neutral-50 p-3 font-mono text-base text-neutral-900 outline-none"
                             spellCheck={false}
                         />
                     )}
