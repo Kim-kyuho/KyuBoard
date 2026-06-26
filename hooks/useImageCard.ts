@@ -17,6 +17,7 @@ export interface ImageCardImage {
     file?: File;
     x: number;
     y: number;
+    z: number;
     width: number;
     height: number;
 }
@@ -34,6 +35,7 @@ type UseImageCardOptions = {
         boardId: number,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => void;
@@ -45,6 +47,7 @@ type UseImageCardOptions = {
         fileName: string | null,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => void;
@@ -92,6 +95,7 @@ export function useImageCard({
                 image.boardId,
                 Math.round(latestImageState.x),
                 Math.round(latestImageState.y),
+                image.z,
                 Math.round(latestImageState.width),
                 Math.round(latestImageState.height),
             );
@@ -108,6 +112,7 @@ export function useImageCard({
             image.fileName,
             Math.round(latestImageState.x),
             Math.round(latestImageState.y),
+            image.z,
             Math.round(latestImageState.width),
             Math.round(latestImageState.height),
         );
@@ -118,6 +123,7 @@ export function useImageCard({
         image.imageId,
         image.publicId,
         image.secureUrl,
+        image.z,
         onInsert,
         onUpdate,
     ]);

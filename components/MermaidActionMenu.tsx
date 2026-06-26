@@ -4,7 +4,7 @@ import { Ref } from "react";
 import { BringToFront, SendToBack, Trash2 } from "lucide-react";
 import PressableButton from "./PressableButton";
 
-interface ImageActionMenuProps {
+interface MermaidActionMenuProps {
     ref?: Ref<HTMLDivElement>;
     zoom: number;
     onBringToFront?: () => void;
@@ -12,17 +12,17 @@ interface ImageActionMenuProps {
     onDelete: () => void;
 }
 
-export default function ImageActionMenu({
+export default function MermaidActionMenu({
     ref,
     zoom,
     onBringToFront,
     onSendToBack,
     onDelete,
-}: ImageActionMenuProps) {
+}: MermaidActionMenuProps) {
     return (
         <div
             ref={ref}
-            className="image-action-menu absolute right-2 top-11 z-50 rounded-md bg-white px-3.5 py-px shadow-md"
+            className="mermaid-action-menu absolute right-2 top-11 z-50 rounded-md bg-white px-3.5 py-px shadow-md"
             style={{
                 transform: `scale(${0.8 / zoom})`,
                 transformOrigin: "top right",

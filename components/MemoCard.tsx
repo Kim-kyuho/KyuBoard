@@ -21,6 +21,7 @@ type MemoCardProps = {
         content: string,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
         color: string,
@@ -32,12 +33,15 @@ type MemoCardProps = {
         content: string,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
         color: string,
         isPublic: boolean
     ) => void;
     onDelete: (id: number) => void;
+    onBringToFront: () => void;
+    onSendToBack: () => void;
 };
 
 // 메모 카드 컴포넌트
@@ -53,6 +57,8 @@ export default function MemoCard(props: MemoCardProps) {
         onInsert,
         onUpdate,
         onDelete,
+        onBringToFront,
+        onSendToBack,
     } = props;
     const {
         actionMenuOpen,
@@ -97,6 +103,9 @@ export default function MemoCard(props: MemoCardProps) {
             <Rnd 
                 data-editing={isEditing}
                 className={`memo-rnd-${memo.id} select-none rounded-xl ${isFocused ? "ring-2 ring-indigo-700 ring-offset-2" : ""}`}
+                style={{
+                    zIndex: memo.z,
+                }}
                 default={{
                     x: memo.x,
                     y: memo.y,
@@ -188,6 +197,14 @@ export default function MemoCard(props: MemoCardProps) {
                                         }}
                                         onBlockQuote={() => {
                                             memoEditorRef.current?.toggleBlockQuote();
+                                            setActionMenuOpen(false);
+                                        }}
+                                        onBringToFront={() => {
+                                            onBringToFront();
+                                            setActionMenuOpen(false);
+                                        }}
+                                        onSendToBack={() => {
+                                            onSendToBack();
                                             setActionMenuOpen(false);
                                         }}
                                         onDelete={openDeleteDialog}   

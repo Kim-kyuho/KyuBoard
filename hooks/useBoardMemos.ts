@@ -6,6 +6,7 @@ export type BoardMemo = {
     content: string;
     x: number;
     y: number;
+    z: number;
     width: number;
     height: number;
     color: string;
@@ -41,6 +42,7 @@ export function useBoardMemos({
             content: "",
             x,
             y,
+            z: 1,
             width: 300,
             height: 200,
             color: "#fffadc",
@@ -49,14 +51,14 @@ export function useBoardMemos({
         setMemos((prev) => [...prev, tempMemo]);
     };
 
-    const handleInsertMemo = async (tempId: number, boardId: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
+    const handleInsertMemo = async (tempId: number, boardId: number, content: string, x: number, y: number, z: number, width: number, height: number, color: string, isPublic: boolean) => {
         const response = await fetch("/api/memos", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                boardId, content, x, y, width, height, color, isPublic
+                boardId, content, x, y, z, width, height, color, isPublic
             }),
         });
 
@@ -72,13 +74,13 @@ export function useBoardMemos({
         );
     };
 
-    const handleUpdateMemo = async (id: number, boardId: number, content: string, x: number, y: number, width: number, height: number, color: string, isPublic: boolean) => {
+    const handleUpdateMemo = async (id: number, boardId: number, content: string, x: number, y: number, z: number, width: number, height: number, color: string, isPublic: boolean) => {
         const response = await fetch(`/api/memos/${id}`, {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ boardId, content, x, y, width, height, color, isPublic }),
+            body: JSON.stringify({ boardId, content, x, y, z, width, height, color, isPublic }),
         });
         const data = await response.json();
         if (!data.ok) {
@@ -87,7 +89,7 @@ export function useBoardMemos({
         }
         setMemos((prev) =>
             prev.map((memo) =>
-                memo.id === id ? { ...memo, content, x, y, width, height, color, isPublic } : memo
+                memo.id === id ? { ...memo, content, x, y, z, width, height, color, isPublic } : memo
             )
         );
     };

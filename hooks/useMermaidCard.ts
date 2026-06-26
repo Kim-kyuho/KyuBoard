@@ -7,6 +7,7 @@ export type MermaidCardMermaid = {
     source: string;
     x: number;
     y: number;
+    z: number;
     width: number;
     height: number;
 };
@@ -21,6 +22,7 @@ type UseMermaidCardOptions = {
         source: string,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => void;
@@ -30,6 +32,7 @@ type UseMermaidCardOptions = {
         source: string,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => void;
@@ -55,7 +58,9 @@ export function useMermaidCard({
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
+    const menuRef = useRef<HTMLDivElement | null>(null);
     const lastMermaidTapRef = useRef(0);
     const sourceRef = useRef(source);
     const cardStateRef = useRef(cardState);
@@ -77,10 +82,11 @@ export function useMermaidCard({
             sourceRef.current,
             Math.round(latestCardState.x),
             Math.round(latestCardState.y),
+            mermaid.z,
             Math.round(latestCardState.width),
             Math.round(latestCardState.height),
         );
-    }, [mermaid.boardId, mermaid.id, onInsert]);
+    }, [mermaid.boardId, mermaid.id, mermaid.z, onInsert]);
 
     const updateMermaid = useCallback(() => {
         const latestCardState = cardStateRef.current;
@@ -91,10 +97,11 @@ export function useMermaidCard({
             sourceRef.current,
             Math.round(latestCardState.x),
             Math.round(latestCardState.y),
+            mermaid.z,
             Math.round(latestCardState.width),
             Math.round(latestCardState.height),
         );
-    }, [mermaid.boardId, mermaid.id, onUpdate]);
+    }, [mermaid.boardId, mermaid.id, mermaid.z, onUpdate]);
 
     const saveMermaidDraft = useCallback(() => {
         if (mermaid.id < 0) {
@@ -129,6 +136,15 @@ export function useMermaidCard({
     };
 
     useEffect(() => {
+        const handlePressOutsideMenu = (event: PointerEvent) => {
+            const target = event.target as Node;
+            const isPressInsideMenu = menuRef.current?.contains(target);
+
+            if (!isPressInsideMenu) {
+                setActionMenuOpen(false);
+            }
+        };
+
         const handlePressOutside = (event: PointerEvent) => {
             const target = event.target as Node;
             const targetElement = target instanceof Element ? target : null;
@@ -144,9 +160,11 @@ export function useMermaidCard({
             
         };
 
+        document.addEventListener("pointerdown", handlePressOutsideMenu);
         document.addEventListener("pointerup", handlePressOutside);
 
         return () => {
+            document.removeEventListener("pointerdown", handlePressOutsideMenu);
             document.removeEventListener("pointerup", handlePressOutside);
         };
     }, [isEditing, saveMermaidDraft, mermaid.id]);
@@ -179,7 +197,17 @@ export function useMermaidCard({
         setCardState(nextCardState);
     };
 
+    const openMermaidActionMenu = () => {
+        if (!canEdit) {
+            onPermissionDenied();
+            return;
+        }
+
+        setActionMenuOpen((prev) => !prev);
+    };
+
     const openDeleteDialog = () => {
+        setActionMenuOpen(false);
         setDeleteDialogOpen(true);
     };
 
@@ -193,9 +221,11 @@ export function useMermaidCard({
     };
 
     return {
+        actionMenuOpen,
         cardState,
         source,
         setSource,
+        menuRef,
         isEditing,
         isResizing,
         deleteDialogOpen,
@@ -207,6 +237,7 @@ export function useMermaidCard({
         handleDragStop,
         handleResizeStart,
         handleResizeStop,
+        openMermaidActionMenu,
         openDeleteDialog,
         closeDeleteDialog,
         confirmDelete,

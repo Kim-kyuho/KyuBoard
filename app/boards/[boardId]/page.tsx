@@ -41,6 +41,7 @@ export default async function BoardPage({
         content: memo.content,
         x: memo.x,
         y: memo.y,
+        z: memo.z,
         width: memo.width,
         height: memo.height,
         color: memo.color,
@@ -55,6 +56,7 @@ export default async function BoardPage({
         fileName: image.fileName,
         x: image.x,
         y: image.y,
+        z: image.z,
         width: image.width,
         height: image.height,
     }));
@@ -65,6 +67,7 @@ export default async function BoardPage({
         source: mermaid.source,
         x: mermaid.x,
         y: mermaid.y,
+        z: mermaid.z,
         width: mermaid.width,
         height: mermaid.height,
     }));
