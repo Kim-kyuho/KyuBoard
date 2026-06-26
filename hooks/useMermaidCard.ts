@@ -55,7 +55,9 @@ export function useMermaidCard({
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
+    const menuRef = useRef<HTMLDivElement | null>(null);
     const lastMermaidTapRef = useRef(0);
     const sourceRef = useRef(source);
     const cardStateRef = useRef(cardState);
@@ -129,6 +131,15 @@ export function useMermaidCard({
     };
 
     useEffect(() => {
+        const handlePressOutsideMenu = (event: PointerEvent) => {
+            const target = event.target as Node;
+            const isPressInsideMenu = menuRef.current?.contains(target);
+
+            if (!isPressInsideMenu) {
+                setActionMenuOpen(false);
+            }
+        };
+
         const handlePressOutside = (event: PointerEvent) => {
             const target = event.target as Node;
             const targetElement = target instanceof Element ? target : null;
@@ -144,9 +155,11 @@ export function useMermaidCard({
             
         };
 
+        document.addEventListener("pointerdown", handlePressOutsideMenu);
         document.addEventListener("pointerup", handlePressOutside);
 
         return () => {
+            document.removeEventListener("pointerdown", handlePressOutsideMenu);
             document.removeEventListener("pointerup", handlePressOutside);
         };
     }, [isEditing, saveMermaidDraft, mermaid.id]);
@@ -179,7 +192,17 @@ export function useMermaidCard({
         setCardState(nextCardState);
     };
 
+    const openMermaidActionMenu = () => {
+        if (!canEdit) {
+            onPermissionDenied();
+            return;
+        }
+
+        setActionMenuOpen((prev) => !prev);
+    };
+
     const openDeleteDialog = () => {
+        setActionMenuOpen(false);
         setDeleteDialogOpen(true);
     };
 
@@ -193,9 +216,11 @@ export function useMermaidCard({
     };
 
     return {
+        actionMenuOpen,
         cardState,
         source,
         setSource,
+        menuRef,
         isEditing,
         isResizing,
         deleteDialogOpen,
@@ -207,6 +232,7 @@ export function useMermaidCard({
         handleDragStop,
         handleResizeStart,
         handleResizeStop,
+        openMermaidActionMenu,
         openDeleteDialog,
         closeDeleteDialog,
         confirmDelete,

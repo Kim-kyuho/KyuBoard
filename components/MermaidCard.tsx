@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import mermaidRenderer from "mermaid";
 import { Rnd } from "react-rnd";
-import { Trash2 } from "lucide-react";
-import PressableButton from "./PressableButton";
+import { EllipsisVertical } from "lucide-react";
 import { MermaidCardMermaid, useMermaidCard } from "@/hooks/useMermaidCard";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import MermaidActionMenu from "./MermaidActionMenu";
 
 type MermaidCardProps = {
     mermaid: MermaidCardMermaid;
@@ -62,9 +62,11 @@ export default function MermaidCard({
     onDelete,
 }: MermaidCardProps) {
     const {
+        actionMenuOpen,
         cardState,
         source,
         setSource,
+        menuRef,
         isEditing,
         isResizing,
         deleteDialogOpen,
@@ -76,6 +78,7 @@ export default function MermaidCard({
         handleDragStop,
         handleResizeStart,
         handleResizeStop,
+        openMermaidActionMenu,
         openDeleteDialog,
         closeDeleteDialog,
         confirmDelete,
@@ -136,6 +139,7 @@ export default function MermaidCard({
         <>
             <Rnd
                 data-editing={isEditing}
+                cancel=".mermaid-action-menu"
                 className={`mermaid-rnd-${mermaid.id} select-none rounded-xl ${isEditing ? "ring-2 ring-pink-400 ring-offset-2" : ""}`}
                 default={{
                     x: mermaid.x,
@@ -167,17 +171,25 @@ export default function MermaidCard({
                     onPointerDown={handleDoubleTap}
                 >
                     {isEditing && (
-                        <div className="flex items-center justify-end border-b border-neutral-200 bg-neutral-50 px-2 py-1">
-                            <PressableButton
-                                variant="menu"
-                                onClick={openDeleteDialog}
+                        <>
+                            <button
+                                type="button"
+                                aria-label="Mermaid actions"
+                                className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-neutral-500 opacity-30 backdrop-blur-sm transition duration-150 hover:bg-white/80 hover:text-neutral-900 hover:opacity-100 hover:shadow-sm active:scale-95"
+                                onPointerUp={() => {
+                                    openMermaidActionMenu();
+                                }}
                             >
-                                <span className="flex items-center gap-2 text-rose-600">
-                                    <Trash2 className="h-4 w-4" />
-                                    <span>Delete</span>
-                                </span>
-                            </PressableButton>
-                        </div>
+                                <EllipsisVertical className="h-8 w-8" />
+                            </button>
+                            {actionMenuOpen && (
+                                <MermaidActionMenu
+                                    ref={menuRef}
+                                    zoom={zoom}
+                                    onDelete={openDeleteDialog}
+                                />
+                            )}
+                        </>
                     )}
 
                     {isEditing && (
