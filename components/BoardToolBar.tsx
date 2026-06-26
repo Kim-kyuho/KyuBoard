@@ -40,7 +40,7 @@ export default function BoardToolBar({
         <>
         {showBoardToolBar && (
         <div
-            className="board-toolbar fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-0 bg-white/75 rounded-xl px-2 py-1 shadow-md"
+            className="board-toolbar fixed bottom-5 left-1/2 z-[50000] flex -translate-x-1/2 items-center gap-0 bg-white/75 rounded-xl px-2 py-1 shadow-md"
         >
             <PressableButton 
                 variant="menu"
@@ -123,7 +123,7 @@ export default function BoardToolBar({
 
         <button
             type="button"
-            className="board-toolbar fixed bottom-7 right-5 z-50 text-neutral-700 transition hover:text-neutral-950 active:scale-95"
+            className="board-toolbar fixed bottom-7 right-5 z-[50000] text-neutral-700 transition hover:text-neutral-950 active:scale-95"
             aria-label={showBoardToolBar ? "Hide board toolbar" : "Show board toolbar"}
             onClick={() => setShowBoardToolBar((prev) => !prev)}
         >

@@ -30,7 +30,7 @@ export default function BoardMenu(
 }: BoardMenuProps) {
     return(
         <>
-        <div className="fixed left-5 top-5 z-50 rounded-xl bg-white/75 text-neutral-900 px-4 py-3 shadow-md" >
+        <div className="fixed left-5 top-5 z-[50000] rounded-xl bg-white/75 text-neutral-900 px-4 py-3 shadow-md" >
             <Link
                 href="/"
                 className="transition duration-300 active:scale-105 active:rotate-1 text-sky-500 hover:text-pink-500 font-mono text-1xl sm:text-1xl font-extrabold"
@@ -45,12 +45,12 @@ export default function BoardMenu(
             </Link>
         </div>
             <PressableButton 
-                className="fixed right-5 top-5 z-50 bg-white/75 px-3 py-3 shadow-md" 
+                className="fixed right-5 top-5 z-[50000] bg-white/75 px-3 py-3 shadow-md" 
                 onClick={() => setMenuOpen((prev) => !prev)}>
                 <EllipsisIcon className="w-5 h-5 text-neutral-900 " />
             </PressableButton>
             {menuOpen && (
-                <div className="fixed w-50 right-5 top-17 z-50 rounded-xl bg-white/75 px-2 py-3 shadow-md">
+                <div className="fixed w-50 right-5 top-17 z-[50000] rounded-xl bg-white/75 px-2 py-3 shadow-md">
                     {currentBoard?.title && (
                         <PressableButton 
                             variant="menu"
