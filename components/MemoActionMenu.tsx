@@ -57,7 +57,7 @@ export default function MemoActionMenu({
     return (
         <div
             ref={ref}
-            className="absolute right-2 top-11 z-50 overflow-hidden rounded-md bg-white shadow-md"
+            className="absolute right-2 top-11 z-[50000] overflow-hidden rounded-md bg-white shadow-md"
             style={{
                 transform: `scale(${0.8 / zoom})`,
                 transformOrigin: "top right",

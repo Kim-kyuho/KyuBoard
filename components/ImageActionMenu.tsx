@@ -22,7 +22,7 @@ export default function ImageActionMenu({
     return (
         <div
             ref={ref}
-            className="image-action-menu absolute right-2 top-11 z-50 rounded-md bg-white px-3.5 py-px shadow-md"
+            className="image-action-menu absolute right-2 top-11 z-[50000] rounded-md bg-white px-3.5 py-px shadow-md"
             style={{
                 transform: `scale(${0.8 / zoom})`,
                 transformOrigin: "top right",

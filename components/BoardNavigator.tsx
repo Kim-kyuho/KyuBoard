@@ -27,7 +27,7 @@ export default function BoardNavigator({currentBoardId, boardIds, onInvalidBoard
 
     return(
         <>
-            <div className="fixed right-5 top-5 z-50 flex items-center gap-0.5 rounded-xl text-neutral-900">
+            <div className="fixed right-5 top-5 z-[50000] flex items-center gap-0.5 rounded-xl text-neutral-900">
                 <PressableButton 
                     variant="menu"
                     onClick={() => moveBoard(prevBoardId)}

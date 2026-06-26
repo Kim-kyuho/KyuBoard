@@ -25,7 +25,7 @@ export default function BoardZoomControl({
         <>
 
         {zoomOpen && (
-            <div className={`fixed right-5 bottom-25 z-50 flex items-center gap-2 transition-opacity duration-300 ${zoomClosing ? "opacity-0" : "opacity-100"}`}>
+            <div className={`fixed right-5 bottom-25 z-[50000] flex items-center gap-2 transition-opacity duration-300 ${zoomClosing ? "opacity-0" : "opacity-100"}`}>
             <span className="text-xs font-semibold text-neutral-700">
                 Zoom
             </span>
