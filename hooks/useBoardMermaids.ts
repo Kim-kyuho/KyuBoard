@@ -6,6 +6,7 @@ export type BoardMermaid = {
     source: string;
     x: number;
     y: number;
+    z: number;
     width: number;
     height: number;
 };
@@ -64,6 +65,7 @@ export function useBoardMermaids({
             source: defaultMermaidSource,
             x: Math.round(x),
             y: Math.round(y),
+            z: 1,
             width: 480,
             height: 360,
         };
@@ -77,6 +79,7 @@ export function useBoardMermaids({
         source: string,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => {
@@ -85,7 +88,7 @@ export function useBoardMermaids({
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ boardId, source, x, y, width, height }),
+            body: JSON.stringify({ boardId, source, x, y, z, width, height }),
         });
         const data = await response.json();
 
@@ -103,6 +106,7 @@ export function useBoardMermaids({
                         source: data.mermaid.source,
                         x: data.mermaid.x,
                         y: data.mermaid.y,
+                        z: data.mermaid.z,
                         width: data.mermaid.width,
                         height: data.mermaid.height,
                     }
@@ -117,6 +121,7 @@ export function useBoardMermaids({
         source: string,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => {
@@ -125,7 +130,7 @@ export function useBoardMermaids({
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ boardId, source, x, y, width, height }),
+            body: JSON.stringify({ boardId, source, x, y, z, width, height }),
         });
         const data = await response.json();
 
@@ -137,7 +142,7 @@ export function useBoardMermaids({
         setMermaids((prev) =>
             prev.map((mermaid) =>
                 mermaid.id === id
-                    ? { ...mermaid, boardId, source, x, y, width, height }
+                    ? { ...mermaid, boardId, source, x, y, z, width, height }
                     : mermaid
             )
         );
@@ -164,6 +169,7 @@ export function useBoardMermaids({
 
     return {
         mermaids,
+        setMermaids,
         handleCreateTempMermaid,
         handleInsertMermaid,
         handleUpdateMermaid,

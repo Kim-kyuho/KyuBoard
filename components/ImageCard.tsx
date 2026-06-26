@@ -21,6 +21,7 @@ type ImageCardProps = {
         boardId: number,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => void;
@@ -32,6 +33,7 @@ type ImageCardProps = {
         fileName: string | null,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => void;
@@ -39,6 +41,8 @@ type ImageCardProps = {
         imageId: number,
         publicId: string,
     ) => void;
+    onBringToFront: () => void;
+    onSendToBack: () => void;
 };
 
 // 이미지 카드 컴포넌트
@@ -54,6 +58,8 @@ export default function ImageCard(props: ImageCardProps) {
         onInsert,
         onUpdate,
         onDelete,
+        onBringToFront,
+        onSendToBack,
     } = props;
 
     const {
@@ -92,6 +98,7 @@ export default function ImageCard(props: ImageCardProps) {
                     isSelected ? "rounded-xl border-2 border-dashed border-pink-500" : ""
                 }`}
                 style={{
+                    zIndex: image.z,
                     WebkitTouchCallout: "none",
                     WebkitUserSelect: "none",
                     userSelect: "none",
@@ -139,6 +146,8 @@ export default function ImageCard(props: ImageCardProps) {
                         <ImageActionMenu
                             ref={menuRef}
                             zoom={zoom}
+                            onBringToFront={onBringToFront}
+                            onSendToBack={onSendToBack}
                             onDelete={openDeleteDialog}
                         />
                     )}

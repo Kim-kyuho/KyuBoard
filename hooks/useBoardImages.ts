@@ -9,6 +9,7 @@ export type BoardImage = {
     file?: File;
     x: number;
     y: number;
+    z: number;
     width: number;
     height: number;
 };
@@ -166,6 +167,7 @@ export function useBoardImages({
             file: compressedFile,
             x: Math.round(x),
             y: Math.round(y),
+            z: 1,
             width,
             height,
         };
@@ -174,12 +176,13 @@ export function useBoardImages({
         setSelectedImageId(tempImage.imageId);
     };
 
-    const handleInsertImage = async (tempId: number, file: File, boardId: number, x: number, y: number, width: number, height: number) => {
+    const handleInsertImage = async (tempId: number, file: File, boardId: number, x: number, y: number, z: number, width: number, height: number) => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("boardId", String(boardId));
         formData.append("x", String(x));
         formData.append("y", String(y));
+        formData.append("z", String(z));
         formData.append("width", String(width));
         formData.append("height", String(height));
 
@@ -207,13 +210,13 @@ export function useBoardImages({
         setSelectedImageId(data.image.imageId);
     };
 
-    const handleUpdateImage = async (imageId: number, boardId: number, publicId: string, secureUrl: string, fileName: string | null, x: number, y: number, width: number, height: number) => {
+    const handleUpdateImage = async (imageId: number, boardId: number, publicId: string, secureUrl: string, fileName: string | null, x: number, y: number, z: number, width: number, height: number) => {
         const response = await fetch(`/api/images/${imageId}`, {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ boardId, publicId, secureUrl, fileName, x, y, width, height }),
+            body: JSON.stringify({ boardId, publicId, secureUrl, fileName, x, y, z, width, height }),
         });
         const data = await response.json();
 
@@ -224,7 +227,7 @@ export function useBoardImages({
 
         setImages((prev) =>
             prev.map((image) =>
-                image.imageId === imageId ? { ...image, boardId, publicId, secureUrl, fileName, x, y, width, height } : image
+                image.imageId === imageId ? { ...image, boardId, publicId, secureUrl, fileName, x, y, z, width, height } : image
             )
         );
     };
@@ -259,6 +262,7 @@ export function useBoardImages({
         imageLocationRef,
         imageInputRef,
         images,
+        setImages,
         selectedImageId,
         setSelectedImageId,
         handleImageUploadClick,

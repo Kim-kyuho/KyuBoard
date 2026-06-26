@@ -1,18 +1,22 @@
 "use client";
 
 import { Ref } from "react";
-import { Trash2 } from "lucide-react";
+import { BringToFront, SendToBack, Trash2 } from "lucide-react";
 import PressableButton from "./PressableButton";
 
 interface ImageActionMenuProps {
     ref?: Ref<HTMLDivElement>;
     zoom: number;
+    onBringToFront?: () => void;
+    onSendToBack?: () => void;
     onDelete: () => void;
 }
 
 export default function ImageActionMenu({
     ref,
     zoom,
+    onBringToFront,
+    onSendToBack,
     onDelete,
 }: ImageActionMenuProps) {
     return (
@@ -24,6 +28,24 @@ export default function ImageActionMenu({
                 transformOrigin: "top right",
             }}
         >
+            <PressableButton
+                variant="menu"
+                onClick={onBringToFront}
+            >
+                <span className="flex w-full items-center gap-2">
+                    <BringToFront className="h-4 w-4" />
+                    <span>Bring to Front</span>
+                </span>
+            </PressableButton>
+            <PressableButton
+                variant="menu"
+                onClick={onSendToBack}
+            >
+                <span className="flex w-full items-center gap-2">
+                    <SendToBack className="h-4 w-4" />
+                    <span>Send to Back</span>
+                </span>
+            </PressableButton>
             <PressableButton
                 variant="menu"
                 onClick={onDelete}

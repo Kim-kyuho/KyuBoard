@@ -31,9 +31,10 @@ export async function POST(request: NextRequest) {
         const boardId = Number(formData.get("boardId"));
         const x = Number(formData.get("x"));
         const y = Number(formData.get("y"));
+        const z = Number(formData.get("z"));
         const requestedWidth = Number(formData.get("width"));
         const requestedHeight = Number(formData.get("height"));
-        if (bytes.byteLength === 0 || !Number.isInteger(boardId) || !Number.isFinite(x) || !Number.isFinite(y) || boardId <=0) {
+        if (bytes.byteLength === 0 || !Number.isInteger(boardId) || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z) || boardId <=0) {
             return NextResponse.json({
                 ok: false,
                 message: "Invalid form data.",
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
             fileName: file.name,
             x: x,
             y: y,
+            z: z,
             width: Number.isFinite(requestedWidth) && requestedWidth > 0 ? requestedWidth : width,
             height: Number.isFinite(requestedHeight) && requestedHeight > 0 ? requestedHeight : height,
         }).returning();

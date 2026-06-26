@@ -19,6 +19,7 @@ type MermaidCardProps = {
         source: string,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => void;
@@ -28,10 +29,13 @@ type MermaidCardProps = {
         source: string,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => void;
     onDelete: (id: number) => void;
+    onBringToFront: () => void;
+    onSendToBack: () => void;
 };
 
 let mermaidRenderIndex = 0;
@@ -60,6 +64,8 @@ export default function MermaidCard({
     onInsert,
     onUpdate,
     onDelete,
+    onBringToFront,
+    onSendToBack,
 }: MermaidCardProps) {
     const {
         actionMenuOpen,
@@ -141,6 +147,9 @@ export default function MermaidCard({
                 data-editing={isEditing}
                 cancel=".mermaid-action-menu"
                 className={`mermaid-rnd-${mermaid.id} select-none rounded-xl ${isEditing ? "ring-2 ring-pink-400 ring-offset-2" : ""}`}
+                style={{
+                    zIndex: mermaid.z,
+                }}
                 default={{
                     x: mermaid.x,
                     y: mermaid.y,
@@ -186,6 +195,8 @@ export default function MermaidCard({
                                 <MermaidActionMenu
                                     ref={menuRef}
                                     zoom={zoom}
+                                    onBringToFront={onBringToFront}
+                                    onSendToBack={onSendToBack}
                                     onDelete={openDeleteDialog}
                                 />
                             )}

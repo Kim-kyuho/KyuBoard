@@ -7,6 +7,7 @@ export type MermaidCardMermaid = {
     source: string;
     x: number;
     y: number;
+    z: number;
     width: number;
     height: number;
 };
@@ -21,6 +22,7 @@ type UseMermaidCardOptions = {
         source: string,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => void;
@@ -30,6 +32,7 @@ type UseMermaidCardOptions = {
         source: string,
         x: number,
         y: number,
+        z: number,
         width: number,
         height: number,
     ) => void;
@@ -79,10 +82,11 @@ export function useMermaidCard({
             sourceRef.current,
             Math.round(latestCardState.x),
             Math.round(latestCardState.y),
+            mermaid.z,
             Math.round(latestCardState.width),
             Math.round(latestCardState.height),
         );
-    }, [mermaid.boardId, mermaid.id, onInsert]);
+    }, [mermaid.boardId, mermaid.id, mermaid.z, onInsert]);
 
     const updateMermaid = useCallback(() => {
         const latestCardState = cardStateRef.current;
@@ -93,10 +97,11 @@ export function useMermaidCard({
             sourceRef.current,
             Math.round(latestCardState.x),
             Math.round(latestCardState.y),
+            mermaid.z,
             Math.round(latestCardState.width),
             Math.round(latestCardState.height),
         );
-    }, [mermaid.boardId, mermaid.id, onUpdate]);
+    }, [mermaid.boardId, mermaid.id, mermaid.z, onUpdate]);
 
     const saveMermaidDraft = useCallback(() => {
         if (mermaid.id < 0) {

@@ -2,7 +2,7 @@
 
 import { Ref } from "react";
 import { useMemoActionMenu } from "@/hooks/useMemoActionMenu";
-import { Bold, ChevronDown, Highlighter, Italic, Minus, Palette, Heading, Code2, Quote, Strikethrough, Trash2 } from "lucide-react";
+import { Bold, BringToFront, ChevronDown, Highlighter, Italic, Minus, Palette, Heading, Code2, Quote, SendToBack, Strikethrough, Trash2 } from "lucide-react";
 import PressableButton from "./PressableButton";
 
 interface MemoActionMenuProps {
@@ -18,6 +18,8 @@ interface MemoActionMenuProps {
     onHighlight: () => void;
     onCodeBlock: () => void;
     onBlockQuote: () => void;
+    onBringToFront?: () => void;
+    onSendToBack?: () => void;
     onDelete: () => void;
 }
 
@@ -34,6 +36,8 @@ export default function MemoActionMenu({
     onHighlight,
     onCodeBlock,
     onBlockQuote,
+    onBringToFront,
+    onSendToBack,
     onDelete,
 }: MemoActionMenuProps) {
     const {
@@ -182,6 +186,18 @@ export default function MemoActionMenu({
                     </PressableButton>
                 </>
             )}
+            <PressableButton variant="menu" onClick={onBringToFront}>
+                <span className="flex w-full items-center gap-2">
+                    <BringToFront className="h-4 w-4" />
+                    <span>Bring to Front</span>
+                </span>
+            </PressableButton>
+            <PressableButton variant="menu" onClick={onSendToBack}>
+                <span className="flex w-full items-center gap-2">
+                    <SendToBack className="h-4 w-4" />
+                    <span>Send to Back</span>
+                </span>
+            </PressableButton>
             <PressableButton variant="menu" onClick={onDelete}>
                 <span className="flex w-full items-center gap-2 text-rose-600">
                     <Trash2 className="h-4 w-4" />

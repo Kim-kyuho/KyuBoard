@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
             !body.source.trim() ||
             !Number.isFinite(body.x) ||
             !Number.isFinite(body.y) ||
+            !Number.isFinite(body.z) ||
             !Number.isFinite(body.width) ||
             !Number.isFinite(body.height) ||
             body.width <= 0 ||
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
                 source: body.source,
                 x: body.x,
                 y: body.y,
+                z: body.z,
                 width: body.width,
                 height: body.height,
             })

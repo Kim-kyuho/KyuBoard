@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
             typeof body.content !== "string" ||
             !Number.isFinite(body.x) ||
             !Number.isFinite(body.y) ||
+            !Number.isFinite(body.z) ||
             !Number.isFinite(body.width) ||
             !Number.isFinite(body.height) ||
             body.width <= 0 ||
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
             content: body.content,
             x: body.x,
             y: body.y,
+            z: body.z,
             width: body.width,
             height: body.height,
             color: body.color,

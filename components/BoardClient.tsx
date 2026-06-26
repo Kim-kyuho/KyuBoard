@@ -11,6 +11,7 @@ import BoardToolBar from "./BoardToolBar";
 import BoardMessage from "./BoardMessage";
 import BoardSearchPanel from "./BoardSearchPanel";
 import MermaidCard from "./MermaidCard";
+import { useCardLayer } from "@/hooks/useCardLayer";
 import { useBoardAuth } from "@/hooks/useBoardAuth";
 import { useBoardImages } from "@/hooks/useBoardImages";
 import { useBoardMermaids } from "@/hooks/useBoardMermaids";
@@ -35,6 +36,7 @@ interface Image {
     fileName: string | null;
     x: number;
     y: number;
+    z: number;
     width: number;
     height: number;
 }
@@ -45,6 +47,7 @@ interface Memo {
     content: string;
     x: number;
     y: number;
+    z: number;
     width: number;
     height: number;
     color: string;
@@ -57,6 +60,7 @@ interface Mermaid {
     source: string;
     x: number;
     y: number;
+    z: number;
     width: number;
     height: number;
 }
@@ -114,6 +118,7 @@ export default function BoardClient(
 
     const {
         memos,
+        setMemos,
         handleCreateTempMemo,
         handleInsertMemo,
         handleUpdateMemo,
@@ -155,6 +160,7 @@ export default function BoardClient(
         imageLocationRef,
         imageInputRef,
         images,
+        setImages,
         selectedImageId,
         setSelectedImageId,
         handleImageUploadClick,
@@ -173,6 +179,7 @@ export default function BoardClient(
 
     const {
         mermaids,
+        setMermaids,
         handleCreateTempMermaid,
         handleInsertMermaid,
         handleUpdateMermaid,
@@ -184,6 +191,14 @@ export default function BoardClient(
         canEditMemos,
         locationRef: imageLocationRef,
         showPermissionMessage,
+        setPermissionMessage,
+    });
+
+    const { handleCardLayer } = useCardLayer({
+        boardId: currentBoard.boardId,
+        setMemos,
+        setImages,
+        setMermaids,
         setPermissionMessage,
     });
 
@@ -321,6 +336,8 @@ export default function BoardClient(
                             onInsert={handleInsertImage}
                             onUpdate={handleUpdateImage}
                             onDelete={handleDeleteImage}
+                            onBringToFront={() => handleCardLayer("image", image.imageId, "front")}
+                            onSendToBack={() => handleCardLayer("image", image.imageId, "back")}
                         />
                     ))}
                     {memos.map((memo) => (
@@ -336,6 +353,8 @@ export default function BoardClient(
                             onInsert={handleInsertMemo}
                             onUpdate={handleUpdateMemo}
                             onDelete={handleDeleteMemo}
+                            onBringToFront={() => handleCardLayer("memo", memo.id, "front")}
+                            onSendToBack={() => handleCardLayer("memo", memo.id, "back")}
                         />
                     ))}
                     {mermaids.map((mermaid) => (
@@ -348,6 +367,8 @@ export default function BoardClient(
                             onInsert={handleInsertMermaid}
                             onUpdate={handleUpdateMermaid}
                             onDelete={handleDeleteMermaid}
+                            onBringToFront={() => handleCardLayer("mermaid", mermaid.id, "front")}
+                            onSendToBack={() => handleCardLayer("mermaid", mermaid.id, "back")}
                         />
                     ))}
                 </div>
