@@ -6,6 +6,7 @@ import { EllipsisVertical } from "lucide-react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ImageActionMenu from "./ImageActionMenu";
 import { ImageCardImage, useImageCard } from "@/hooks/useImageCard";
+import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 
 type ImageCardProps = {
     image: ImageCardImage;
@@ -94,11 +95,9 @@ export default function ImageCard(props: ImageCardProps) {
                 data-selected={isSelected}
                 // imageCard컴포넌트의 드래그 이벤트와 충돌을 막기 위한 cancel처리
                 cancel=".image-action-menu"
-                className={`image-rnd-${image.imageId} select-none ${
-                    isSelected ? "rounded-xl border-2 border-dashed border-pink-500" : ""
-                }`}
+                className={`image-rnd-${image.imageId} select-none ${isSelected ? "kyu-card-focused" : ""}`}
                 style={{
-                    zIndex: image.z,
+                    zIndex: isSelected ? ACTIVE_CARD_Z : image.z,
                     WebkitTouchCallout: "none",
                     WebkitUserSelect: "none",
                     userSelect: "none",
@@ -125,7 +124,7 @@ export default function ImageCard(props: ImageCardProps) {
                 onResizeStop={handleResizeStop}
             >
                 <div
-                    className="relative h-full w-full overflow-hidden rounded-xl bg-white shadow-md"
+                    className="relative h-full w-full rounded-xl bg-white"
                     onClick={handleImagePress}
                     onDoubleClick={selectImage}
                     onPointerDown={handleDoubleTap}
@@ -151,14 +150,16 @@ export default function ImageCard(props: ImageCardProps) {
                             onDelete={openDeleteDialog}
                         />
                     )}
-                    <Image
-                        src={image.secureUrl}
-                        alt={image.fileName ?? "Uploaded image"}
-                        fill
-                        draggable={false}
-                        sizes={`${Math.round(imageState.width)}px`}
-                        className="object-contain"
-                    />
+                    <div className="relative h-full w-full overflow-hidden rounded-xl">
+                        <Image
+                            src={image.secureUrl}
+                            alt={image.fileName ?? "Uploaded image"}
+                            fill
+                            draggable={false}
+                            sizes={`${Math.round(imageState.width)}px`}
+                            className="object-contain"
+                        />
+                    </div>
                 </div>
             </Rnd>
 
