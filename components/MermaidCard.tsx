@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import mermaidRenderer from "mermaid";
 import { Rnd } from "react-rnd";
 import { EllipsisVertical } from "lucide-react";
 import { MermaidCardMermaid, useMermaidCard } from "@/hooks/useMermaidCard";
+import { useMermaidRenderer } from "@/hooks/useMermaidRenderer";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 import MermaidActionMenu from "./MermaidActionMenu";
 
 type MermaidCardProps = {
@@ -36,24 +36,6 @@ type MermaidCardProps = {
     onDelete: (id: number) => void;
     onBringToFront: () => void;
     onSendToBack: () => void;
-};
-
-let mermaidRenderIndex = 0;
-
-mermaidRenderer.initialize({
-    startOnLoad: false,
-    securityLevel: "strict",
-});
-
-const makeMermaidSvgResponsive = (svg: string) =>
-    svg
-        .replace(/\swidth="[^"]*"/, "")
-        .replace(/\sheight="[^"]*"/, "")
-        .replace("<svg", "<svg preserveAspectRatio=\"xMidYMid meet\"");
-
-const removeMermaidRenderArtifacts = (renderId: string) => {
-    document.getElementById(renderId)?.remove();
-    document.getElementById(`d${renderId}`)?.remove();
 };
 
 export default function MermaidCard({
@@ -96,59 +78,19 @@ export default function MermaidCard({
         onUpdate,
         onDelete,
     });
-    const [svg, setSvg] = useState("");
-    const [renderError, setRenderError] = useState("");
-    const renderTicketRef = useRef(0);
-
-    useEffect(() => {
-        const renderTicket = renderTicketRef.current + 1;
-        renderTicketRef.current = renderTicket;
-
-        if (!source.trim()) {
-            void Promise.resolve().then(() => {
-                if (renderTicketRef.current !== renderTicket) {
-                    return;
-                }
-
-                setSvg("");
-                setRenderError("");
-            });
-            return;
-        }
-
-        const renderId = `kyuboard-mermaid-${Math.abs(mermaid.id)}-${mermaidRenderIndex++}`;
-
-        Promise.resolve(mermaidRenderer.parse(source))
-            .then(() => mermaidRenderer.render(renderId, source))
-            .then(({ svg }) => {
-                if (renderTicketRef.current !== renderTicket) {
-                    return;
-                }
-
-                setSvg(makeMermaidSvgResponsive(svg));
-                setRenderError("");
-            })
-            .catch((error) => {
-                if (renderTicketRef.current !== renderTicket) {
-                    return;
-                }
-
-                setSvg("");
-                setRenderError(error instanceof Error ? error.message : "Mermaid syntax error.");
-            })
-            .finally(() => {
-                removeMermaidRenderArtifacts(renderId);
-            });
-    }, [mermaid.id, source]);
+    const { svg, renderError } = useMermaidRenderer({
+        source,
+        mermaidId: mermaid.id,
+    });
 
     return (
         <>
             <Rnd
                 data-editing={isEditing}
                 cancel=".mermaid-action-menu"
-                className={`mermaid-rnd-${mermaid.id} select-none rounded-xl ${isEditing ? "ring-2 ring-pink-400 ring-offset-2" : ""}`}
+                className={`mermaid-rnd-${mermaid.id} select-none rounded-xl ${isEditing ? "kyu-card-focused" : ""}`}
                 style={{
-                    zIndex: mermaid.z,
+                    zIndex: isEditing ? ACTIVE_CARD_Z : mermaid.z,
                 }}
                 default={{
                     x: mermaid.x,
@@ -174,7 +116,7 @@ export default function MermaidCard({
                 onResizeStop={handleResizeStop}
             >
                 <div
-                    className="relative flex h-full w-full flex-col overflow-hidden rounded-xl bg-white shadow-md"
+                    className="relative h-full w-full rounded-xl bg-white"
                     onClick={handleMermaidPress}
                     onDoubleClick={editMermaid}
                     onPointerDown={handleDoubleTap}
@@ -203,45 +145,47 @@ export default function MermaidCard({
                         </>
                     )}
 
-                    {isEditing && (
-                        <textarea
-                            value={source}
-                            onChange={(event) => setSource(event.target.value)}
-                            className="h-2/5 min-h-24 resize-none border-b border-neutral-200 bg-neutral-50 p-3 font-mono text-base text-neutral-900 outline-none"
-                            spellCheck={false}
-                        />
-                    )}
-
-                    <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-3">
-                        {renderError ? (
-                            <pre className="w-full whitespace-pre-wrap rounded-md bg-rose-50 p-3 text-xs text-rose-700">
-                                {renderError}
-                            </pre>
-                        ) : svg ? (
-                            <div
-                                className="mermaid-rendered h-full w-full"
-                                dangerouslySetInnerHTML={{ __html: svg }}
+                    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-xl">
+                        {isEditing && (
+                            <textarea
+                                value={source}
+                                onChange={(event) => setSource(event.target.value)}
+                                className="h-2/5 min-h-24 resize-none border-b border-neutral-200 bg-neutral-50 p-3 font-mono text-base text-neutral-900 outline-none"
+                                spellCheck={false}
                             />
-                        ) : (
-                            <div className="text-sm text-neutral-400">Mermaid source is empty.</div>
+                        )}
+
+                        <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-3">
+                            {renderError ? (
+                                <pre className="w-full whitespace-pre-wrap rounded-md bg-rose-50 p-3 text-xs text-rose-700">
+                                    {renderError}
+                                </pre>
+                            ) : svg ? (
+                                <div
+                                    className="mermaid-rendered h-full w-full"
+                                    dangerouslySetInnerHTML={{ __html: svg }}
+                                />
+                            ) : (
+                                <div className="text-sm text-neutral-400">Mermaid source is empty.</div>
+                            )}
+                        </div>
+
+                        {isEditing && (
+                            <div
+                                className="mermaid-drag-handle absolute bottom-2 left-1/2 z-10 flex h-5 w-24 -translate-x-1/2 cursor-grab items-center justify-center rounded-full active:cursor-grabbing"
+                                onPointerDown={() => setDragHandlePressed(true)}
+                                onPointerUp={() => setDragHandlePressed(false)}
+                                onPointerCancel={() => setDragHandlePressed(false)}
+                                onPointerLeave={() => setDragHandlePressed(false)}
+                            >
+                                <div className={`h-1.5 w-24 rounded-full transition duration-150 ${dragHandlePressed ? "bg-black/70" : "bg-black/25"}`} />
+                            </div>
+                        )}
+
+                        {isResizing && (
+                            <div className="pointer-events-none absolute inset-0 z-20 animate-pulse rounded-xl border-2 border-dashed border-pink-500" />
                         )}
                     </div>
-
-                    {isEditing && (
-                        <div
-                            className="mermaid-drag-handle absolute bottom-2 left-1/2 z-10 flex h-5 w-24 -translate-x-1/2 cursor-grab items-center justify-center rounded-full active:cursor-grabbing"
-                            onPointerDown={() => setDragHandlePressed(true)}
-                            onPointerUp={() => setDragHandlePressed(false)}
-                            onPointerCancel={() => setDragHandlePressed(false)}
-                            onPointerLeave={() => setDragHandlePressed(false)}
-                        >
-                            <div className={`h-1.5 w-24 rounded-full transition duration-150 ${dragHandlePressed ? "bg-black/70" : "bg-black/25"}`} />
-                        </div>
-                    )}
-
-                    {isResizing && (
-                        <div className="pointer-events-none absolute inset-0 z-20 animate-pulse rounded-xl border-2 border-dashed border-pink-500" />
-                    )}
                 </div>
             </Rnd>
 

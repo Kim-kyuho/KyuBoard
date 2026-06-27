@@ -4,6 +4,7 @@ import { EllipsisVertical } from "lucide-react";
 import MemoActionMenu from "./MemoActionMenu";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { MemoCardMemo, useMemoCard } from "@/hooks/useMemoCard";
+import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 import MemoEditor from "./MemoEditor";
 import type { MemoEditorHandle } from "./MemoEditor";
 
@@ -102,9 +103,9 @@ export default function MemoCard(props: MemoCardProps) {
         <>
             <Rnd 
                 data-editing={isEditing}
-                className={`memo-rnd-${memo.id} select-none rounded-xl ${isFocused ? "ring-2 ring-indigo-700 ring-offset-2" : ""}`}
+                className={`memo-rnd-${memo.id} select-none rounded-xl ${isFocused ? "kyu-card-focused" : ""}`}
                 style={{
-                    zIndex: memo.z,
+                    zIndex: isFocused ? ACTIVE_CARD_Z : memo.z,
                 }}
                 default={{
                     x: memo.x,
@@ -136,7 +137,7 @@ export default function MemoCard(props: MemoCardProps) {
                     {memo.isPublic ? (
                         isEditing ? (
                             <div
-                                className="relative h-full w-full rounded-xl p-4 shadow-md text-neutral-900"
+                                className="relative h-full w-full rounded-xl p-4 shadow-xl text-neutral-900"
                                 ref={memoFocusRef}
                                 tabIndex={-1}
                                 style={{

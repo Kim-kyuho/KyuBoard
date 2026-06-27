@@ -109,8 +109,8 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --kyu-background: #ffffff;
+  --kyu-foreground: #171717;
   --font-line-seed: "LINE Seed", "Apple SD Gothic Neo", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
 }
 
@@ -278,23 +278,28 @@
   width: 100% !important;
 }
 
+.kyu-card-focused {
+  border: 2px dashed #ec4899;
+  border-radius: 0.75rem;
+}
+
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--kyu-background);
+  --color-foreground: var(--kyu-foreground);
   --font-sans: var(--font-line-seed);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --kyu-background: #0a0a0a;
+    --kyu-foreground: #ededed;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--kyu-background);
+  color: var(--kyu-foreground);
   font-family: var(--font-line-seed);
 }
 
