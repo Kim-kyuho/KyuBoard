@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { jsonRequestInit, requestJson, type ApiResponse } from "@/lib/api/client";
 
 export type BoardMemo = {
     id: number;
@@ -12,6 +13,15 @@ export type BoardMemo = {
     color: string;
     isPublic: boolean;
 };
+
+export type BoardMemoPayload = Omit<BoardMemo, "id">;
+
+export type InsertBoardMemoInput = {
+    tempId: number;
+    memo: BoardMemoPayload;
+};
+
+export type UpdateBoardMemoInput = BoardMemo;
 
 type UseBoardMemosOptions = {
     initialMemos: BoardMemo[];
@@ -51,45 +61,45 @@ export function useBoardMemos({
         setMemos((prev) => [...prev, tempMemo]);
     };
 
-    const handleInsertMemo = async (tempId: number, boardId: number, content: string, x: number, y: number, z: number, width: number, height: number, color: string, isPublic: boolean) => {
-        const response = await fetch("/api/memos", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                boardId, content, x, y, z, width, height, color, isPublic
-            }),
-        });
+    const handleInsertMemo = async ({ tempId, memo }: InsertBoardMemoInput) => {
+        const data = await requestJson<ApiResponse & { memo: BoardMemo }>(
+            "/api/memos",
+            jsonRequestInit("POST", memo),
+            {
+                fallbackMessage: "You do not have permission to edit memos.",
+                setErrorMessage: setPermissionMessage,
+            }
+        );
 
-        const data = await response.json();
-        if (!response.ok || !data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to edit memos.");
+        if (!data) {
             return;
         }
+
         setMemos((prev) =>
             prev.map((memo) =>
-                memo.id === tempId ? { ...data.memo, isNew: false } : memo
+                memo.id === tempId ? data.memo : memo
             )
         );
     };
 
-    const handleUpdateMemo = async (id: number, boardId: number, content: string, x: number, y: number, z: number, width: number, height: number, color: string, isPublic: boolean) => {
-        const response = await fetch(`/api/memos/${id}`, {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ boardId, content, x, y, z, width, height, color, isPublic }),
-        });
-        const data = await response.json();
-        if (!data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to edit memos.");
+    const handleUpdateMemo = async (memo: UpdateBoardMemoInput) => {
+        const { id, ...payload } = memo;
+        const data = await requestJson<ApiResponse>(
+            `/api/memos/${id}`,
+            jsonRequestInit("PATCH", payload),
+            {
+                fallbackMessage: "You do not have permission to edit memos.",
+                setErrorMessage: setPermissionMessage,
+            }
+        );
+
+        if (!data) {
             return;
         }
+
         setMemos((prev) =>
             prev.map((memo) =>
-                memo.id === id ? { ...memo, content, x, y, z, width, height, color, isPublic } : memo
+                memo.id === id ? { ...memo, ...payload } : memo
             )
         );
     };
@@ -101,14 +111,19 @@ export function useBoardMemos({
             return;
         }
 
-        const response = await fetch(`/api/memos/${id}`, {
-            method: "DELETE",
-        });
-        const data = await response.json();
-        if (!data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to edit memos.");
+        const data = await requestJson<ApiResponse>(
+            `/api/memos/${id}`,
+            { method: "DELETE" },
+            {
+                fallbackMessage: "You do not have permission to edit memos.",
+                setErrorMessage: setPermissionMessage,
+            }
+        );
+
+        if (!data) {
             return;
         }
+
         setMemos((prev) => prev.filter((memo) => memo.id !== id));
     };
 

@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction } from "react";
 import { BoardImage } from "@/hooks/useBoardImages";
 import { BoardMemo } from "@/hooks/useBoardMemos";
 import { BoardMermaid } from "@/hooks/useBoardMermaids";
+import { jsonRequestInit, requestJson, type ApiResponse } from "@/lib/api/client";
 
 export type CardLayerType = "memo" | "image" | "mermaid";
 export type CardLayerAction = "front" | "back";
@@ -54,22 +55,21 @@ export function useCardLayer({
             return;
         }
 
-        const response = await fetch("/api/cards/layer", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
+        const data = await requestJson<ApiResponse & { cards?: CardLayer[] }>(
+            "/api/cards/layer",
+            jsonRequestInit("POST", {
                 boardId,
                 type,
                 id,
                 action,
             }),
-        });
-        const data = await response.json();
+            {
+                fallbackMessage: "Card layer could not be updated.",
+                setErrorMessage: setPermissionMessage,
+            }
+        );
 
-        if (!response.ok || !data.ok) {
-            setPermissionMessage(data.message ?? "Card layer could not be updated.");
+        if (!data) {
             return;
         }
 

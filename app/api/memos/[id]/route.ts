@@ -1,8 +1,13 @@
 import { getDb } from "@/lib/db";
 import { getCurrentUserFromRequest, getMemoPermissionMessage } from "@/lib/auth/current-user";
 import { db_memos } from "@/lib/db/schema";
+import { updateMemoSchema } from "@/lib/validation/memos";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 export async function PATCH(request: NextRequest, {params}: { params: Promise<{ id: string }> }) {
     try {
@@ -19,32 +24,41 @@ export async function PATCH(request: NextRequest, {params}: { params: Promise<{ 
         const db = getDb();
         const { id } = await params;
         const body = await request.json();
-        const updates: Partial<typeof db_memos.$inferInsert> = {};
         const memoId = Number(id);
+
         if (!Number.isInteger(memoId)) {
             return NextResponse.json({
                 ok: false,
                 message: "Invalid memo id.",
             }, { status: 400 });
         }
-        if (body.boardId !== undefined) updates.boardId = body.boardId;
-        if (body.content !== undefined) updates.content = body.content;
-        if (body.x !== undefined) updates.x = body.x;
-        if (body.y !== undefined) updates.y = body.y;
-        if (body.z !== undefined) updates.z = body.z;
-        if (body.width !== undefined) updates.width = body.width;
-        if (body.height !== undefined) updates.height = body.height;
-        if (body.color !== undefined) updates.color = body.color;
-        if (body.isPublic !== undefined) updates.isPublic = body.isPublic;
-        if (Object.keys(updates).length === 0) {
+
+        if (!isJsonObject(body)) {
+            return NextResponse.json({
+                ok: false,
+                message: "Invalid request body.",
+            }, { status: 400 });
+        }
+
+        if (Object.keys(body).length === 0) {
             return NextResponse.json({
                 ok: false,
                 message: "No update fields were provided.",
             }, { status: 400 });
         }
+
+        const parsedBody = updateMemoSchema.safeParse(body);
+
+        if (!parsedBody.success) {
+            return NextResponse.json({
+                ok: false,
+                message: "Invalid request body.",
+            }, { status: 400 });
+        }
+
         const updatedMemo = await db
         .update(db_memos)
-        .set(updates)
+        .set(parsedBody.data)
         .where(eq(db_memos.id, memoId)).returning();
         
         if (!updatedMemo[0]) {

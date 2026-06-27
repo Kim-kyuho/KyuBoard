@@ -1,4 +1,5 @@
 import { ChangeEvent, useRef, useState } from "react";
+import { jsonRequestInit, requestJson, type ApiResponse } from "@/lib/api/client";
 
 export type BoardImage = {
     imageId: number;
@@ -13,6 +14,19 @@ export type BoardImage = {
     width: number;
     height: number;
 };
+
+export type InsertBoardImageInput = {
+    tempId: number;
+    file: File;
+    boardId: number;
+    x: number;
+    y: number;
+    z: number;
+    width: number;
+    height: number;
+};
+
+export type UpdateBoardImageInput = Omit<BoardImage, "file">;
 
 type BoardPoint = {
     x: number;
@@ -176,7 +190,16 @@ export function useBoardImages({
         setSelectedImageId(tempImage.imageId);
     };
 
-    const handleInsertImage = async (tempId: number, file: File, boardId: number, x: number, y: number, z: number, width: number, height: number) => {
+    const handleInsertImage = async ({
+        tempId,
+        file,
+        boardId,
+        x,
+        y,
+        z,
+        width,
+        height,
+    }: InsertBoardImageInput) => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("boardId", String(boardId));
@@ -186,14 +209,19 @@ export function useBoardImages({
         formData.append("width", String(width));
         formData.append("height", String(height));
 
-        const response = await fetch("/api/images", {
-            method: "POST",
-            body: formData,
-        });
-        const data = await response.json();
+        const data = await requestJson<ApiResponse & { image: BoardImage }>(
+            "/api/images",
+            {
+                method: "POST",
+                body: formData,
+            },
+            {
+                fallbackMessage: "You do not have permission to upload images.",
+                setErrorMessage: setPermissionMessage,
+            }
+        );
 
-        if (!data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to upload images.");
+        if (!data) {
             return;
         }
 
@@ -210,24 +238,24 @@ export function useBoardImages({
         setSelectedImageId(data.image.imageId);
     };
 
-    const handleUpdateImage = async (imageId: number, boardId: number, publicId: string, secureUrl: string, fileName: string | null, x: number, y: number, z: number, width: number, height: number) => {
-        const response = await fetch(`/api/images/${imageId}`, {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ boardId, publicId, secureUrl, fileName, x, y, z, width, height }),
-        });
-        const data = await response.json();
+    const handleUpdateImage = async (image: UpdateBoardImageInput) => {
+        const { imageId, ...payload } = image;
+        const data = await requestJson<ApiResponse>(
+            `/api/images/${imageId}`,
+            jsonRequestInit("PATCH", payload),
+            {
+                fallbackMessage: "You do not have permission to edit images.",
+                setErrorMessage: setPermissionMessage,
+            }
+        );
 
-        if (!response.ok || !data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to edit images.");
+        if (!data) {
             return;
         }
 
         setImages((prev) =>
             prev.map((image) =>
-                image.imageId === imageId ? { ...image, boardId, publicId, secureUrl, fileName, x, y, z, width, height } : image
+                image.imageId === imageId ? { ...image, ...payload } : image
             )
         );
     };
@@ -244,13 +272,16 @@ export function useBoardImages({
             return;
         }
 
-        const response = await fetch(`/api/images/${imageId}`, {
-            method: "DELETE",
-        });
-        const data = await response.json();
+        const data = await requestJson<ApiResponse>(
+            `/api/images/${imageId}`,
+            { method: "DELETE" },
+            {
+                fallbackMessage: "You do not have permission to delete images.",
+                setErrorMessage: setPermissionMessage,
+            }
+        );
 
-        if (!response.ok || !data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to delete images.");
+        if (!data) {
             return;
         }
 

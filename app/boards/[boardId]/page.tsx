@@ -3,7 +3,8 @@
 import BoardClient from "@/components/BoardClient";
 import { getDb } from "@/lib/db";
 import { db_boards, db_images, db_memos, db_mermaids } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { notFound } from "next/navigation";
 
 export default async function BoardPage({
     params,
@@ -14,26 +15,34 @@ export default async function BoardPage({
     const { boardId } = await params;
     const boardIdNumber = Number(boardId);
 
-    const currentBoard = await db
+    if (!Number.isInteger(boardIdNumber) || boardIdNumber <= 0) {
+        notFound();
+    }
+
+    const [currentBoard] = await db
         .select()
         .from(db_boards)
         .where(eq(db_boards.boardId, boardIdNumber))
-        .orderBy(desc(db_boards.boardId))
-        
-    const allMemos = await db
-        .select()
-        .from(db_memos)
-        .where(eq(db_memos.boardId, boardIdNumber));
+        .limit(1);
 
-    const allImages = await db
-        .select()
-        .from(db_images)
-        .where(eq(db_images.boardId, boardIdNumber));
+    if (!currentBoard) {
+        notFound();
+    }
 
-    const allMermaids = await db
-        .select()
-        .from(db_mermaids)
-        .where(eq(db_mermaids.boardId, boardIdNumber));
+    const [allMemos, allImages, allMermaids] = await Promise.all([
+        db
+            .select()
+            .from(db_memos)
+            .where(eq(db_memos.boardId, boardIdNumber)),
+        db
+            .select()
+            .from(db_images)
+            .where(eq(db_images.boardId, boardIdNumber)),
+        db
+            .select()
+            .from(db_mermaids)
+            .where(eq(db_mermaids.boardId, boardIdNumber)),
+    ]);
 
     const mappedMemos = allMemos.map((memo) => ({
         id: memo.id,
@@ -74,7 +83,7 @@ export default async function BoardPage({
 
     return (
         <BoardClient
-            currentBoard={currentBoard[0]}
+            currentBoard={currentBoard}
             mappedImages={mappedImages}
             mappedMemos={mappedMemos}
             mappedMermaids={mappedMermaids}

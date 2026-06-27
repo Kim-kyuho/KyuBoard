@@ -1,4 +1,5 @@
 import { RefObject, useState } from "react";
+import { jsonRequestInit, requestJson, type ApiResponse } from "@/lib/api/client";
 
 export type BoardMermaid = {
     id: number;
@@ -10,6 +11,15 @@ export type BoardMermaid = {
     width: number;
     height: number;
 };
+
+export type BoardMermaidPayload = Omit<BoardMermaid, "id">;
+
+export type InsertBoardMermaidInput = {
+    tempId: number;
+    mermaid: BoardMermaidPayload;
+};
+
+export type UpdateBoardMermaidInput = BoardMermaid;
 
 type UseBoardMermaidsOptions = {
     initialMermaids: BoardMermaid[];
@@ -73,27 +83,17 @@ export function useBoardMermaids({
         setMermaids((prev) => [...prev, tempMermaid]);
     };
 
-    const handleInsertMermaid = async (
-        tempId: number,
-        boardId: number,
-        source: string,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-    ) => {
-        const response = await fetch("/api/mermaids", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ boardId, source, x, y, z, width, height }),
-        });
-        const data = await response.json();
+    const handleInsertMermaid = async ({ tempId, mermaid }: InsertBoardMermaidInput) => {
+        const data = await requestJson<ApiResponse & { mermaid: { mermaidId: number } & BoardMermaidPayload }>(
+            "/api/mermaids",
+            jsonRequestInit("POST", mermaid),
+            {
+                fallbackMessage: "You do not have permission to edit mermaids.",
+                setErrorMessage: setPermissionMessage,
+            }
+        );
 
-        if (!response.ok || !data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to edit mermaids.");
+        if (!data) {
             return;
         }
 
@@ -115,34 +115,25 @@ export function useBoardMermaids({
         );
     };
 
-    const handleUpdateMermaid = async (
-        id: number,
-        boardId: number,
-        source: string,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-    ) => {
-        const response = await fetch(`/api/mermaids/${id}`, {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ boardId, source, x, y, z, width, height }),
-        });
-        const data = await response.json();
+    const handleUpdateMermaid = async (mermaid: UpdateBoardMermaidInput) => {
+        const { id, ...payload } = mermaid;
+        const data = await requestJson<ApiResponse>(
+            `/api/mermaids/${id}`,
+            jsonRequestInit("PATCH", payload),
+            {
+                fallbackMessage: "You do not have permission to edit mermaids.",
+                setErrorMessage: setPermissionMessage,
+            }
+        );
 
-        if (!response.ok || !data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to edit mermaids.");
+        if (!data) {
             return;
         }
 
         setMermaids((prev) =>
             prev.map((mermaid) =>
                 mermaid.id === id
-                    ? { ...mermaid, boardId, source, x, y, z, width, height }
+                    ? { ...mermaid, ...payload }
                     : mermaid
             )
         );
@@ -154,13 +145,16 @@ export function useBoardMermaids({
             return;
         }
 
-        const response = await fetch(`/api/mermaids/${id}`, {
-            method: "DELETE",
-        });
-        const data = await response.json();
+        const data = await requestJson<ApiResponse>(
+            `/api/mermaids/${id}`,
+            { method: "DELETE" },
+            {
+                fallbackMessage: "You do not have permission to delete mermaids.",
+                setErrorMessage: setPermissionMessage,
+            }
+        );
 
-        if (!response.ok || !data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to delete mermaids.");
+        if (!data) {
             return;
         }
 

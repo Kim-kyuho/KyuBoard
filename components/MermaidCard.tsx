@@ -3,6 +3,7 @@
 import { Rnd } from "react-rnd";
 import { EllipsisVertical } from "lucide-react";
 import { MermaidCardMermaid, useMermaidCard } from "@/hooks/useMermaidCard";
+import type { InsertBoardMermaidInput, UpdateBoardMermaidInput } from "@/hooks/useBoardMermaids";
 import { useMermaidRenderer } from "@/hooks/useMermaidRenderer";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
@@ -13,26 +14,8 @@ type MermaidCardProps = {
     zoom: number;
     canEdit: boolean;
     onPermissionDenied: () => void;
-    onUpdate: (
-        id: number,
-        boardId: number,
-        source: string,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-    ) => void;
-    onInsert: (
-        tempId: number,
-        boardId: number,
-        source: string,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-    ) => void;
+    onUpdate: (input: UpdateBoardMermaidInput) => void;
+    onInsert: (input: InsertBoardMermaidInput) => void;
     onDelete: (id: number) => void;
     onBringToFront: () => void;
     onSendToBack: () => void;

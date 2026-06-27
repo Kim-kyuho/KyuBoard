@@ -1,5 +1,6 @@
 import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { DraggableData, RndDragEvent, RndResizeCallback } from "react-rnd";
+import type { InsertBoardMemoInput, UpdateBoardMemoInput } from "@/hooks/useBoardMemos";
 
 export interface MemoCardMemo {
     id: number;
@@ -21,30 +22,8 @@ type UseMemoCardOptions = {
     onFocus: () => void;
     onFocusClear: () => void;
     onPermissionDenied: () => void;
-    onInsert: (
-        tempId: number,
-        boardId: number,
-        content: string,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-        color: string,
-        isPublic: boolean
-    ) => void;
-    onUpdate: (
-        id: number,
-        boardId: number,
-        content: string,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-        color: string,
-        isPublic: boolean
-    ) => void;
+    onInsert: (input: InsertBoardMemoInput) => void;
+    onUpdate: (input: UpdateBoardMemoInput) => void;
     onDelete: (id: number) => void;
 };
 
@@ -79,18 +58,20 @@ export function useMemoCard({
     const [memoColor, setMemoColor] = useState(memo.color);
 
     const insertMemo = useCallback(() => {
-        onInsert(
-            memo.id,
-            memo.boardId,
-            memoContent,
-            Math.round(memoState.x),
-            Math.round(memoState.y),
-            memo.z,
-            Math.round(memoState.width),
-            Math.round(memoState.height),
-            memoColor,
-            memo.isPublic
-        );
+        onInsert({
+            tempId: memo.id,
+            memo: {
+                boardId: memo.boardId,
+                content: memoContent,
+                x: Math.round(memoState.x),
+                y: Math.round(memoState.y),
+                z: memo.z,
+                width: Math.round(memoState.width),
+                height: Math.round(memoState.height),
+                color: memoColor,
+                isPublic: memo.isPublic,
+            },
+        });
     }, [
         memo.id,
         memo.boardId,
@@ -106,18 +87,18 @@ export function useMemoCard({
     ]);
 
     const updateMemo = useCallback(() => {
-        onUpdate(
-            memo.id,
-            memo.boardId,
-            memoContent,
-            Math.round(memoState.x),
-            Math.round(memoState.y),
-            memo.z,
-            Math.round(memoState.width),
-            Math.round(memoState.height),
-            memoColor,
-            memo.isPublic
-        );
+        onUpdate({
+            id: memo.id,
+            boardId: memo.boardId,
+            content: memoContent,
+            x: Math.round(memoState.x),
+            y: Math.round(memoState.y),
+            z: memo.z,
+            width: Math.round(memoState.width),
+            height: Math.round(memoState.height),
+            color: memoColor,
+            isPublic: memo.isPublic,
+        });
     }, [
         memo.id,
         memo.boardId,

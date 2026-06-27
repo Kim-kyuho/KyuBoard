@@ -4,6 +4,8 @@ import { db_users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
+export { getMemoPermissionMessage } from "@/lib/auth/permissions";
+
 // 현재 유저정보 GET 위한 라이브러리
 export async function getCurrentUserFromRequest(request: NextRequest) {
     try {
@@ -35,20 +37,4 @@ export async function getCurrentUserFromRequest(request: NextRequest) {
         console.error("Error fetching current user:", error);
         throw error;
     }
-}
-
-// 메시지 출력을 위한 기능 - ** 수정시 BoardClient의 showPermissionMessage도 함꼐 수정할 필요가 있음.
-export function getMemoPermissionMessage(
-    user: Awaited<ReturnType<typeof getCurrentUserFromRequest>>
-) {
-    // Sign in을 하지 않았을 경우 출력 메시지
-    if (!user) {
-        return "Please sign in before editing memos.";
-    }
-    // Sign up 후 허가되지 않은 유저의 경우 출력 메시지
-    if (!user.permissionFlg) {
-        return "Your account is waiting for administrator approval.";
-    }
-
-    return null;
 }

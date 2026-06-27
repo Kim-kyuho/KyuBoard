@@ -1,5 +1,6 @@
 import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { DraggableData, RndDragEvent, RndResizeCallback } from "react-rnd";
+import type { InsertBoardMermaidInput, UpdateBoardMermaidInput } from "@/hooks/useBoardMermaids";
 
 export type MermaidCardMermaid = {
     id: number;
@@ -16,26 +17,8 @@ type UseMermaidCardOptions = {
     mermaid: MermaidCardMermaid;
     canEdit: boolean;
     onPermissionDenied: () => void;
-    onUpdate: (
-        id: number,
-        boardId: number,
-        source: string,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-    ) => void;
-    onInsert: (
-        tempId: number,
-        boardId: number,
-        source: string,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-    ) => void;
+    onUpdate: (input: UpdateBoardMermaidInput) => void;
+    onInsert: (input: InsertBoardMermaidInput) => void;
     onDelete: (id: number) => void;
 };
 
@@ -76,31 +59,33 @@ export function useMermaidCard({
     const insertMermaid = useCallback(() => {
         const latestCardState = cardStateRef.current;
 
-        onInsert(
-            mermaid.id,
-            mermaid.boardId,
-            sourceRef.current,
-            Math.round(latestCardState.x),
-            Math.round(latestCardState.y),
-            mermaid.z,
-            Math.round(latestCardState.width),
-            Math.round(latestCardState.height),
-        );
+        onInsert({
+            tempId: mermaid.id,
+            mermaid: {
+                boardId: mermaid.boardId,
+                source: sourceRef.current,
+                x: Math.round(latestCardState.x),
+                y: Math.round(latestCardState.y),
+                z: mermaid.z,
+                width: Math.round(latestCardState.width),
+                height: Math.round(latestCardState.height),
+            },
+        });
     }, [mermaid.boardId, mermaid.id, mermaid.z, onInsert]);
 
     const updateMermaid = useCallback(() => {
         const latestCardState = cardStateRef.current;
 
-        onUpdate(
-            mermaid.id,
-            mermaid.boardId,
-            sourceRef.current,
-            Math.round(latestCardState.x),
-            Math.round(latestCardState.y),
-            mermaid.z,
-            Math.round(latestCardState.width),
-            Math.round(latestCardState.height),
-        );
+        onUpdate({
+            id: mermaid.id,
+            boardId: mermaid.boardId,
+            source: sourceRef.current,
+            x: Math.round(latestCardState.x),
+            y: Math.round(latestCardState.y),
+            z: mermaid.z,
+            width: Math.round(latestCardState.width),
+            height: Math.round(latestCardState.height),
+        });
     }, [mermaid.boardId, mermaid.id, mermaid.z, onUpdate]);
 
     const saveMermaidDraft = useCallback(() => {

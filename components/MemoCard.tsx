@@ -4,6 +4,7 @@ import { EllipsisVertical } from "lucide-react";
 import MemoActionMenu from "./MemoActionMenu";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { MemoCardMemo, useMemoCard } from "@/hooks/useMemoCard";
+import type { InsertBoardMemoInput, UpdateBoardMemoInput } from "@/hooks/useBoardMemos";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 import MemoEditor from "./MemoEditor";
 import type { MemoEditorHandle } from "./MemoEditor";
@@ -16,30 +17,8 @@ type MemoCardProps = {
     onFocus: () => void;
     onFocusClear: () => void;
     onPermissionDenied: () => void;
-    onInsert: (
-        tempId: number,
-        boardId: number,
-        content: string,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-        color: string,
-        isPublic: boolean
-    ) => void;
-    onUpdate: (
-        id: number,
-        boardId: number,
-        content: string,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-        color: string,
-        isPublic: boolean
-    ) => void;
+    onInsert: (input: InsertBoardMemoInput) => void;
+    onUpdate: (input: UpdateBoardMemoInput) => void;
     onDelete: (id: number) => void;
     onBringToFront: () => void;
     onSendToBack: () => void;

@@ -6,6 +6,7 @@ import { EllipsisVertical } from "lucide-react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ImageActionMenu from "./ImageActionMenu";
 import { ImageCardImage, useImageCard } from "@/hooks/useImageCard";
+import type { InsertBoardImageInput, UpdateBoardImageInput } from "@/hooks/useBoardImages";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 
 type ImageCardProps = {
@@ -16,32 +17,9 @@ type ImageCardProps = {
     onSelect: () => void;
     onSelectClear: () => void;
     onPermissionDenied: () => void;
-    onInsert: (
-        tempId: number,
-        file: File,
-        boardId: number,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-    ) => void;
-    onUpdate: (
-        imageId: number,
-        boardId: number,
-        publicId: string,
-        secureUrl: string,
-        fileName: string | null,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-    ) => void;
-    onDelete: (
-        imageId: number,
-        publicId: string,
-    ) => void;
+    onInsert: (input: InsertBoardImageInput) => void;
+    onUpdate: (input: UpdateBoardImageInput) => void;
+    onDelete: (imageId: number) => void;
     onBringToFront: () => void;
     onSendToBack: () => void;
 };

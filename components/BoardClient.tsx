@@ -20,6 +20,7 @@ import { useBoardMemos } from "@/hooks/useBoardMemos";
 import { useBoardScroll } from "@/hooks/useBoardScroll";
 import { useBoardSearch } from "@/hooks/useBoardSearch";
 import { useBoardZoom } from "@/hooks/useBoardZoom";
+import { getMemoPermissionMessage } from "@/lib/auth/permissions";
 
 interface Board {
   boardId: number;
@@ -75,13 +76,9 @@ export default function BoardClient(
     const [showBoardToolBar, setShowBoardToolBar] = useState(true);
     const [writeClicked, setWriteClicked] = useState(false);
     const [permissionMessage, setPermissionMessage] = useState("");
-    // **수정시 current-user.ts의 getMemoPermissionMessage를 함꼐 수정할 필요가 있음
+
     const showPermissionMessage = () => {
-        setPermissionMessage(
-            currentUser
-                ? "Your account is waiting for administrator approval."
-                : "Please sign in before editing memos."
-        );
+        setPermissionMessage(getMemoPermissionMessage(currentUser) ?? "");
     };
 
     const {

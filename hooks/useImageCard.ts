@@ -7,6 +7,7 @@ import {
     useState,
 } from "react";
 import { DraggableData, RndDragEvent, RndResizeCallback } from "react-rnd";
+import type { InsertBoardImageInput, UpdateBoardImageInput } from "@/hooks/useBoardImages";
 
 export interface ImageCardImage {
     imageId: number;
@@ -29,32 +30,9 @@ type UseImageCardOptions = {
     onSelect: () => void;
     onSelectClear: () => void;
     onPermissionDenied: () => void;
-    onInsert: (
-        tempId: number,
-        file: File,
-        boardId: number,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-    ) => void;
-    onUpdate: (
-        imageId: number,
-        boardId: number,
-        publicId: string,
-        secureUrl: string,
-        fileName: string | null,
-        x: number,
-        y: number,
-        z: number,
-        width: number,
-        height: number,
-    ) => void;
-    onDelete: (
-        imageId: number,
-        publicId: string,
-    ) => void;
+    onInsert: (input: InsertBoardImageInput) => void;
+    onUpdate: (input: UpdateBoardImageInput) => void;
+    onDelete: (imageId: number) => void;
 };
 
 export function useImageCard({
@@ -89,33 +67,33 @@ export function useImageCard({
 
             const latestImageState = imageStateRef.current;
 
-            onInsert(
-                image.imageId,
-                image.file,
-                image.boardId,
-                Math.round(latestImageState.x),
-                Math.round(latestImageState.y),
-                image.z,
-                Math.round(latestImageState.width),
-                Math.round(latestImageState.height),
-            );
+            onInsert({
+                tempId: image.imageId,
+                file: image.file,
+                boardId: image.boardId,
+                x: Math.round(latestImageState.x),
+                y: Math.round(latestImageState.y),
+                z: image.z,
+                width: Math.round(latestImageState.width),
+                height: Math.round(latestImageState.height),
+            });
             return;
         }
 
         const latestImageState = imageStateRef.current;
 
-        onUpdate(
-            image.imageId,
-            image.boardId,
-            image.publicId,
-            image.secureUrl,
-            image.fileName,
-            Math.round(latestImageState.x),
-            Math.round(latestImageState.y),
-            image.z,
-            Math.round(latestImageState.width),
-            Math.round(latestImageState.height),
-        );
+        onUpdate({
+            imageId: image.imageId,
+            boardId: image.boardId,
+            publicId: image.publicId,
+            secureUrl: image.secureUrl,
+            fileName: image.fileName,
+            x: Math.round(latestImageState.x),
+            y: Math.round(latestImageState.y),
+            z: image.z,
+            width: Math.round(latestImageState.width),
+            height: Math.round(latestImageState.height),
+        });
     }, [
         image.boardId,
         image.file,
@@ -229,7 +207,7 @@ export function useImageCard({
     };
 
     const confirmDelete = () => {
-        onDelete(image.imageId, image.publicId);
+        onDelete(image.imageId);
         setDeleteDialogOpen(false);
         onSelectClear();
     };

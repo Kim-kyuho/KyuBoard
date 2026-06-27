@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CurrentUser } from "@/hooks/useBoardAuth";
+import { requestJson, type ApiResponse } from "@/lib/api/client";
 
 export type BoardListBoard = {
     boardId: number;
@@ -88,13 +89,16 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
             return;
         }
 
-        const response = await fetch(`/api/boards/${selectedBoardId}`, {
-            method: "DELETE",
-        });
-        const data = await response.json();
+        const data = await requestJson<ApiResponse>(
+            `/api/boards/${selectedBoardId}`,
+            { method: "DELETE" },
+            {
+                fallbackMessage: "Board could not be deleted.",
+                setErrorMessage: setBoardListMessage,
+            }
+        );
 
-        if (!response.ok || !data.ok) {
-            setBoardListMessage(data.message ?? "Board could not be deleted.");
+        if (!data) {
             setDeleteDialogOpen(false);
             return;
         }
