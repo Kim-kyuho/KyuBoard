@@ -242,7 +242,10 @@
 .memo-editor-content pre {
   margin: 0.5rem 0;
   padding: 0.75rem;
-  overflow: auto;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   border-radius: 0.5rem;
   background-color: #171717;
   color: #fafafa;
