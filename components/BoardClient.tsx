@@ -211,30 +211,35 @@ export default function BoardClient(
             className="hidden"
             onChange={handleUploadImage}
         />
-        <BoardMenu
-            menuOpen={menuOpen}
-            currentBoard={currentBoard}
-            setMenuOpen={setMenuOpen}
-            setSignInOpen={setSignInOpen}
-            setSignUpOpen={setSignUpOpen}
-            onSignOut={handleSignOut}
-            currentUser={currentUser}
-        />
-        {/* <BoardNavigator boardIds={boardIds} currentBoardId={currentBoard.boardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/> */}
-        <BoardToolBar 
-            showBoardToolBar={showBoardToolBar}
-            setShowBoardToolBar={setShowBoardToolBar}
-            setMenuOpen={setMenuOpen}
-            setSearchBarOpen={setSearchBarOpen}
-            setWriteClicked={setWriteClicked}
-            canEditMemos={canEditMemos}
-            onFocusPrevMemo={handleFocusPrevMemo}
-            onFocusNextMemo={handleFocusNextMemo}
-            onZoomControlOpen={showZoomControl}
-            onImageUploadClick={handleImageUploadClick}
-            onMermaidCreateClick={handleCreateTempMermaid}
-            onPermissionDenied={showPermissionMessage}
-        />
+        <div
+            className="contents"
+            onPointerDownCapture={() => setWriteClicked(false)}
+        >
+            <BoardMenu
+                menuOpen={menuOpen}
+                currentBoard={currentBoard}
+                setMenuOpen={setMenuOpen}
+                setSignInOpen={setSignInOpen}
+                setSignUpOpen={setSignUpOpen}
+                onSignOut={handleSignOut}
+                currentUser={currentUser}
+            />
+            {/* <BoardNavigator boardIds={boardIds} currentBoardId={currentBoard.boardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/> */}
+            <BoardToolBar 
+                showBoardToolBar={showBoardToolBar}
+                setShowBoardToolBar={setShowBoardToolBar}
+                setMenuOpen={setMenuOpen}
+                setSearchBarOpen={setSearchBarOpen}
+                setWriteClicked={setWriteClicked}
+                canEditMemos={canEditMemos}
+                onFocusPrevMemo={handleFocusPrevMemo}
+                onFocusNextMemo={handleFocusNextMemo}
+                onZoomControlOpen={showZoomControl}
+                onImageUploadClick={handleImageUploadClick}
+                onMermaidCreateClick={handleCreateTempMermaid}
+                onPermissionDenied={showPermissionMessage}
+            />
+        </div>
         {searchBarOpen && (
             <BoardSearchPanel
                 searchText={searchText}
