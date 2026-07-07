@@ -6,6 +6,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Kyu-board",
   description: "A free-form board for arranging rich text memos and images.",
+  icons: {
+    icon: "/favicon.ico?v=2",
+    apple: "/apple-touch-icon.png?v=2",
+  },
 };
 
 export default function RootLayout({
