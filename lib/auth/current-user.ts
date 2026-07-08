@@ -23,7 +23,7 @@ export async function getCurrentUserFromRequest(request: NextRequest) {
             .select({
                 id: db_users.id,
                 email: db_users.email,
-                permissionFlg: db_users.permissionFlg,
+                isApproved: db_users.isApproved,
                 role: db_users.role,
             })
             .from(db_users)
@@ -37,16 +37,16 @@ export async function getCurrentUserFromRequest(request: NextRequest) {
     }
 }
 
-// 메시지 출력을 위한 기능 - ** 수정시 BoardClient의 showPermissionMessage도 함꼐 수정할 필요가 있음.
-export function getMemoPermissionMessage(
+// 카드 편집 권한 메시지
+export function getCardPermissionMessage(
     user: Awaited<ReturnType<typeof getCurrentUserFromRequest>>
 ) {
     // Sign in을 하지 않았을 경우 출력 메시지
     if (!user) {
-        return "Please sign in before editing memos.";
+        return "Please sign in before editing cards.";
     }
     // Sign up 후 허가되지 않은 유저의 경우 출력 메시지
-    if (!user.permissionFlg) {
+    if (!user.isApproved) {
         return "Your account is waiting for administrator approval.";
     }
 

@@ -5,11 +5,11 @@ import { Rnd } from "react-rnd";
 import { EllipsisVertical } from "lucide-react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ImageActionMenu from "./ImageActionMenu";
-import { ImageCardImage, useImageCard } from "@/hooks/useImageCard";
+import { ImageCardData, useImageCard } from "@/hooks/useImageCard";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 
 type ImageCardProps = {
-    image: ImageCardImage;
+    image: ImageCardData;
     zoom: number;
     canEdit: boolean;
     isSelected: boolean;

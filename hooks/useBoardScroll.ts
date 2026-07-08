@@ -10,14 +10,9 @@ type BoardPanState = {
     isDragging: boolean;
 };
 
-type UseBoardScrollOptions = {
-    writeClicked: boolean;
-};
-
-export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
+export function useBoardScroll() {
     const [boardPanning, setBoardPanning] = useState(false);
     const boardPanRef = useRef<BoardPanState | null>(null);
-    const suppressBoardClickRef = useRef(false);
     const boardPanClearTimerRef = useRef<number | null>(null);
 
     const clearBoardPanMode = () => {
@@ -42,7 +37,7 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
     };
 
     const handleBoardPanStart = (event: ReactPointerEvent<HTMLElement>) => {
-        if (event.pointerType !== "mouse" || event.button !== 0 || writeClicked) {
+        if (event.pointerType !== "mouse" || event.button !== 0) {
             return;
         }
 
@@ -88,7 +83,6 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
         }
 
         document.documentElement.dataset.boardPanning = "true";
-        suppressBoardClickRef.current = true;
         event.preventDefault();
 
         event.currentTarget.scrollLeft = panState.scrollLeft - deltaX;
@@ -112,7 +106,6 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
         if (panState.isDragging) {
             boardPanClearTimerRef.current = window.setTimeout(() => {
                 clearBoardPanMode();
-                suppressBoardClickRef.current = false;
             }, 160);
             return;
         }
@@ -132,7 +125,6 @@ export function useBoardScroll({ writeClicked }: UseBoardScrollOptions) {
 
     return {
         boardPanning,
-        suppressBoardClickRef,
         handleBoardPanStart,
         handleBoardPanMove,
         handleBoardPanEnd,

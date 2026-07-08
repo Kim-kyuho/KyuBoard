@@ -5,7 +5,7 @@ export const db_users = pgTable("users", {
     id: serial("id").primaryKey(),
     email: varchar("email", { length: 254 }).notNull().unique(),
     passwordHash: text("password_hash").notNull(),
-    permissionFlg: boolean("permission_flg").notNull().default(false),
+    isApproved: boolean("permission_flg").notNull().default(false),
     role: varchar("role", { length: 20 }).notNull().default("user"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

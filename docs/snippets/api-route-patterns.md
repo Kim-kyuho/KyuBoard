@@ -6,7 +6,7 @@
 export async function POST(request: NextRequest) {
   try {
     const currentUser = await getCurrentUserFromRequest(request);
-    const permissionMessage = getMemoPermissionMessage(currentUser);
+    const permissionMessage = getCardPermissionMessage(currentUser);
 
     if (permissionMessage) {
       return NextResponse.json(

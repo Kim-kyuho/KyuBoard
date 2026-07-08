@@ -1,4 +1,4 @@
-import { getCurrentUserFromRequest, getMemoPermissionMessage } from "@/lib/auth/current-user";
+import { getCardPermissionMessage, getCurrentUserFromRequest } from "@/lib/auth/current-user";
 import { getDb } from "@/lib/db";
 import { db_images, db_memos, db_mermaids } from "@/lib/db/schema";
 import { and, eq, sql } from "drizzle-orm";
@@ -151,7 +151,7 @@ async function normalizeCards(cards: LayerCard[]) {
 export async function POST(request: NextRequest) {
     try {
         const currentUser = await getCurrentUserFromRequest(request);
-        const permissionMessage = getMemoPermissionMessage(currentUser);
+        const permissionMessage = getCardPermissionMessage(currentUser);
 
         if (permissionMessage) {
             return NextResponse.json({

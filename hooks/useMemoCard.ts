@@ -1,7 +1,7 @@
 import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { DraggableData, RndDragEvent, RndResizeCallback } from "react-rnd";
 
-export interface MemoCardMemo {
+export interface MemoCardData {
     id: number;
     boardId: number;
     content: string;
@@ -15,7 +15,7 @@ export interface MemoCardMemo {
 }
 
 type UseMemoCardOptions = {
-    memo: MemoCardMemo;
+    memo: MemoCardData;
     canEdit: boolean;
     isFocused: boolean;
     onFocus: () => void;
@@ -60,7 +60,7 @@ export function useMemoCard({
     onDelete,
 }: UseMemoCardOptions) {
     const [actionMenuOpen, setActionMenuOpen] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditing, setIsEditing] = useState(memo.id < 0);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
     const [isResizing, setIsResizing] = useState(false);

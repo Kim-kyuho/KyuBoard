@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export type CurrentUser = {
     email: string;
-    permissionFlg: boolean;
+    isApproved: boolean;
     role: string;
 };
 
@@ -41,7 +41,7 @@ export function useBoardAuth({ onSignOutComplete }: UseBoardAuthOptions = {}) {
         setSignUpOpen,
         currentUser,
         setCurrentUser,
-        canEditMemos: currentUser?.permissionFlg === true,
+        canEditCard: currentUser?.isApproved === true,
         handleSignOut,
     };
 }

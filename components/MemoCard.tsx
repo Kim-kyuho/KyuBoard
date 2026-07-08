@@ -3,13 +3,13 @@ import { Rnd } from "react-rnd";
 import { EllipsisVertical } from "lucide-react";
 import MemoActionMenu from "./MemoActionMenu";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { MemoCardMemo, useMemoCard } from "@/hooks/useMemoCard";
+import { MemoCardData, useMemoCard } from "@/hooks/useMemoCard";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 import MemoEditor from "./MemoEditor";
 import type { MemoEditorHandle } from "./MemoEditor";
 
 type MemoCardProps = {
-    memo: MemoCardMemo;
+    memo: MemoCardData;
     zoom: number;
     canEdit: boolean;
     isFocused: boolean;

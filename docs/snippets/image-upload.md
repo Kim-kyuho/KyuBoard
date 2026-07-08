@@ -25,10 +25,10 @@ const handleImageUploadClick = () => {
 ## 현재 화면 중앙에 생성 위치 계산
 
 ```tsx
-const imageLocationRef = useRef<HTMLElement | null>(null);
+const cardLocationRef = useRef<HTMLElement | null>(null);
 
 const getImageUploadPoint = () => {
-  const scrollElement = imageLocationRef.current;
+  const scrollElement = cardLocationRef.current;
   if (!scrollElement) {
     return { x: 0, y: 0 };
   }

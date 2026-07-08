@@ -23,7 +23,7 @@ type UseBoardImagesOptions = {
     initialImages: BoardImage[];
     boardId: number;
     boardZoom: number;
-    canEditMemos: boolean;
+    canEditCard: boolean;
     showPermissionMessage: () => void;
     setPermissionMessage: (message: string) => void;
 };
@@ -84,17 +84,17 @@ export function useBoardImages({
     initialImages,
     boardId,
     boardZoom,
-    canEditMemos,
+    canEditCard,
     showPermissionMessage,
     setPermissionMessage,
 }: UseBoardImagesOptions) {
-    const imageLocationRef = useRef<HTMLDivElement | null>(null);
+    const cardLocationRef = useRef<HTMLDivElement | null>(null);
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const [images, setImages] = useState(initialImages);
     const [selectedImageId, setSelectedImageId] = useState<number | null>(null);
 
     const handleImageUploadClick = () => {
-        if (!canEditMemos) {
+        if (!canEditCard) {
             showPermissionMessage();
             return;
         }
@@ -131,7 +131,7 @@ export function useBoardImages({
         });
 
     const getImageAutoLocation = (): BoardPoint => {
-        const locationElement = imageLocationRef.current;
+        const locationElement = cardLocationRef.current;
         if (!locationElement) {
             return { x: 0, y: 0 };
         }
@@ -149,7 +149,7 @@ export function useBoardImages({
         if (!file) {
             return;
         }
-        if (!canEditMemos) {
+        if (!canEditCard) {
             showPermissionMessage();
             return;
         }
@@ -258,7 +258,7 @@ export function useBoardImages({
     };
 
     return {
-        imageLocationRef,
+        cardLocationRef,
         imageInputRef,
         images,
         setImages,
