@@ -15,8 +15,8 @@ type UseBoardMermaidsOptions = {
     initialMermaids: BoardMermaid[];
     boardId: number;
     boardZoom: number;
-    canEditMemos: boolean;
-    locationRef: RefObject<HTMLDivElement | null>;
+    canEditCard: boolean;
+    cardLocationRef: RefObject<HTMLDivElement | null>;
     showPermissionMessage: () => void;
     setPermissionMessage: (message: string) => void;
 };
@@ -33,15 +33,15 @@ export function useBoardMermaids({
     initialMermaids,
     boardId,
     boardZoom,
-    canEditMemos,
-    locationRef,
+    canEditCard,
+    cardLocationRef,
     showPermissionMessage,
     setPermissionMessage,
 }: UseBoardMermaidsOptions) {
     const [mermaids, setMermaids] = useState<BoardMermaid[]>(initialMermaids);
 
     const getMermaidAutoLocation = (): BoardPoint => {
-        const locationElement = locationRef.current;
+        const locationElement = cardLocationRef.current;
         if (!locationElement) {
             return { x: 0, y: 0 };
         }
@@ -53,7 +53,7 @@ export function useBoardMermaids({
     };
 
     const handleCreateTempMermaid = () => {
-        if (!canEditMemos) {
+        if (!canEditCard) {
             showPermissionMessage();
             return;
         }

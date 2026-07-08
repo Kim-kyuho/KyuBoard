@@ -73,14 +73,12 @@ export default function BoardClient(
     const boardHeight = currentBoard.height;
     const [menuOpen, setMenuOpen] = useState(false);
     const [showBoardToolBar, setShowBoardToolBar] = useState(true);
-    const [writeClicked, setWriteClicked] = useState(false);
     const [permissionMessage, setPermissionMessage] = useState("");
-    // **수정시 current-user.ts의 getMemoPermissionMessage를 함꼐 수정할 필요가 있음
     const showPermissionMessage = () => {
         setPermissionMessage(
             currentUser
                 ? "Your account is waiting for administrator approval."
-                : "Please sign in before editing memos."
+                : "Please sign in before editing cards."
         );
     };
 
@@ -98,7 +96,7 @@ export default function BoardClient(
         signInOpen, setSignInOpen,
         signUpOpen, setSignUpOpen,
         currentUser, setCurrentUser,
-        canEditMemos,
+        canEditCard,
         handleSignOut,
     } = useBoardAuth({
         onSignOutComplete: () => {
@@ -110,11 +108,31 @@ export default function BoardClient(
 
     const {
         boardPanning,
-        suppressBoardClickRef,
         handleBoardPanStart,
         handleBoardPanMove,
         handleBoardPanEnd,
-    } = useBoardScroll({ writeClicked });
+    } = useBoardScroll();
+
+    const {
+        cardLocationRef,
+        imageInputRef,
+        images,
+        setImages,
+        selectedImageId,
+        setSelectedImageId,
+        handleImageUploadClick,
+        handleUploadImage,
+        handleInsertImage,
+        handleUpdateImage,
+        handleDeleteImage,
+    } = useBoardImages({
+        initialImages: mappedImages,
+        boardId: currentBoard.boardId,
+        boardZoom,
+        canEditCard,
+        showPermissionMessage,
+        setPermissionMessage,
+    });
 
     const {
         memos,
@@ -126,7 +144,9 @@ export default function BoardClient(
     } = useBoardMemos({
         initialMemos: mappedMemos,
         boardId: currentBoard.boardId,
-        canEditMemos,
+        boardZoom,
+        cardLocationRef,
+        canEditCard,
         showPermissionMessage,
         setPermissionMessage,
     });
@@ -157,27 +177,6 @@ export default function BoardClient(
     });
 
     const {
-        imageLocationRef,
-        imageInputRef,
-        images,
-        setImages,
-        selectedImageId,
-        setSelectedImageId,
-        handleImageUploadClick,
-        handleUploadImage,
-        handleInsertImage,
-        handleUpdateImage,
-        handleDeleteImage,
-    } = useBoardImages({
-        initialImages: mappedImages,
-        boardId: currentBoard.boardId,
-        boardZoom,
-        canEditMemos,
-        showPermissionMessage,
-        setPermissionMessage,
-    });
-
-    const {
         mermaids,
         setMermaids,
         handleCreateTempMermaid,
@@ -188,8 +187,8 @@ export default function BoardClient(
         initialMermaids: mappedMermaids,
         boardId: currentBoard.boardId,
         boardZoom,
-        canEditMemos,
-        locationRef: imageLocationRef,
+        canEditCard,
+        cardLocationRef,
         showPermissionMessage,
         setPermissionMessage,
     });
@@ -211,35 +210,28 @@ export default function BoardClient(
             className="hidden"
             onChange={handleUploadImage}
         />
-        <div
-            className="contents"
-            onPointerDownCapture={() => setWriteClicked(false)}
-        >
-            <BoardMenu
-                menuOpen={menuOpen}
-                currentBoard={currentBoard}
-                setMenuOpen={setMenuOpen}
-                setSignInOpen={setSignInOpen}
-                setSignUpOpen={setSignUpOpen}
-                onSignOut={handleSignOut}
-                currentUser={currentUser}
-            />
-            {/* <BoardNavigator boardIds={boardIds} currentBoardId={currentBoard.boardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/> */}
-            <BoardToolBar 
-                showBoardToolBar={showBoardToolBar}
-                setShowBoardToolBar={setShowBoardToolBar}
-                setMenuOpen={setMenuOpen}
-                setSearchBarOpen={setSearchBarOpen}
-                setWriteClicked={setWriteClicked}
-                canEditMemos={canEditMemos}
-                onFocusPrevMemo={handleFocusPrevMemo}
-                onFocusNextMemo={handleFocusNextMemo}
-                onZoomControlOpen={showZoomControl}
-                onImageUploadClick={handleImageUploadClick}
-                onMermaidCreateClick={handleCreateTempMermaid}
-                onPermissionDenied={showPermissionMessage}
-            />
-        </div>
+        <BoardMenu
+            menuOpen={menuOpen}
+            currentBoard={currentBoard}
+            setMenuOpen={setMenuOpen}
+            setSignInOpen={setSignInOpen}
+            setSignUpOpen={setSignUpOpen}
+            onSignOut={handleSignOut}
+            currentUser={currentUser}
+        />
+        {/* <BoardNavigator boardIds={boardIds} currentBoardId={currentBoard.boardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/> */}
+        <BoardToolBar
+            showBoardToolBar={showBoardToolBar}
+            setShowBoardToolBar={setShowBoardToolBar}
+            setMenuOpen={setMenuOpen}
+            setSearchBarOpen={setSearchBarOpen}
+            onFocusPrevMemo={handleFocusPrevMemo}
+            onFocusNextMemo={handleFocusNextMemo}
+            onMemoCreateClick={handleCreateTempMemo}
+            onZoomControlOpen={showZoomControl}
+            onImageUploadClick={handleImageUploadClick}
+            onMermaidCreateClick={handleCreateTempMermaid}
+        />
         {searchBarOpen && (
             <BoardSearchPanel
                 searchText={searchText}
@@ -281,7 +273,7 @@ export default function BoardClient(
             }}
         >
             <div
-                ref={imageLocationRef}
+                ref={cardLocationRef}
                 className="board-scroll-layer h-full w-full overflow-auto"
                 onPointerDown={handleBoardPanStart}
                 onPointerMove={handleBoardPanMove}
@@ -296,26 +288,7 @@ export default function BoardClient(
             >
                 <div
                     className="kyu-board relative bg-white"
-                    onClick={(e)=>{
-                        setPermissionMessage("");
-                        setMemoMessage("");
-                        if (suppressBoardClickRef.current) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            suppressBoardClickRef.current = false;
-                            return;
-                        }
-                        if(writeClicked)
-                        {
-                            // 화면 좌표를 실제 보드 좌표로 변환하기 위해 줌 값을 나눔
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const x = (e.clientX - rect.left) / boardZoom;
-                            const y = (e.clientY - rect.top) / boardZoom; 
-                            handleCreateTempMemo(x, y);
-                            setWriteClicked(false);
-                        }
-                        }}
-                        style={{
+                    style={{
                             width: `${boardWidth}px`,
                             height: `${boardHeight}px`,
                             transform: `scale(${boardZoom})`,
@@ -333,7 +306,7 @@ export default function BoardClient(
                             key={image.imageId}
                             image={image}
                             zoom={boardZoom}
-                            canEdit={canEditMemos}
+                            canEdit={canEditCard}
                             isSelected={selectedImageId === image.imageId}
                             onSelect={() => setSelectedImageId(image.imageId)}
                             onSelectClear={() => setSelectedImageId(null)}
@@ -350,7 +323,7 @@ export default function BoardClient(
                             key={memo.id}
                             memo={memo}
                             zoom={boardZoom}
-                            canEdit={canEditMemos}
+                            canEdit={canEditCard}
                             isFocused={focusedMemoId === memo.id}
                             onFocus={() => setFocusedMemoId(memo.id)}
                             onFocusClear={() => setFocusedMemoId(null)}
@@ -367,7 +340,7 @@ export default function BoardClient(
                             key={mermaid.id}
                             mermaid={mermaid}
                             zoom={boardZoom}
-                            canEdit={canEditMemos}
+                            canEdit={canEditCard}
                             onPermissionDenied={showPermissionMessage}
                             onInsert={handleInsertMermaid}
                             onUpdate={handleUpdateMermaid}

@@ -15,7 +15,7 @@ export async function getCurrentUserFromRequest(request: NextRequest) {
   }
 
   const users = await db
-    .select({ id, email, permissionFlg, role })
+    .select({ id, email, isApproved, role })
     .from(db_users)
     .where(eq(db_users.id, userId))
     .limit(1);
@@ -27,14 +27,14 @@ export async function getCurrentUserFromRequest(request: NextRequest) {
 ## 권한 메시지
 
 ```ts
-export function getMemoPermissionMessage(
+export function getCardPermissionMessage(
   user: Awaited<ReturnType<typeof getCurrentUserFromRequest>>,
 ) {
   if (!user) {
-    return "Please sign in before editing memos.";
+    return "Please sign in before editing cards.";
   }
 
-  if (!user.permissionFlg) {
+  if (!user.isApproved) {
     return "Your account is waiting for administrator approval.";
   }
 

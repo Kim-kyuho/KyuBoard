@@ -2,14 +2,14 @@
 
 import { Rnd } from "react-rnd";
 import { EllipsisVertical } from "lucide-react";
-import { MermaidCardMermaid, useMermaidCard } from "@/hooks/useMermaidCard";
+import { MermaidCardData, useMermaidCard } from "@/hooks/useMermaidCard";
 import { useMermaidRenderer } from "@/hooks/useMermaidRenderer";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 import MermaidActionMenu from "./MermaidActionMenu";
 
 type MermaidCardProps = {
-    mermaid: MermaidCardMermaid;
+    mermaid: MermaidCardData;
     zoom: number;
     canEdit: boolean;
     onPermissionDenied: () => void;

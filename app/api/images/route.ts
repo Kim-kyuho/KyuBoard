@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { db_images } from "@/lib/db/schema";
-import { getCurrentUserFromRequest, getMemoPermissionMessage } from "@/lib/auth/current-user";
+import { getCardPermissionMessage, getCurrentUserFromRequest } from "@/lib/auth/current-user";
 import { v2 as cloudinary } from 'cloudinary';
 import type { UploadApiResponse } from "cloudinary";    
 import { NextRequest, NextResponse } from "next/server";
@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
     try {
         const currentUser = await getCurrentUserFromRequest(request);
-        const permissionMessage = getMemoPermissionMessage(currentUser);
+        const permissionMessage = getCardPermissionMessage(currentUser);
         if (permissionMessage) {
             return NextResponse.json({
                 ok: false,

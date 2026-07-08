@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
                 id: db_users.id,
                 email: db_users.email,
                 passwordHash: db_users.passwordHash,
-                permissionFlg: db_users.permissionFlg,
+                isApproved: db_users.isApproved,
                 role: db_users.role,
             })
             .from(db_users)
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
             ok: true,
             user: {
                 email: user.email,
-                permissionFlg: user.permissionFlg,
+                isApproved: user.isApproved,
                 role: user.role,
             },
         },{ status: 200 });

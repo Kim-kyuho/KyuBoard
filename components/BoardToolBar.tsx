@@ -9,14 +9,12 @@ type BoardToolBarProps = {
     setShowBoardToolBar: Dispatch<SetStateAction<boolean>>;
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
     setSearchBarOpen: Dispatch<SetStateAction<boolean>>;
-    setWriteClicked: Dispatch<SetStateAction<boolean>>;
-    canEditMemos: boolean;
     onFocusPrevMemo: () => void;
     onFocusNextMemo: () => void;
+    onMemoCreateClick: () => void;
     onZoomControlOpen: () => void;
     onImageUploadClick: () => void;
     onMermaidCreateClick: () => void;
-    onPermissionDenied: () => void;
 };
 
 export default function BoardToolBar({ 
@@ -24,14 +22,12 @@ export default function BoardToolBar({
     setShowBoardToolBar,
     setMenuOpen,
     setSearchBarOpen,
-    setWriteClicked, 
-    canEditMemos,
     onFocusPrevMemo,
     onFocusNextMemo,
+    onMemoCreateClick,
     onZoomControlOpen,
     onImageUploadClick,
-    onMermaidCreateClick,
-    onPermissionDenied
+    onMermaidCreateClick
 }: BoardToolBarProps){
     const toolbarButtonClassName = "flex h-10 w-10 items-center justify-center px-0 py-0 hover:pl-0 hover:bg-white/80 hover:shadow-sm active:scale-90 active:bg-white active:shadow-inner";
     const toolbarIconClassName = "h-5 w-5 transition duration-150 ease-out";
@@ -67,12 +63,7 @@ export default function BoardToolBar({
                 variant="menu"
                 className={toolbarButtonClassName}
                 onClick={() => { 
-                    if (!canEditMemos) {
-                        onPermissionDenied();
-                        setMenuOpen(false);
-                        return;
-                    }
-                    setWriteClicked(true);
+                    onMemoCreateClick();
                     setMenuOpen(false);
                 }}
             >

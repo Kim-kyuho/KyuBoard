@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
             user: {
                 email: currentUser.email,
-                permissionFlg: currentUser.permissionFlg,
+                isApproved: currentUser.isApproved,
                 role: currentUser.role,
             },
         },{ status: 200 });

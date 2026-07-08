@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         .values({
             email,
             passwordHash,
-            permissionFlg: false,
+            isApproved: false,
             role: "user"
         }).returning();
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
             ok: true,
             user: {
                 email: newUser[0].email,
-                permissionFlg: newUser[0].permissionFlg,
+                isApproved: newUser[0].isApproved,
                 role: newUser[0].role,
             }
         }, { status: 201 });

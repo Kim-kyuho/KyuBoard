@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { RefObject, useState } from "react";
 
 export type BoardMemo = {
     id: number;
@@ -16,7 +16,9 @@ export type BoardMemo = {
 type UseBoardMemosOptions = {
     initialMemos: BoardMemo[];
     boardId: number;
-    canEditMemos: boolean;
+    boardZoom: number;
+    cardLocationRef: RefObject<HTMLDivElement | null>;
+    canEditCard: boolean;
     showPermissionMessage: () => void;
     setPermissionMessage: (message: string) => void;
 };
@@ -24,24 +26,39 @@ type UseBoardMemosOptions = {
 export function useBoardMemos({
     initialMemos,
     boardId,
-    canEditMemos,
+    boardZoom,
+    cardLocationRef,
+    canEditCard,
     showPermissionMessage,
     setPermissionMessage,
 }: UseBoardMemosOptions) {
     const [memos, setMemos] = useState(initialMemos);
 
-    const handleCreateTempMemo = (x: number, y: number) => {
-        if (!canEditMemos) {
+    const getMemoAutoLocation = () => {
+        const locationElement = cardLocationRef.current;
+        if (!locationElement) {
+            return { x: 0, y: 0 };
+        }
+
+        return {
+            x: Math.max(0, (locationElement.scrollLeft + locationElement.clientWidth / 2) / boardZoom - 150),
+            y: Math.max(0, (locationElement.scrollTop + locationElement.clientHeight / 2) / boardZoom - 100),
+        };
+    };
+
+    const handleCreateTempMemo = () => {
+        if (!canEditCard) {
             showPermissionMessage();
             return;
         }
 
+        const { x, y } = getMemoAutoLocation();
         const tempMemo: BoardMemo = {
             id: -Date.now(),
             boardId,
             content: "",
-            x,
-            y,
+            x: Math.round(x),
+            y: Math.round(y),
             z: 1,
             width: 300,
             height: 200,
@@ -64,7 +81,7 @@ export function useBoardMemos({
 
         const data = await response.json();
         if (!response.ok || !data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to edit memos.");
+            setPermissionMessage(data.message ?? "You do not have permission to edit cards.");
             return;
         }
         setMemos((prev) =>
@@ -84,7 +101,7 @@ export function useBoardMemos({
         });
         const data = await response.json();
         if (!data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to edit memos.");
+            setPermissionMessage(data.message ?? "You do not have permission to edit cards.");
             return;
         }
         setMemos((prev) =>
@@ -106,7 +123,7 @@ export function useBoardMemos({
         });
         const data = await response.json();
         if (!data.ok) {
-            setPermissionMessage(data.message ?? "You do not have permission to edit memos.");
+            setPermissionMessage(data.message ?? "You do not have permission to edit cards.");
             return;
         }
         setMemos((prev) => prev.filter((memo) => memo.id !== id));

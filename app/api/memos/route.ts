@@ -1,12 +1,12 @@
 import { getDb } from "@/lib/db";
-import { getCurrentUserFromRequest, getMemoPermissionMessage } from "@/lib/auth/current-user";
+import { getCardPermissionMessage, getCurrentUserFromRequest } from "@/lib/auth/current-user";
 import { db_memos } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
     try {
         const currentUser = await getCurrentUserFromRequest(request);
-        const permissionMessage = getMemoPermissionMessage(currentUser);
+        const permissionMessage = getCardPermissionMessage(currentUser);
         if (permissionMessage) {
             return NextResponse.json({
                 ok: false,

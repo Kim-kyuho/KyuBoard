@@ -8,7 +8,7 @@ import {
 } from "react";
 import { DraggableData, RndDragEvent, RndResizeCallback } from "react-rnd";
 
-export interface ImageCardImage {
+export interface ImageCardData {
     imageId: number;
     boardId: number;
     publicId: string;
@@ -23,7 +23,7 @@ export interface ImageCardImage {
 }
 
 type UseImageCardOptions = {
-    image: ImageCardImage;
+    image: ImageCardData;
     canEdit: boolean;
     isSelected: boolean;
     onSelect: () => void;

@@ -1,7 +1,7 @@
 import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { DraggableData, RndDragEvent, RndResizeCallback } from "react-rnd";
 
-export type MermaidCardMermaid = {
+export type MermaidCardData = {
     id: number;
     boardId: number;
     source: string;
@@ -13,7 +13,7 @@ export type MermaidCardMermaid = {
 };
 
 type UseMermaidCardOptions = {
-    mermaid: MermaidCardMermaid;
+    mermaid: MermaidCardData;
     canEdit: boolean;
     onPermissionDenied: () => void;
     onUpdate: (
