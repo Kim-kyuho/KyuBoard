@@ -95,7 +95,7 @@ export default function ImageCard(props: ImageCardProps) {
                 data-editing={isEditing}
                 // imageCard컴포넌트의 드래그 이벤트와 충돌을 막기 위한 cancel처리
                 cancel=".image-action-menu"
-                className={`image-rnd-${image.imageId} select-none ${isEditing ? "kyu-card-focused" : ""}`}
+                className={`image-rnd-${image.imageId} select-none ${isEditing ? "card-editing" : ""}`}
                 style={{
                     zIndex: isEditing ? ACTIVE_CARD_Z : image.z,
                     WebkitTouchCallout: "none",

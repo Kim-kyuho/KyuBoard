@@ -111,7 +111,7 @@ export default function MemoCard(props: MemoCardProps) {
         <>
             <Rnd 
                 data-editing={isEditing}
-                className={`memo-rnd-${memo.id} select-none rounded-xl ${isEditing ? "kyu-card-focused" : ""}`}
+                className={`memo-rnd-${memo.id} select-none rounded-xl ${isEditing ? "card-editing" : ""}`}
                 style={{
                     zIndex: isEditing ? ACTIVE_CARD_Z : memo.z,
                 }}

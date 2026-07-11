@@ -96,7 +96,7 @@ export default function MermaidCard({
             <Rnd
                 data-editing={isEditing}
                 cancel=".mermaid-action-menu"
-                className={`mermaid-rnd-${mermaid.id} select-none rounded-xl ${isEditing ? "kyu-card-focused" : ""}`}
+                className={`mermaid-rnd-${mermaid.id} select-none rounded-xl ${isEditing ? "card-editing" : ""}`}
                 style={{
                     zIndex: isEditing ? ACTIVE_CARD_Z : mermaid.z,
                 }}

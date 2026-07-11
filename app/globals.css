@@ -281,7 +281,7 @@
   width: 100% !important;
 }
 
-.kyu-card-focused {
+.card-editing {
   border: 2px dashed #ec4899;
   border-radius: 0.75rem;
 }
