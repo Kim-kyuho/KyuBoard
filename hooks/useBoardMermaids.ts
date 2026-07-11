@@ -39,6 +39,7 @@ export function useBoardMermaids({
     setPermissionMessage,
 }: UseBoardMermaidsOptions) {
     const [mermaids, setMermaids] = useState<BoardMermaid[]>(initialMermaids);
+    const [editingMermaidId, setEditingMermaidId] = useState<number | null>(null);
 
     const getMermaidAutoLocation = (): BoardPoint => {
         const locationElement = cardLocationRef.current;
@@ -71,6 +72,7 @@ export function useBoardMermaids({
         };
 
         setMermaids((prev) => [...prev, tempMermaid]);
+        setEditingMermaidId(tempMermaid.id);
     };
 
     const handleInsertMermaid = async (
@@ -151,6 +153,7 @@ export function useBoardMermaids({
     const handleDeleteMermaid = async (id: number) => {
         if (id < 0) {
             setMermaids((prev) => prev.filter((mermaid) => mermaid.id !== id));
+            setEditingMermaidId((prev) => prev === id ? null : prev);
             return;
         }
 
@@ -165,11 +168,14 @@ export function useBoardMermaids({
         }
 
         setMermaids((prev) => prev.filter((mermaid) => mermaid.id !== id));
+        setEditingMermaidId((prev) => prev === id ? null : prev);
     };
 
     return {
         mermaids,
         setMermaids,
+        editingMermaidId,
+        setEditingMermaidId,
         handleCreateTempMermaid,
         handleInsertMermaid,
         handleUpdateMermaid,

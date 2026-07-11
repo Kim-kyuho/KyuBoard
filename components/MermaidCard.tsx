@@ -12,6 +12,9 @@ type MermaidCardProps = {
     mermaid: MermaidCardData;
     zoom: number;
     canEdit: boolean;
+    isEditing: boolean;
+    onEditing: () => void;
+    onEditingClear: () => void;
     onPermissionDenied: () => void;
     onUpdate: (
         id: number,
@@ -42,6 +45,9 @@ export default function MermaidCard({
     mermaid,
     zoom,
     canEdit,
+    isEditing,
+    onEditing,
+    onEditingClear,
     onPermissionDenied,
     onInsert,
     onUpdate,
@@ -55,7 +61,6 @@ export default function MermaidCard({
         source,
         setSource,
         menuRef,
-        isEditing,
         isResizing,
         deleteDialogOpen,
         dragHandlePressed,
@@ -73,6 +78,9 @@ export default function MermaidCard({
     } = useMermaidCard({
         mermaid,
         canEdit,
+        isEditing,
+        onEditing,
+        onEditingClear,
         onPermissionDenied,
         onInsert,
         onUpdate,
@@ -88,7 +96,7 @@ export default function MermaidCard({
             <Rnd
                 data-editing={isEditing}
                 cancel=".mermaid-action-menu"
-                className={`mermaid-rnd-${mermaid.id} select-none rounded-xl ${isEditing ? "kyu-card-focused" : ""}`}
+                className={`mermaid-rnd-${mermaid.id} select-none rounded-xl ${isEditing ? "card-editing" : ""}`}
                 style={{
                     zIndex: isEditing ? ACTIVE_CARD_Z : mermaid.z,
                 }}

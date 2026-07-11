@@ -33,6 +33,7 @@ export function useBoardMemos({
     setPermissionMessage,
 }: UseBoardMemosOptions) {
     const [memos, setMemos] = useState(initialMemos);
+    const [editingMemoId, setEditingMemoId] = useState<number | null>(null);
 
     const getMemoAutoLocation = () => {
         const locationElement = cardLocationRef.current;
@@ -66,6 +67,7 @@ export function useBoardMemos({
             isPublic: true,
         };
         setMemos((prev) => [...prev, tempMemo]);
+        setEditingMemoId(tempMemo.id);
     };
 
     const handleInsertMemo = async (tempId: number, boardId: number, content: string, x: number, y: number, z: number, width: number, height: number, color: string, isPublic: boolean) => {
@@ -115,6 +117,7 @@ export function useBoardMemos({
         if (id < 0) {
             setMemos((prev) =>
                 prev.filter((memo) => memo.id !== id));
+            setEditingMemoId((prev) => prev === id ? null : prev);
             return;
         }
 
@@ -127,11 +130,14 @@ export function useBoardMemos({
             return;
         }
         setMemos((prev) => prev.filter((memo) => memo.id !== id));
+        setEditingMemoId((prev) => prev === id ? null : prev);
     };
 
     return {
         memos,
         setMemos,
+        editingMemoId,
+        setEditingMemoId,
         handleCreateTempMemo,
         handleInsertMemo,
         handleUpdateMemo,

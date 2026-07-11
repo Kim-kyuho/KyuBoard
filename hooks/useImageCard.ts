@@ -25,9 +25,9 @@ export interface ImageCardData {
 type UseImageCardOptions = {
     image: ImageCardData;
     canEdit: boolean;
-    isSelected: boolean;
-    onSelect: () => void;
-    onSelectClear: () => void;
+    isEditing: boolean;
+    onEditing: () => void;
+    onEditingClear: () => void;
     onPermissionDenied: () => void;
     onInsert: (
         tempId: number,
@@ -60,9 +60,9 @@ type UseImageCardOptions = {
 export function useImageCard({
     image,
     canEdit,
-    isSelected,
-    onSelect,
-    onSelectClear,
+    isEditing,
+    onEditing,
+    onEditingClear,
     onPermissionDenied,
     onInsert,
     onUpdate,
@@ -128,13 +128,13 @@ export function useImageCard({
         onUpdate,
     ]);
 
-    const selectImage = () => {
+    const editImage = () => {
         if (!canEdit) {
             onPermissionDenied();
             return;
         }
 
-        onSelect();
+        onEditing();
     };
 
     const handleDoubleTap = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -148,7 +148,7 @@ export function useImageCard({
 
         if (isDoubleTap) {
             // event.preventDefault();
-            selectImage();
+            editImage();
         }
     };
 
@@ -169,15 +169,18 @@ export function useImageCard({
             const isPressInsideMenu = menuRef.current?.contains(target);
             const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
             const isPressInsideImage = targetElement?.closest(`.image-rnd-${image.imageId}`);
+            const isPressInsideBoard = targetElement?.closest(".board-scroll-layer");
+            const isPressInsideEmptyBoard = Boolean(
+                isPressInsideBoard &&
+                !isPressInsideImage &&
+                !isPressInsideMenu &&
+                !isPressInsideBoardToolBar
+            );
 
-            if (isPressInsideBoardToolBar || isPressInsideMenu) {
-                return;
-            }
-
-            if (isSelected && !isPressInsideImage && !isPressInsideMenu) {
+            if (isEditing && isPressInsideEmptyBoard) {
                 window.setTimeout(() => {
                     saveImageDraft();
-                    onSelectClear();
+                    onEditingClear();
                     setActionMenuOpen(false);
                 }, 0);
                 return;
@@ -191,7 +194,7 @@ export function useImageCard({
             document.removeEventListener("pointerdown", handlePressOutsideMenu);
             document.removeEventListener("pointerup", handlePressOutside);
         };
-    }, [image.imageId, isSelected, onSelectClear, saveImageDraft]);
+    }, [image.imageId, isEditing, onEditingClear, saveImageDraft]);
 
     const handleImagePress = (event: ReactMouseEvent<HTMLDivElement>) => {
         event.stopPropagation();
@@ -231,7 +234,7 @@ export function useImageCard({
     const confirmDelete = () => {
         onDelete(image.imageId, image.publicId);
         setDeleteDialogOpen(false);
-        onSelectClear();
+        onEditingClear();
     };
 
     const closeDeleteDialog = () => {
@@ -243,7 +246,7 @@ export function useImageCard({
         deleteDialogOpen,
         actionMenuOpen,
         menuRef,
-        selectImage,
+        editImage,
         handleDoubleTap,
         handleImagePress,
         openImageActionMenu,

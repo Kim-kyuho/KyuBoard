@@ -12,9 +12,12 @@ type MemoCardProps = {
     memo: MemoCardData;
     zoom: number;
     canEdit: boolean;
+    isEditing: boolean;
     isFocused: boolean;
     onFocus: () => void;
     onFocusClear: () => void;
+    onEditing: () => void;
+    onEditingClear: () => void;
     onPermissionDenied: () => void;
     onInsert: (
         tempId: number,
@@ -51,9 +54,12 @@ export default function MemoCard(props: MemoCardProps) {
         memo,
         zoom,
         canEdit,
+        isEditing,
         isFocused,
         onFocus,
         onFocusClear,
+        onEditing,
+        onEditingClear,
         onPermissionDenied,
         onInsert,
         onUpdate,
@@ -67,7 +73,6 @@ export default function MemoCard(props: MemoCardProps) {
         memoColor,
         setMemoColor,
         menuRef,
-        isEditing,
         memoFocusRef,
         memoState,
         memoContent,
@@ -88,7 +93,10 @@ export default function MemoCard(props: MemoCardProps) {
     } = useMemoCard({
         memo,
         canEdit,
+        isEditing,
         isFocused,
+        onEditing,
+        onEditingClear,
         onFocus,
         onFocusClear,
         onPermissionDenied,
@@ -103,9 +111,9 @@ export default function MemoCard(props: MemoCardProps) {
         <>
             <Rnd 
                 data-editing={isEditing}
-                className={`memo-rnd-${memo.id} select-none rounded-xl ${isFocused ? "kyu-card-focused" : ""}`}
+                className={`memo-rnd-${memo.id} select-none rounded-xl ${isEditing ? "card-editing" : ""}`}
                 style={{
-                    zIndex: isFocused ? ACTIVE_CARD_Z : memo.z,
+                    zIndex: isEditing ? ACTIVE_CARD_Z : memo.z,
                 }}
                 default={{
                     x: memo.x,
