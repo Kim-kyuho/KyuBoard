@@ -1,4 +1,4 @@
-import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
+import { PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from "react";
 import { DraggableData, RndDragEvent, RndResizeCallback } from "react-rnd";
 
 export interface MemoCardData {
@@ -225,8 +225,7 @@ export function useMemoCard({
         };
     }, [isEditing, isFocused, memo.id, saveMemo, onEditingClear, onFocusClear]);
 
-    const handleMemoPress = (event: ReactMouseEvent<HTMLDivElement>) => {
-        event.stopPropagation();
+    const handleMemoPress = () => {
         onFocus();
     };
 
