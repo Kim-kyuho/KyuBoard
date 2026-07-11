@@ -17,7 +17,10 @@ export interface MemoCardData {
 type UseMemoCardOptions = {
     memo: MemoCardData;
     canEdit: boolean;
+    isEditing: boolean;
     isFocused: boolean;
+    onEditing: () => void;
+    onEditingClear: () => void;
     onFocus: () => void;
     onFocusClear: () => void;
     onPermissionDenied: () => void;
@@ -51,7 +54,10 @@ type UseMemoCardOptions = {
 export function useMemoCard({
     memo,
     canEdit,
+    isEditing,
     isFocused,
+    onEditing,
+    onEditingClear,
     onFocus,
     onFocusClear,
     onPermissionDenied,
@@ -60,7 +66,6 @@ export function useMemoCard({
     onDelete,
 }: UseMemoCardOptions) {
     const [actionMenuOpen, setActionMenuOpen] = useState(false);
-    const [isEditing, setIsEditing] = useState(memo.id < 0);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
@@ -147,13 +152,13 @@ export function useMemoCard({
             return;
         }
 
-        setIsEditing(true);
+        onEditing();
         onFocus();
 
         window.setTimeout(() => {
             memoFocusRef.current?.focus();
         }, 0);
-    }, [canEdit, onFocus, onPermissionDenied]);
+    }, [canEdit, onEditing, onFocus, onPermissionDenied]);
 
     const handleDoubleTap = (event: ReactPointerEvent<HTMLDivElement>) => {
         if (event.pointerType !== "touch") {
@@ -197,7 +202,7 @@ export function useMemoCard({
 
             if (isEditing && isPressInsideEmptyBoard) {
                 saveMemo();
-                setIsEditing(false);
+                onEditingClear();
                 return;
             }
 
@@ -218,7 +223,7 @@ export function useMemoCard({
             document.removeEventListener("pointerdown", handlePressOutsideMenu);
             document.removeEventListener("pointerup", handlePressOutside);
         };
-    }, [isEditing, isFocused, memo.id, saveMemo, onFocusClear]);
+    }, [isEditing, isFocused, memo.id, saveMemo, onEditingClear, onFocusClear]);
 
     const handleMemoPress = (event: ReactMouseEvent<HTMLDivElement>) => {
         event.stopPropagation();
@@ -250,6 +255,7 @@ export function useMemoCard({
 
     const confirmDelete = () => {
         onDelete(memo.id);
+        onEditingClear();
         setDeleteDialogOpen(false);
     };
 

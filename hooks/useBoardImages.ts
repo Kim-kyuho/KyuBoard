@@ -92,7 +92,7 @@ export function useBoardImages({
 }: UseBoardImagesOptions) {
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const [images, setImages] = useState(initialImages);
-    const [selectedImageId, setSelectedImageId] = useState<number | null>(null);
+    const [editingImageId, setEditingImageId] = useState<number | null>(null);
 
     const handleImageUploadClick = () => {
         if (!canEditCard) {
@@ -173,7 +173,7 @@ export function useBoardImages({
         };
 
         setImages((prev) => [...prev, tempImage]);
-        setSelectedImageId(tempImage.imageId);
+        setEditingImageId(tempImage.imageId);
     };
 
     const handleInsertImage = async (tempId: number, file: File, boardId: number, x: number, y: number, z: number, width: number, height: number) => {
@@ -207,7 +207,7 @@ export function useBoardImages({
                 image.imageId === tempId ? data.image : image
             )
         );
-        setSelectedImageId(data.image.imageId);
+        setEditingImageId(data.image.imageId);
     };
 
     const handleUpdateImage = async (imageId: number, boardId: number, publicId: string, secureUrl: string, fileName: string | null, x: number, y: number, z: number, width: number, height: number) => {
@@ -240,7 +240,7 @@ export function useBoardImages({
             }
 
             setImages((prev) => prev.filter((image) => image.imageId !== imageId));
-            setSelectedImageId(null);
+            setEditingImageId(null);
             return;
         }
 
@@ -255,15 +255,15 @@ export function useBoardImages({
         }
 
         setImages((prev) => prev.filter((image) => image.imageId !== imageId));
-        setSelectedImageId(null);
+        setEditingImageId(null);
     };
 
     return {
         imageInputRef,
         images,
         setImages,
-        selectedImageId,
-        setSelectedImageId,
+        editingImageId,
+        setEditingImageId,
         handleImageUploadClick,
         handleUploadImage,
         handleInsertImage,

@@ -15,6 +15,9 @@ export type MermaidCardData = {
 type UseMermaidCardOptions = {
     mermaid: MermaidCardData;
     canEdit: boolean;
+    isEditing: boolean;
+    onEditing: () => void;
+    onEditingClear: () => void;
     onPermissionDenied: () => void;
     onUpdate: (
         id: number,
@@ -42,12 +45,14 @@ type UseMermaidCardOptions = {
 export function useMermaidCard({
     mermaid,
     canEdit,
+    isEditing,
+    onEditing,
+    onEditingClear,
     onPermissionDenied,
     onInsert,
     onUpdate,
     onDelete,
 }: UseMermaidCardOptions) {
-    const [isEditing, setIsEditing] = useState(mermaid.id < 0);
     const [source, setSource] = useState(mermaid.source);
     const [cardState, setCardState] = useState({
         x: mermaid.x,
@@ -118,7 +123,7 @@ export function useMermaidCard({
             return;
         }
 
-        setIsEditing(true);
+        onEditing();
     };
 
     const handleDoubleTap = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -148,16 +153,21 @@ export function useMermaidCard({
         const handlePressOutside = (event: PointerEvent) => {
             const target = event.target as Node;
             const targetElement = target instanceof Element ? target : null;
+            const isPressInsideMenu = menuRef.current?.contains(target);
             const isPressInsideCard = targetElement?.closest(`.mermaid-rnd-${mermaid.id}`);
             const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
+            const isPressInsideBoard = targetElement?.closest(".board-scroll-layer");
+            const isPressInsideEmptyBoard = Boolean(
+                isPressInsideBoard &&
+                !isPressInsideCard &&
+                !isPressInsideMenu &&
+                !isPressInsideBoardToolBar
+            );
 
-            if (!isEditing || isPressInsideCard || isPressInsideBoardToolBar) {
-                return;
+            if (isEditing && isPressInsideEmptyBoard) {
+                saveMermaidDraft();
+                onEditingClear();
             }
-            saveMermaidDraft();
-            setIsEditing(false);
-
-            
         };
 
         document.addEventListener("pointerdown", handlePressOutsideMenu);
@@ -167,7 +177,7 @@ export function useMermaidCard({
             document.removeEventListener("pointerdown", handlePressOutsideMenu);
             document.removeEventListener("pointerup", handlePressOutside);
         };
-    }, [isEditing, saveMermaidDraft, mermaid.id]);
+    }, [isEditing, saveMermaidDraft, mermaid.id, onEditingClear]);
 
     const handleMermaidPress = (event: ReactMouseEvent<HTMLDivElement>) => {
         event.stopPropagation();
@@ -217,6 +227,7 @@ export function useMermaidCard({
 
     const confirmDelete = () => {
         onDelete(mermaid.id);
+        onEditingClear();
         setDeleteDialogOpen(false);
     };
 

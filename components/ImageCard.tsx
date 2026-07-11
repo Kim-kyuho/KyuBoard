@@ -12,9 +12,9 @@ type ImageCardProps = {
     image: ImageCardData;
     zoom: number;
     canEdit: boolean;
-    isSelected: boolean;
-    onSelect: () => void;
-    onSelectClear: () => void;
+    isEditing: boolean;
+    onEditing: () => void;
+    onEditingClear: () => void;
     onPermissionDenied: () => void;
     onInsert: (
         tempId: number,
@@ -52,9 +52,9 @@ export default function ImageCard(props: ImageCardProps) {
         image,
         zoom,
         canEdit,
-        isSelected,
-        onSelect,
-        onSelectClear,
+        isEditing,
+        onEditing,
+        onEditingClear,
         onPermissionDenied,
         onInsert,
         onUpdate,
@@ -68,7 +68,7 @@ export default function ImageCard(props: ImageCardProps) {
         deleteDialogOpen,
         actionMenuOpen,
         menuRef,
-        selectImage,
+        editImage,
         handleDoubleTap,
         handleImagePress,
         openImageActionMenu,
@@ -80,9 +80,9 @@ export default function ImageCard(props: ImageCardProps) {
     } = useImageCard({
         image,
         canEdit,
-        isSelected,
-        onSelect,
-        onSelectClear,
+        isEditing,
+        onEditing,
+        onEditingClear,
         onPermissionDenied,
         onInsert,
         onUpdate,
@@ -92,12 +92,12 @@ export default function ImageCard(props: ImageCardProps) {
     return (
         <>
             <Rnd
-                data-selected={isSelected}
+                data-editing={isEditing}
                 // imageCard컴포넌트의 드래그 이벤트와 충돌을 막기 위한 cancel처리
                 cancel=".image-action-menu"
-                className={`image-rnd-${image.imageId} select-none ${isSelected ? "kyu-card-focused" : ""}`}
+                className={`image-rnd-${image.imageId} select-none ${isEditing ? "kyu-card-focused" : ""}`}
                 style={{
-                    zIndex: isSelected ? ACTIVE_CARD_Z : image.z,
+                    zIndex: isEditing ? ACTIVE_CARD_Z : image.z,
                     WebkitTouchCallout: "none",
                     WebkitUserSelect: "none",
                     userSelect: "none",
@@ -118,18 +118,18 @@ export default function ImageCard(props: ImageCardProps) {
                 }}
                 bounds="parent"
                 scale={zoom}
-                disableDragging={!isSelected}
-                enableResizing={isSelected}
+                disableDragging={!isEditing}
+                enableResizing={isEditing}
                 onDragStop={handleDragStop}
                 onResizeStop={handleResizeStop}
             >
                 <div
                     className="relative h-full w-full rounded-xl bg-white"
                     onClick={handleImagePress}
-                    onDoubleClick={selectImage}
+                    onDoubleClick={editImage}
                     onPointerDown={handleDoubleTap}
                 >
-                    {isSelected && (
+                    {isEditing && (
                         <button
                             type="button"
                             aria-label="Image actions"

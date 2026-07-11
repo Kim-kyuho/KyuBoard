@@ -2,30 +2,31 @@
 
 import PressableButton from "./PressableButton";
 import { Dispatch, SetStateAction } from "react";
-import { Eye, EyeOff, Camera, ChevronLeft, ChevronRight, Search, SquarePen, SlidersHorizontal, Workflow } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Search, SquarePen, Workflow } from "lucide-react";
+import BoardZoomControl from "./BoardZoomControl";
 
 type BoardToolBarProps = {
-    showBoardToolBar: boolean;
-    setShowBoardToolBar: Dispatch<SetStateAction<boolean>>;
+    cardEditing: boolean;
+    boardZoom: number;
+    setBoardZoom: Dispatch<SetStateAction<number>>;
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
     setSearchBarOpen: Dispatch<SetStateAction<boolean>>;
     onFocusPrevMemo: () => void;
     onFocusNextMemo: () => void;
     onMemoCreateClick: () => void;
-    onZoomControlOpen: () => void;
     onImageUploadClick: () => void;
     onMermaidCreateClick: () => void;
 };
 
 export default function BoardToolBar({ 
-    showBoardToolBar,
-    setShowBoardToolBar,
+    cardEditing,
+    boardZoom,
+    setBoardZoom,
     setMenuOpen,
     setSearchBarOpen,
     onFocusPrevMemo,
     onFocusNextMemo,
     onMemoCreateClick,
-    onZoomControlOpen,
     onImageUploadClick,
     onMermaidCreateClick
 }: BoardToolBarProps){
@@ -34,92 +35,84 @@ export default function BoardToolBar({
 
     return (
         <>
-        {showBoardToolBar && (
-        <div
-            className="board-toolbar fixed bottom-5 left-1/2 z-[50000] flex -translate-x-1/2 items-center gap-0 bg-white/75 rounded-xl px-2 py-1 shadow-md"
-        >
-            <PressableButton 
-                variant="menu"
-                className={toolbarButtonClassName}
-                onClick={() => {
-                    onFocusPrevMemo();
-                    setMenuOpen(false);
-                }}
-            >
-                <ChevronLeft className={toolbarIconClassName} />
-            </PressableButton>
-            <PressableButton 
-                variant="menu"
-                className={toolbarButtonClassName}
-                onClick={() => {
-                    setMenuOpen(false);
-                    setSearchBarOpen(prev => !prev);
-                    }    
-                }
-            >
-                <Search className={toolbarIconClassName} />
-            </PressableButton>
-            <PressableButton 
-                variant="menu"
-                className={toolbarButtonClassName}
-                onClick={() => { 
-                    onMemoCreateClick();
-                    setMenuOpen(false);
-                }}
-            >
-                <SquarePen className={toolbarIconClassName} />
-            </PressableButton>
-            <PressableButton 
-                variant="menu"
-                className={toolbarButtonClassName}
-                onClick={() => {
-                    onImageUploadClick();
-                    setMenuOpen(false);
-                }}
-            >
-                <Camera className={toolbarIconClassName} />
-            </PressableButton>
-            <PressableButton
-                variant="menu"
-                className={toolbarButtonClassName}
-                onClick={() => {
-                    onMermaidCreateClick();
-                    setMenuOpen(false);
-                }}
-            >
-                <Workflow className={toolbarIconClassName} />
-            </PressableButton>
-            <PressableButton
-                variant="menu"
-                className={toolbarButtonClassName}
-                onClick={() => {
-                    onZoomControlOpen();
-                    setMenuOpen(false);
-                }}
-            >
-                <SlidersHorizontal className={toolbarIconClassName}/>
-            </PressableButton>
-            <PressableButton
-                variant="menu"
-                className={toolbarButtonClassName}
-                onClick={() => {
-                    onFocusNextMemo();
-                    setMenuOpen(false);
-                }}
-            >
-                <ChevronRight className={toolbarIconClassName} />
-            </PressableButton>
-        </div>
-        )}
-
-        <button
-            type="button"
-            className="board-toolbar fixed bottom-7 right-5 z-[50000] text-neutral-700 transition hover:text-neutral-950 active:scale-95"
-            aria-label={showBoardToolBar ? "Hide board toolbar" : "Show board toolbar"}
-            onClick={() => setShowBoardToolBar((prev) => !prev)}
-        >
-            {showBoardToolBar ? <EyeOff /> : <Eye />}
-        </button>
+            {!cardEditing && (
+            <div className="board-toolbar fixed bottom-16 right-5 z-[50000] flex flex-col items-end gap-1">
+                <div className="flex flex-col items-center gap-0">
+                    <PressableButton
+                        variant="menu"
+                        className={toolbarButtonClassName}
+                        onClick={() => {
+                            onFocusPrevMemo();
+                            setMenuOpen(false);
+                        }}
+                    >
+                        <ChevronLeft className={toolbarIconClassName} />
+                    </PressableButton>
+                    <PressableButton
+                        variant="menu"
+                        className={toolbarButtonClassName}
+                        onClick={() => {
+                            onFocusNextMemo();
+                            setMenuOpen(false);
+                        }}
+                    >
+                        <ChevronRight className={toolbarIconClassName} />
+                    </PressableButton>
+                </div>
+                <div>
+                    <PressableButton 
+                        variant="menu"
+                        className={toolbarButtonClassName}
+                        onClick={() => {
+                            setMenuOpen(false);
+                            setSearchBarOpen(prev => !prev);
+                        }}
+                    >
+                        <Search className={toolbarIconClassName} />
+                    </PressableButton>
+                </div>
+                <div>
+                    <PressableButton 
+                        variant="menu"
+                        className={toolbarButtonClassName}
+                        onClick={() => { 
+                            onMemoCreateClick();
+                            setMenuOpen(false);
+                        }}
+                    >
+                        <SquarePen className={toolbarIconClassName} />
+                    </PressableButton>
+                </div>
+                <div>
+                    <PressableButton 
+                        variant="menu"
+                        className={toolbarButtonClassName}
+                        onClick={() => {
+                            onImageUploadClick();
+                            setMenuOpen(false);
+                        }}
+                    >
+                        <Camera className={toolbarIconClassName} />
+                    </PressableButton>
+                </div>
+                <div>
+                    <PressableButton
+                        variant="menu"
+                        className={toolbarButtonClassName}
+                        onClick={() => {
+                            onMermaidCreateClick();
+                            setMenuOpen(false);
+                        }}
+                    >
+                        <Workflow className={toolbarIconClassName} />
+                    </PressableButton>
+                </div>
+            </div>
+            )}
+            <BoardZoomControl
+                boardZoom={boardZoom}
+                setBoardZoom={setBoardZoom}
+            />
         </>
     );
 }
