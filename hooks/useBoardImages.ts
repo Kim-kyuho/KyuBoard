@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useState } from "react";
+import { ChangeEvent, RefObject, useRef, useState } from "react";
 
 export type BoardImage = {
     imageId: number;
@@ -23,6 +23,7 @@ type UseBoardImagesOptions = {
     initialImages: BoardImage[];
     boardId: number;
     boardZoom: number;
+    cardLocationRef: RefObject<HTMLDivElement | null>;
     canEditCard: boolean;
     showPermissionMessage: () => void;
     setPermissionMessage: (message: string) => void;
@@ -84,11 +85,11 @@ export function useBoardImages({
     initialImages,
     boardId,
     boardZoom,
+    cardLocationRef,
     canEditCard,
     showPermissionMessage,
     setPermissionMessage,
 }: UseBoardImagesOptions) {
-    const cardLocationRef = useRef<HTMLDivElement | null>(null);
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const [images, setImages] = useState(initialImages);
     const [selectedImageId, setSelectedImageId] = useState<number | null>(null);
@@ -258,7 +259,6 @@ export function useBoardImages({
     };
 
     return {
-        cardLocationRef,
         imageInputRef,
         images,
         setImages,

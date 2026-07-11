@@ -16,6 +16,7 @@ type BoardMenuProps = {
     setSignUpOpen: Dispatch<SetStateAction<boolean>>;
     currentUser: CurrentUser | null;
     onSignOut: () => void;
+    onCompileMarkdown?: () => void;
 };
 
 export default function BoardMenu( 
@@ -27,6 +28,7 @@ export default function BoardMenu(
     setSignUpOpen, 
     currentUser,
     onSignOut,
+    onCompileMarkdown,
 }: BoardMenuProps) {
     return(
         <>
@@ -52,13 +54,24 @@ export default function BoardMenu(
             {menuOpen && (
                 <div className="fixed w-50 right-5 top-17 z-[50000] rounded-xl bg-white/75 px-2 py-3 shadow-md">
                     {currentBoard?.title && (
-                        <PressableButton 
-                            variant="menu"
-                            onClick={() => setMenuOpen(false)}>
-                            <span className="font-bold">
-                                {currentBoard.title}
-                            </span>
-                        </PressableButton>
+                        <>
+                            <PressableButton
+                                variant="menu"
+                                onClick={() => setMenuOpen(false)}>
+                                <span className="font-bold">
+                                    {currentBoard.title}
+                                </span>
+                            </PressableButton>
+                            <PressableButton
+                                variant="menu"
+                                onClick={() => {
+                                    setMenuOpen(false);
+                                    onCompileMarkdown?.();
+                                }}
+                            >
+                                Compile to Markdown
+                            </PressableButton>
+                        </>
                     )}
                     {currentUser ? (
                         <div className="border-t border-white/75">

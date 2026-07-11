@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import SignInModal from "./SignInModal";
 import SignUpModal from "./SignUpModal";
 import BoardZoomControl from "./BoardZoomControl";
@@ -10,6 +10,7 @@ import BoardMenu from "./BoardMenu";
 import BoardToolBar from "./BoardToolBar";
 import BoardMessage from "./BoardMessage";
 import BoardSearchPanel from "./BoardSearchPanel";
+import BoardMarkdownView from "./BoardMarkdownView";
 import MermaidCard from "./MermaidCard";
 import { useCardLayer } from "@/hooks/useCardLayer";
 import { useBoardAuth } from "@/hooks/useBoardAuth";
@@ -71,8 +72,10 @@ export default function BoardClient(
 ) {
     const boardWidth = currentBoard.width;
     const boardHeight = currentBoard.height;
+    const cardLocationRef = useRef<HTMLDivElement | null>(null);
     const [menuOpen, setMenuOpen] = useState(false);
     const [showBoardToolBar, setShowBoardToolBar] = useState(true);
+    const [markdownViewOpen, setMarkdownViewOpen] = useState(false);
     const [permissionMessage, setPermissionMessage] = useState("");
     const showPermissionMessage = () => {
         setPermissionMessage(
@@ -114,7 +117,6 @@ export default function BoardClient(
     } = useBoardScroll();
 
     const {
-        cardLocationRef,
         imageInputRef,
         images,
         setImages,
@@ -129,6 +131,7 @@ export default function BoardClient(
         initialImages: mappedImages,
         boardId: currentBoard.boardId,
         boardZoom,
+        cardLocationRef,
         canEditCard,
         showPermissionMessage,
         setPermissionMessage,
@@ -218,6 +221,7 @@ export default function BoardClient(
             setSignUpOpen={setSignUpOpen}
             onSignOut={handleSignOut}
             currentUser={currentUser}
+            onCompileMarkdown={() => setMarkdownViewOpen(true)}
         />
         {/* <BoardNavigator boardIds={boardIds} currentBoardId={currentBoard.boardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/> */}
         <BoardToolBar
@@ -260,6 +264,12 @@ export default function BoardClient(
         {signUpOpen && (
             <SignUpModal 
                 onClose={() => setSignUpOpen(false)} 
+            />
+        )}
+        {markdownViewOpen && (
+            <BoardMarkdownView
+                boardId={currentBoard.boardId}
+                onClose={() => setMarkdownViewOpen(false)}
             />
         )}
         <BoardMessage type = "permission" message = {permissionMessage} />
