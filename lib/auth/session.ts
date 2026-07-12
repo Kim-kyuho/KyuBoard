@@ -5,10 +5,7 @@ export const sessionCookieName = "kyuboard_session";
 
 // 세션 비밀키 GET
 function getSessionSecret() {
-    // 런타임 환경의 세션 비밀키(Vercel)를 체크, 개발환경에서만 로컬 기본값을 사용
-    const sessionSecret =
-        process.env.AUTH_SECRET ??
-        (process.env.NODE_ENV === "development" ? "kyuboard-local-auth-secret" : undefined);
+    const sessionSecret = process.env.AUTH_SECRET;
 
     if (!sessionSecret) {
         throw new Error("AUTH_SECRET is required");

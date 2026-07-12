@@ -1,10 +1,10 @@
 import { getCardPermissionMessage, getCurrentUserFromRequest } from "@/lib/auth/current-user";
 import { getDb } from "@/lib/db";
-import { db_images, db_memos, db_mermaids } from "@/lib/db/schema";
+import { db_images, db_memos, db_mermaids, db_tables } from "@/lib/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-type CardLayerType = "memo" | "image" | "mermaid";
+type CardLayerType = "memo" | "image" | "mermaid" | "table";
 type CardLayerAction = "front" | "back";
 
 type LayerCard = {
@@ -18,10 +18,11 @@ const typeOrder: Record<CardLayerType, number> = {
     memo: 1,
     image: 2,
     mermaid: 3,
+    table: 4,
 };
 
 const isCardLayerType = (value: unknown): value is CardLayerType =>
-    value === "memo" || value === "image" || value === "mermaid";
+    value === "memo" || value === "image" || value === "mermaid" || value === "table";
 
 const isCardLayerAction = (value: unknown): value is CardLayerAction =>
     value === "front" || value === "back";
@@ -37,7 +38,7 @@ const normalizeLayerCards = (cards: LayerCard[]) =>
 async function getLayerCards(boardId: number) {
     const db = getDb();
 
-    const [memos, images, mermaids] = await Promise.all([
+    const [memos, images, mermaids, tables] = await Promise.all([
         db
             .select({
                 id: db_memos.id,
@@ -59,12 +60,20 @@ async function getLayerCards(boardId: number) {
             })
             .from(db_mermaids)
             .where(eq(db_mermaids.boardId, boardId)),
+        db
+            .select({
+                id: db_tables.tableId,
+                z: db_tables.z,
+            })
+            .from(db_tables)
+            .where(eq(db_tables.boardId, boardId)),
     ]);
 
     return [
         ...memos.map((memo) => ({ type: "memo" as const, id: memo.id, z: memo.z })),
         ...images.map((image) => ({ type: "image" as const, id: image.id, z: image.z })),
         ...mermaids.map((mermaid) => ({ type: "mermaid" as const, id: mermaid.id, z: mermaid.z })),
+        ...tables.map((table) => ({ type: "table" as const, id: table.id, z: table.z })),
     ];
 }
 
@@ -94,6 +103,14 @@ async function updateCardZ(card: LayerCard) {
             .where(eq(db_mermaids.mermaidId, card.id));
         return;
     }
+
+    if (card.type === "table") {
+        await db
+            .update(db_tables)
+            .set({ z: card.z })
+            .where(eq(db_tables.tableId, card.id));
+        return;
+    }
 }
 
 async function bringCardToFront(type: CardLayerType, id: number, z: number) {
@@ -113,6 +130,9 @@ async function sendCardToBack(type: CardLayerType, id: number, boardId: number) 
         type === "mermaid"
             ? db.update(db_mermaids).set({ z: 1 }).where(eq(db_mermaids.mermaidId, id))
             : db.update(db_mermaids).set({ z: sql`${db_mermaids.z} + 1` }).where(eq(db_mermaids.boardId, boardId)),
+        type === "table"
+            ? db.update(db_tables).set({ z: 1 }).where(eq(db_tables.tableId, id))
+            : db.update(db_tables).set({ z: sql`${db_tables.z} + 1` }).where(eq(db_tables.boardId, boardId)),
     ]);
 
     if (type === "memo") {
@@ -136,6 +156,14 @@ async function sendCardToBack(type: CardLayerType, id: number, boardId: number) 
             .update(db_mermaids)
             .set({ z: sql`${db_mermaids.z} + 1` })
             .where(and(eq(db_mermaids.boardId, boardId), sql`${db_mermaids.mermaidId} <> ${id}`));
+        return;
+    }
+
+    if (type === "table") {
+        await db
+            .update(db_tables)
+            .set({ z: sql`${db_tables.z} + 1` })
+            .where(and(eq(db_tables.boardId, boardId), sql`${db_tables.tableId} <> ${id}`));
         return;
     }
 }

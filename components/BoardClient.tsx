@@ -11,10 +11,13 @@ import BoardMessage from "./BoardMessage";
 import BoardSearchPanel from "./BoardSearchPanel";
 import BoardMarkdownView from "./BoardMarkdownView";
 import MermaidCard from "./MermaidCard";
+import TableCard from "./TableCard";
 import { useCardLayer } from "@/hooks/useCardLayer";
 import { useBoardAuth } from "@/hooks/useBoardAuth";
 import { useBoardImages } from "@/hooks/useBoardImages";
 import { useBoardMermaids } from "@/hooks/useBoardMermaids";
+import { useBoardTables } from "@/hooks/useBoardTables";
+import type { TableSource } from "@/lib/table-card";
 import { useBoardMemoFocus } from "@/hooks/useBoardMemoFocus";
 import { useBoardMemos } from "@/hooks/useBoardMemos";
 import { useBoardScroll } from "@/hooks/useBoardScroll";
@@ -65,9 +68,20 @@ interface Mermaid {
     height: number;
 }
 
+interface Table {
+    id: number;
+    boardId: number;
+    source: TableSource;
+    x: number;
+    y: number;
+    z: number;
+    width: number;
+    height: number;
+}
+
 // 보드 컴포넌트
 export default function BoardClient(
-  {currentBoard, mappedImages, mappedMemos, mappedMermaids}:{currentBoard:Board, mappedImages: Image[], mappedMemos: Memo[], mappedMermaids: Mermaid[]}
+  {currentBoard, mappedImages, mappedMemos, mappedMermaids, mappedTables}:{currentBoard:Board, mappedImages: Image[], mappedMemos: Memo[], mappedMermaids: Mermaid[], mappedTables: Table[]}
 ) {
     const boardWidth = currentBoard.width;
     const boardHeight = currentBoard.height;
@@ -193,16 +207,37 @@ export default function BoardClient(
         setPermissionMessage,
     });
 
+    const {
+        tables,
+        setTables,
+        editingTableId,
+        setEditingTableId,
+        handleCreateTempTable,
+        handleInsertTable,
+        handleUpdateTable,
+        handleDeleteTable,
+    } = useBoardTables({
+        initialTables: mappedTables,
+        boardId: currentBoard.boardId,
+        boardZoom,
+        canEditCard,
+        cardLocationRef,
+        showPermissionMessage,
+        setPermissionMessage,
+    });
+
     const isEditing =
         editingMemoId !== null ||
         editingImageId !== null ||
-        editingMermaidId !== null;
+        editingMermaidId !== null ||
+        editingTableId !== null;
 
     const { handleCardLayer } = useCardLayer({
         boardId: currentBoard.boardId,
         setMemos,
         setImages,
         setMermaids,
+        setTables,
         setPermissionMessage,
     });
 
@@ -237,6 +272,7 @@ export default function BoardClient(
             onMemoCreateClick={handleCreateTempMemo}
             onImageUploadClick={handleImageUploadClick}
             onMermaidCreateClick={handleCreateTempMermaid}
+            onTableCreateClick={handleCreateTempTable}
         />
         {searchBarOpen && (
             <BoardSearchPanel
@@ -356,6 +392,23 @@ export default function BoardClient(
                             onDelete={handleDeleteMermaid}
                             onBringToFront={() => handleCardLayer("mermaid", mermaid.id, "front")}
                             onSendToBack={() => handleCardLayer("mermaid", mermaid.id, "back")}
+                        />
+                    ))}
+                    {tables.map((table) => (
+                        <TableCard
+                            key={table.id}
+                            table={table}
+                            zoom={boardZoom}
+                            canEdit={canEditCard}
+                            isEditing={editingTableId === table.id}
+                            onEditing={() => setEditingTableId(table.id)}
+                            onEditingClear={() => setEditingTableId(null)}
+                            onPermissionDenied={showPermissionMessage}
+                            onInsert={handleInsertTable}
+                            onUpdate={handleUpdateTable}
+                            onDelete={handleDeleteTable}
+                            onBringToFront={() => handleCardLayer("table", table.id, "front")}
+                            onSendToBack={() => handleCardLayer("table", table.id, "back")}
                         />
                     ))}
                 </div>

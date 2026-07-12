@@ -68,7 +68,6 @@ export function useMemoCard({
     const [actionMenuOpen, setActionMenuOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
-    const [isResizing, setIsResizing] = useState(false);
     const menuRef = useRef<HTMLDivElement | null>(null);
     const memoFocusRef = useRef<HTMLDivElement | null>(null);
     const lastMemoTapRef = useRef(0);
@@ -233,12 +232,7 @@ export function useMemoCard({
         setMemoState((prev) => ({ ...prev, x: data.x, y: data.y }));
     };
 
-    const handleResizeStart = () => {
-        setIsResizing(true);
-    };
-
     const handleResizeStop: RndResizeCallback = (_event, _direction, ref, _delta, position) => {
-        setIsResizing(false);
         setMemoState({
             x: position.x,
             y: position.y,
@@ -276,12 +270,10 @@ export function useMemoCard({
         deleteDialogOpen,
         dragHandlePressed,
         setDragHandlePressed,
-        isResizing,
         editMemo,
         handleDoubleTap,
         handleMemoPress,
         handleDragStop,
-        handleResizeStart,
         handleResizeStop,
         openDeleteDialog,
         confirmDelete,

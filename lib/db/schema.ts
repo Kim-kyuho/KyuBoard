@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
-import { pgTable, serial, text, integer, boolean, timestamp, varchar, check } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, boolean, timestamp, varchar, check, jsonb } from "drizzle-orm/pg-core";
+import type { TableSource } from "@/lib/table-card";
 
 export const db_users = pgTable("users", {
     id: serial("id").primaryKey(),
@@ -61,6 +62,21 @@ export const db_mermaids = pgTable("mermaids", {
         .notNull()
         .references(() => db_boards.boardId, { onDelete: "cascade" }),
     source: text("source").notNull(),
+    x: integer("x").notNull().default(0),
+    y: integer("y").notNull().default(0),
+    z: integer("z").notNull().default(1),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const db_tables = pgTable("tables", {
+    tableId: serial("table_id").primaryKey(),
+    boardId: integer("board_id")
+        .notNull()
+        .references(() => db_boards.boardId, { onDelete: "cascade" }),
+    source: jsonb("source").$type<TableSource>().notNull(),
     x: integer("x").notNull().default(0),
     y: integer("y").notNull().default(0),
     z: integer("z").notNull().default(1),

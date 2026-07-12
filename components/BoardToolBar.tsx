@@ -2,7 +2,7 @@
 
 import PressableButton from "./PressableButton";
 import { Dispatch, SetStateAction } from "react";
-import { Camera, ChevronLeft, ChevronRight, Search, SquarePen, Workflow } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Search, SquarePen, Table2, Workflow } from "lucide-react";
 import BoardZoomControl from "./BoardZoomControl";
 
 type BoardToolBarProps = {
@@ -16,6 +16,7 @@ type BoardToolBarProps = {
     onMemoCreateClick: () => void;
     onImageUploadClick: () => void;
     onMermaidCreateClick: () => void;
+    onTableCreateClick: () => void;
 };
 
 export default function BoardToolBar({ 
@@ -28,7 +29,8 @@ export default function BoardToolBar({
     onFocusNextMemo,
     onMemoCreateClick,
     onImageUploadClick,
-    onMermaidCreateClick
+    onMermaidCreateClick,
+    onTableCreateClick,
 }: BoardToolBarProps){
     const toolbarButtonClassName = "flex h-10 w-10 items-center justify-center px-0 py-0 hover:pl-0 hover:bg-white/80 hover:shadow-sm active:scale-90 active:bg-white active:shadow-inner";
     const toolbarIconClassName = "h-5 w-5 transition duration-150 ease-out";
@@ -93,6 +95,18 @@ export default function BoardToolBar({
                         }}
                     >
                         <Camera className={toolbarIconClassName} />
+                    </PressableButton>
+                </div>
+                <div>
+                    <PressableButton
+                        variant="menu"
+                        className={toolbarButtonClassName}
+                        onClick={() => {
+                            onTableCreateClick();
+                            setMenuOpen(false);
+                        }}
+                    >
+                        <Table2 className={toolbarIconClassName} />
                     </PressableButton>
                 </div>
                 <div>

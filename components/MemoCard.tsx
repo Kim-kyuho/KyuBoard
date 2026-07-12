@@ -80,12 +80,10 @@ export default function MemoCard(props: MemoCardProps) {
         deleteDialogOpen,
         dragHandlePressed,
         setDragHandlePressed,
-        isResizing,
         editMemo,
         handleDoubleTap,
         handleMemoPress,
         handleDragStop,
-        handleResizeStart,
         handleResizeStop,
         openDeleteDialog,
         closeDeleteDialog,
@@ -135,7 +133,6 @@ export default function MemoCard(props: MemoCardProps) {
                 disableDragging={!isEditing || !canEdit}
                 enableResizing={isEditing}
                 onDragStop={handleDragStop}
-                onResizeStart={handleResizeStart}
                 onResizeStop={handleResizeStop}
             >   
                 <div
@@ -261,9 +258,6 @@ export default function MemoCard(props: MemoCardProps) {
                         >
                             <div className={`h-1.5 w-24 rounded-full transition duration-150 ${dragHandlePressed ? "bg-black/70" : "bg-black/25"}`} />
                         </div>
-                    )}
-                    {isResizing && (
-                        <div className="pointer-events-none absolute inset-0 z-20 animate-pulse rounded-xl border-2 border-dashed border-pink-500" />
                     )}
                 </div>
             </Rnd>

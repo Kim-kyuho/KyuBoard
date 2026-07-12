@@ -4,12 +4,13 @@ import { NextResponse } from "next/server";
 
 import { getDb } from "@/lib/db";
 import { db_boards } from "@/lib/db/schema";
+import { tableSourceSchema, tableSourceToMarkdown } from "@/lib/table-card";
 
 type CompiledCardRow = {
     memo_id: number;
     memo_content: string;
     corner_order: number | null;
-    card_type: "image" | "mermaid" | null;
+    card_type: "image" | "mermaid" | "table" | null;
     card_id: number | null;
     card_content: string | null;
     card_label: string | null;
@@ -57,6 +58,18 @@ const compileMarkdown = (rows: CompiledCardRow[]) => {
         if (row.card_type === "image") {
             const imageLabel = escapeImageLabel(row.card_label?.trim() || "Image");
             markdownParts.push(`![${imageLabel}](${row.card_content})`);
+            return;
+        }
+
+        if (row.card_type === "table") {
+            try {
+                const source = tableSourceSchema.safeParse(JSON.parse(row.card_content));
+                if (source.success) {
+                    markdownParts.push(tableSourceToMarkdown(source.data));
+                }
+            } catch {
+                return;
+            }
             return;
         }
 
@@ -150,6 +163,21 @@ export async function GET(
                     width,
                     height
                 FROM mermaids
+                WHERE board_id = ${boardIdNumber}
+
+                UNION ALL
+
+                SELECT
+                    'table'::text AS card_type,
+                    table_id AS card_id,
+                    source::text AS card_content,
+                    NULL::text AS card_label,
+                    x,
+                    y,
+                    z,
+                    width,
+                    height
+                FROM tables
                 WHERE board_id = ${boardIdNumber}
             ),
             ranked_cards AS (

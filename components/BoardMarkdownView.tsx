@@ -4,6 +4,8 @@ import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 
 import PressableButton from "@/components/PressableButton";
 import { useBoardMarkdown } from "@/hooks/useBoardMarkdown";
@@ -101,6 +103,7 @@ export default function BoardMarkdownView({ boardId, onClose }: BoardMarkdownVie
                                         <ReactMarkdown
                                             key={`markdown-${index}`}
                                             remarkPlugins={[remarkGfm]}
+                                            rehypePlugins={[rehypeRaw, rehypeSanitize]}
                                         >
                                             {section}
                                         </ReactMarkdown>
