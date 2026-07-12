@@ -72,6 +72,7 @@ export default function ImageCard(props: ImageCardProps) {
         handleDoubleTap,
         handleImagePress,
         openImageActionMenu,
+        closeActionMenu,
         handleDragStop,
         handleResizeStop,
         openDeleteDialog,
@@ -145,8 +146,14 @@ export default function ImageCard(props: ImageCardProps) {
                         <ImageActionMenu
                             ref={menuRef}
                             zoom={zoom}
-                            onBringToFront={onBringToFront}
-                            onSendToBack={onSendToBack}
+                            onBringToFront={() => {
+                                onBringToFront();
+                                closeActionMenu();
+                            }}
+                            onSendToBack={() => {
+                                onSendToBack();
+                                closeActionMenu();
+                            }}
                             onDelete={openDeleteDialog}
                         />
                     )}

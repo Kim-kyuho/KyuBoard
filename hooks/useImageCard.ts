@@ -250,6 +250,7 @@ export function useImageCard({
         handleDoubleTap,
         handleImagePress,
         openImageActionMenu,
+        closeActionMenu: () => setActionMenuOpen(false),
         handleDragStop,
         handleResizeStop,
         openDeleteDialog,

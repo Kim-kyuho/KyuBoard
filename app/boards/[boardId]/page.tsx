@@ -2,7 +2,7 @@
 
 import BoardClient from "@/components/BoardClient";
 import { getDb } from "@/lib/db";
-import { db_boards, db_images, db_memos, db_mermaids } from "@/lib/db/schema";
+import { db_boards, db_images, db_memos, db_mermaids, db_tables } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export default async function BoardPage({
@@ -34,6 +34,11 @@ export default async function BoardPage({
         .select()
         .from(db_mermaids)
         .where(eq(db_mermaids.boardId, boardIdNumber));
+
+    const allTables = await db
+        .select()
+        .from(db_tables)
+        .where(eq(db_tables.boardId, boardIdNumber));
 
     const mappedMemos = allMemos.map((memo) => ({
         id: memo.id,
@@ -72,12 +77,24 @@ export default async function BoardPage({
         height: mermaid.height,
     }));
 
+    const mappedTables = allTables.map((table) => ({
+        id: table.tableId,
+        boardId: table.boardId,
+        source: table.source,
+        x: table.x,
+        y: table.y,
+        z: table.z,
+        width: table.width,
+        height: table.height,
+    }));
+
     return (
         <BoardClient
             currentBoard={currentBoard[0]}
             mappedImages={mappedImages}
             mappedMemos={mappedMemos}
             mappedMermaids={mappedMermaids}
+            mappedTables={mappedTables}
         />
     );
 }

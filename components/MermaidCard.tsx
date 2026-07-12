@@ -61,7 +61,6 @@ export default function MermaidCard({
         source,
         setSource,
         menuRef,
-        isResizing,
         deleteDialogOpen,
         dragHandlePressed,
         setDragHandlePressed,
@@ -69,9 +68,9 @@ export default function MermaidCard({
         handleDoubleTap,
         handleMermaidPress,
         handleDragStop,
-        handleResizeStart,
         handleResizeStop,
         openMermaidActionMenu,
+        closeActionMenu,
         openDeleteDialog,
         closeDeleteDialog,
         confirmDelete,
@@ -120,7 +119,6 @@ export default function MermaidCard({
                 disableDragging={!isEditing || !canEdit}
                 enableResizing={isEditing}
                 onDragStop={handleDragStop}
-                onResizeStart={handleResizeStart}
                 onResizeStop={handleResizeStop}
             >
                 <div
@@ -145,8 +143,14 @@ export default function MermaidCard({
                                 <MermaidActionMenu
                                     ref={menuRef}
                                     zoom={zoom}
-                                    onBringToFront={onBringToFront}
-                                    onSendToBack={onSendToBack}
+                                    onBringToFront={() => {
+                                        onBringToFront();
+                                        closeActionMenu();
+                                    }}
+                                    onSendToBack={() => {
+                                        onSendToBack();
+                                        closeActionMenu();
+                                    }}
                                     onDelete={openDeleteDialog}
                                 />
                             )}
@@ -190,9 +194,6 @@ export default function MermaidCard({
                             </div>
                         )}
 
-                        {isResizing && (
-                            <div className="pointer-events-none absolute inset-0 z-20 animate-pulse rounded-xl border-2 border-dashed border-pink-500" />
-                        )}
                     </div>
                 </div>
             </Rnd>

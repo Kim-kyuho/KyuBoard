@@ -61,7 +61,6 @@ export function useMermaidCard({
         height: mermaid.height,
     });
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
-    const [isResizing, setIsResizing] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
@@ -189,13 +188,7 @@ export function useMermaidCard({
         setCardState(nextCardState);
     };
 
-    const handleResizeStart = () => {
-        setIsResizing(true);
-    };
-
     const handleResizeStop: RndResizeCallback = (_event, _direction, ref, _delta, position) => {
-        setIsResizing(false);
-
         const nextCardState = {
             x: position.x,
             y: position.y,
@@ -238,7 +231,6 @@ export function useMermaidCard({
         setSource,
         menuRef,
         isEditing,
-        isResizing,
         deleteDialogOpen,
         dragHandlePressed,
         setDragHandlePressed,
@@ -246,9 +238,9 @@ export function useMermaidCard({
         handleDoubleTap,
         handleMermaidPress,
         handleDragStop,
-        handleResizeStart,
         handleResizeStop,
         openMermaidActionMenu,
+        closeActionMenu: () => setActionMenuOpen(false),
         openDeleteDialog,
         closeDeleteDialog,
         confirmDelete,
