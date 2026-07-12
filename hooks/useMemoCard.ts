@@ -71,6 +71,8 @@ export function useMemoCard({
     const menuRef = useRef<HTMLDivElement | null>(null);
     const memoFocusRef = useRef<HTMLDivElement | null>(null);
     const lastMemoTapRef = useRef(0);
+    // 카드 내부에서 드래그하여 카드 외부에서 Pointer up이벤트가 발상한 경우 내용 저장을 방지하기 위한 Ref
+    const outsidePressStartedRef = useRef(false);
 
     const [memoState, setMemoState] = useState({
         x: memo.x,
@@ -177,7 +179,18 @@ export function useMemoCard({
     useEffect(() => {
         const handlePressOutsideMenu = (event: PointerEvent) => {
             const target = event.target as Node;
+            const targetElement = target instanceof Element ? target : null;
             const isPressInsideMenu = menuRef.current?.contains(target);
+            const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
+            const isPressInsideMemo = targetElement?.closest(`.memo-rnd-${memo.id}`);
+            const isPressInsideBoard = targetElement?.closest(".board-scroll-layer");
+
+            outsidePressStartedRef.current = Boolean(
+                isPressInsideBoard &&
+                !isPressInsideMemo &&
+                !isPressInsideMenu &&
+                !isPressInsideBoardToolBar
+            );
 
             if (!isPressInsideMenu) {
                 setActionMenuOpen(false);
@@ -199,7 +212,10 @@ export function useMemoCard({
                 !isPressInsideBoardToolBar
             );
 
-            if (isEditing && isPressInsideEmptyBoard) {
+            const startedInsideEmptyBoard = outsidePressStartedRef.current;
+            outsidePressStartedRef.current = false;
+
+            if (isEditing && startedInsideEmptyBoard && isPressInsideEmptyBoard) {
                 saveMemo();
                 onEditingClear();
                 return;
