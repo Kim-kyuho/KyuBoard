@@ -40,6 +40,8 @@ export function useTableCard({
     const sourceRef = useRef(source);
     const cardStateRef = useRef(cardState);
     const lastTapRef = useRef(0);
+    // 카드 내부에서 드래그하여 카드 외부에서 Pointer up이벤트가 발상한 경우 내용 저장을 방지하기 위한 Ref
+    const outsidePressStartedRef = useRef(false);
 
     useEffect(() => {
         sourceRef.current = source;
@@ -86,7 +88,23 @@ export function useTableCard({
 
     useEffect(() => {
         const handlePressOutsideMenu = (event: PointerEvent) => {
-            if (!menuRef.current?.contains(event.target as Node)) {
+            const target = event.target;
+            const element = target instanceof Element ? target : null;
+            const isPressInsideCard = element?.closest(`.table-rnd-${table.id}`);
+            const isPressInsideMenu = menuRef.current?.contains(target as Node);
+            const isPressInsideToolBar = element?.closest(".board-toolbar");
+            const isPressInsideDialog = element?.closest(".confirm-dialog");
+            const isPressInsideBoard = element?.closest(".board-scroll-layer");
+
+            outsidePressStartedRef.current = Boolean(
+                isPressInsideBoard &&
+                !isPressInsideCard &&
+                !isPressInsideMenu &&
+                !isPressInsideToolBar &&
+                !isPressInsideDialog
+            );
+
+            if (!isPressInsideMenu) {
                 setActionMenuOpen(false);
             }
         };
@@ -107,7 +125,10 @@ export function useTableCard({
                 !isPressInsideDialog
             );
 
-            if (isEditing && isPressInsideEmptyBoard) {
+            const startedInsideEmptyBoard = outsidePressStartedRef.current;
+            outsidePressStartedRef.current = false;
+
+            if (isEditing && startedInsideEmptyBoard && isPressInsideEmptyBoard) {
                 saveTable();
                 onEditingClear();
             }

@@ -68,6 +68,8 @@ export function useMermaidCard({
     const lastMermaidTapRef = useRef(0);
     const sourceRef = useRef(source);
     const cardStateRef = useRef(cardState);
+    // 카드 내부에서 드래그하여 카드 외부에서 Pointer up이벤트가 발상한 경우 내용 저장을 방지하기 위한 Ref
+    const outsidePressStartedRef = useRef(false);
 
     useEffect(() => {
         sourceRef.current = source;
@@ -142,7 +144,18 @@ export function useMermaidCard({
     useEffect(() => {
         const handlePressOutsideMenu = (event: PointerEvent) => {
             const target = event.target as Node;
+            const targetElement = target instanceof Element ? target : null;
             const isPressInsideMenu = menuRef.current?.contains(target);
+            const isPressInsideCard = targetElement?.closest(`.mermaid-rnd-${mermaid.id}`);
+            const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
+            const isPressInsideBoard = targetElement?.closest(".board-scroll-layer");
+
+            outsidePressStartedRef.current = Boolean(
+                isPressInsideBoard &&
+                !isPressInsideCard &&
+                !isPressInsideMenu &&
+                !isPressInsideBoardToolBar
+            );
 
             if (!isPressInsideMenu) {
                 setActionMenuOpen(false);
@@ -163,7 +176,10 @@ export function useMermaidCard({
                 !isPressInsideBoardToolBar
             );
 
-            if (isEditing && isPressInsideEmptyBoard) {
+            const startedInsideEmptyBoard = outsidePressStartedRef.current;
+            outsidePressStartedRef.current = false;
+
+            if (isEditing && startedInsideEmptyBoard && isPressInsideEmptyBoard) {
                 saveMermaidDraft();
                 onEditingClear();
             }
