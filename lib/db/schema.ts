@@ -34,7 +34,6 @@ export const db_memos = pgTable("memos", {
     width: integer("width").notNull(),
     height: integer("height").notNull(),
     color: text("color").notNull(),
-    isPublic: boolean("is_public").default(false),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });

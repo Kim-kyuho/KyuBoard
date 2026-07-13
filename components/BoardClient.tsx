@@ -54,7 +54,6 @@ interface Memo {
     width: number;
     height: number;
     color: string;
-    isPublic: boolean;
 }
 
 interface Mermaid {
