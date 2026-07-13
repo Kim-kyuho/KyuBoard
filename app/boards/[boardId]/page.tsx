@@ -50,7 +50,6 @@ export default async function BoardPage({
         width: memo.width,
         height: memo.height,
         color: memo.color,
-        isPublic: memo.isPublic ?? false,
     }));
 
     const mappedImages = allImages.map((image) => ({

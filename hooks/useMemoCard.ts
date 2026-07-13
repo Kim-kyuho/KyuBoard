@@ -11,7 +11,6 @@ export interface MemoCardData {
     width: number;
     height: number;
     color: string;
-    isPublic: boolean;
 }
 
 type UseMemoCardOptions = {
@@ -33,8 +32,7 @@ type UseMemoCardOptions = {
         z: number,
         width: number,
         height: number,
-        color: string,
-        isPublic: boolean
+        color: string
     ) => void;
     onUpdate: (
         id: number,
@@ -45,8 +43,7 @@ type UseMemoCardOptions = {
         z: number,
         width: number,
         height: number,
-        color: string,
-        isPublic: boolean
+        color: string
     ) => void;
     onDelete: (id: number) => void;
 };
@@ -94,8 +91,7 @@ export function useMemoCard({
             memo.z,
             Math.round(memoState.width),
             Math.round(memoState.height),
-            memoColor,
-            memo.isPublic
+            memoColor
         );
     }, [
         memo.id,
@@ -107,7 +103,6 @@ export function useMemoCard({
         memoState.width,
         memoState.height,
         memoColor,
-        memo.isPublic,
         onInsert,
     ]);
 
@@ -121,8 +116,7 @@ export function useMemoCard({
             memo.z,
             Math.round(memoState.width),
             Math.round(memoState.height),
-            memoColor,
-            memo.isPublic
+            memoColor
         );
     }, [
         memo.id,
@@ -134,7 +128,6 @@ export function useMemoCard({
         memoState.width,
         memoState.height,
         memoColor,
-        memo.isPublic,
         onUpdate,
     ]);
 

@@ -35,7 +35,6 @@ export async function PATCH(request: NextRequest, {params}: { params: Promise<{ 
         if (body.width !== undefined) updates.width = body.width;
         if (body.height !== undefined) updates.height = body.height;
         if (body.color !== undefined) updates.color = body.color;
-        if (body.isPublic !== undefined) updates.isPublic = body.isPublic;
         if (Object.keys(updates).length === 0) {
             return NextResponse.json({
                 ok: false,

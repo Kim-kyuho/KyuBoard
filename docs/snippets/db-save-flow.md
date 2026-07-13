@@ -14,7 +14,6 @@ const tempMemo = {
   width: 300,
   height: 200,
   color: "#fffadc",
-  isPublic: true,
 };
 
 setMemos((prev) => [...prev, tempMemo]);
@@ -54,7 +53,7 @@ setMemos((prev) =>
 setMemos((prev) =>
   prev.map((memo) =>
     memo.id === id
-      ? { ...memo, content, x, y, width, height, color, isPublic }
+      ? { ...memo, content, x, y, width, height, color }
       : memo
   )
 );

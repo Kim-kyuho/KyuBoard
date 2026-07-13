@@ -28,8 +28,7 @@ export async function POST(request: NextRequest) {
             body.width <= 0 ||
             body.height <= 0 ||
             typeof body.color !== "string" ||
-            !body.color.trim() ||
-            typeof body.isPublic !== "boolean"
+            !body.color.trim()
         ) {
             return NextResponse.json({
                 ok: false,
@@ -48,7 +47,6 @@ export async function POST(request: NextRequest) {
             width: body.width,
             height: body.height,
             color: body.color,
-            isPublic: body.isPublic,
         }).returning();
         
         return NextResponse.json({ 

@@ -10,7 +10,6 @@ export type BoardMemo = {
     width: number;
     height: number;
     color: string;
-    isPublic: boolean;
 };
 
 type UseBoardMemosOptions = {
@@ -64,20 +63,19 @@ export function useBoardMemos({
             width: 300,
             height: 200,
             color: "#fffadc",
-            isPublic: true,
         };
         setMemos((prev) => [...prev, tempMemo]);
         setEditingMemoId(tempMemo.id);
     };
 
-    const handleInsertMemo = async (tempId: number, boardId: number, content: string, x: number, y: number, z: number, width: number, height: number, color: string, isPublic: boolean) => {
+    const handleInsertMemo = async (tempId: number, boardId: number, content: string, x: number, y: number, z: number, width: number, height: number, color: string) => {
         const response = await fetch("/api/memos", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                boardId, content, x, y, z, width, height, color, isPublic
+                boardId, content, x, y, z, width, height, color
             }),
         });
 
@@ -93,13 +91,13 @@ export function useBoardMemos({
         );
     };
 
-    const handleUpdateMemo = async (id: number, boardId: number, content: string, x: number, y: number, z: number, width: number, height: number, color: string, isPublic: boolean) => {
+    const handleUpdateMemo = async (id: number, boardId: number, content: string, x: number, y: number, z: number, width: number, height: number, color: string) => {
         const response = await fetch(`/api/memos/${id}`, {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ boardId, content, x, y, z, width, height, color, isPublic }),
+            body: JSON.stringify({ boardId, content, x, y, z, width, height, color }),
         });
         const data = await response.json();
         if (!data.ok) {
@@ -108,7 +106,7 @@ export function useBoardMemos({
         }
         setMemos((prev) =>
             prev.map((memo) =>
-                memo.id === id ? { ...memo, content, x, y, z, width, height, color, isPublic } : memo
+                memo.id === id ? { ...memo, content, x, y, z, width, height, color } : memo
             )
         );
     };

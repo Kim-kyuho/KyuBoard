@@ -218,7 +218,8 @@ export function useTableEdit({ source, isEditing, onChange }: UseTableEditOption
             header: TableColumnHeader,
             cell: TableColumnCell,
         } satisfies ColumnDef<TableRow>)),
-        // Column names and cell values are supplied through table meta to keep inputs mounted.
+        // input 재마운트를 방지하기 위해 source.columns 대신 columnStructureKey로 열 구조 변경만 감지
+        // 의존성 배열에 source.columns가 포함되지 않아 출력되는 의존성 경고를 막기 위해 주석 추가
         // eslint-disable-next-line react-hooks/exhaustive-deps
     ], [columnStructureKey, isEditing]);
 
