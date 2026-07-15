@@ -5,7 +5,7 @@ import { MermaidCardData, useMermaidCard } from "@/hooks/useMermaidCard";
 import { useMermaidRenderer } from "@/hooks/useMermaidRenderer";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
-import CardLayerToolBar from "./CardLayerToolBar";
+import MermaidToolBar from "./MermaidToolBar";
 
 type MermaidCardProps = {
     mermaid: MermaidCardData;
@@ -163,8 +163,7 @@ export default function MermaidCard({
             </Rnd>
 
             {isEditing && (
-                <CardLayerToolBar
-                    cardName="mermaid"
+                <MermaidToolBar
                     onBringToFront={onBringToFront}
                     onSendToBack={onSendToBack}
                     onDelete={openDeleteDialog}

@@ -5,7 +5,7 @@ import { Rnd } from "react-rnd";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { ImageCardData, useImageCard } from "@/hooks/useImageCard";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
-import CardLayerToolBar from "./CardLayerToolBar";
+import ImageToolBar from "./ImageToolBar";
 
 type ImageCardProps = {
     image: ImageCardData;
@@ -137,8 +137,7 @@ export default function ImageCard(props: ImageCardProps) {
             </Rnd>
 
             {isEditing && (
-                <CardLayerToolBar
-                    cardName="image"
+                <ImageToolBar
                     onBringToFront={onBringToFront}
                     onSendToBack={onSendToBack}
                     onDelete={openDeleteDialog}

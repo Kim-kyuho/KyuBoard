@@ -6,7 +6,7 @@ import { useTableCard } from "@/hooks/useTableCard";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 import ConfirmDialog from "./ConfirmDialog";
 import TableGrid from "./TableGrid";
-import CardLayerToolBar from "./CardLayerToolBar";
+import TableToolBar from "./TableToolBar";
 
 type TableCardProps = {
     table: BoardTable;
@@ -106,8 +106,7 @@ export default function TableCard({
             </Rnd>
 
             {isEditing && (
-                <CardLayerToolBar
-                    cardName="table"
+                <TableToolBar
                     onBringToFront={onBringToFront}
                     onSendToBack={onSendToBack}
                     onDelete={openDeleteDialog}
