@@ -18,7 +18,7 @@ export default function BoardActionMenu({
     return (
         <div
             ref={ref}
-            className="absolute right-2 top-11 z-[50000] rounded-md bg-white px-3.5 py-px shadow-md"
+            className="absolute right-2 top-11 z-50000 rounded-md bg-white px-3.5 py-px shadow-md"
         >
             <PressableButton variant="menu" onClick={onRename}>
                 <span className="flex w-full items-center gap-2">
