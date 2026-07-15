@@ -1,12 +1,11 @@
 import { useRef } from "react";
 import { Rnd } from "react-rnd";
-import { EllipsisVertical } from "lucide-react";
-import MemoActionMenu from "./MemoActionMenu";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { MemoCardData, useMemoCard } from "@/hooks/useMemoCard";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 import MemoEditor from "./MemoEditor";
 import type { MemoEditorHandle } from "./MemoEditor";
+import MemoToolBar from "./MemoToolBar";
 
 type MemoCardProps = {
     memo: MemoCardData;
@@ -66,11 +65,8 @@ export default function MemoCard(props: MemoCardProps) {
         onSendToBack,
     } = props;
     const {
-        actionMenuOpen,
-        setActionMenuOpen,
         memoColor,
         setMemoColor,
-        menuRef,
         memoFocusRef,
         memoState,
         memoContent,
@@ -147,72 +143,11 @@ export default function MemoCard(props: MemoCardProps) {
                                 cursor: "text",
                             }}
                         >
-                            <button
-                                type="button"
-                                className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-neutral-500 opacity-30 backdrop-blur-sm transition duration-150 hover:bg-white/80 hover:text-neutral-900 hover:opacity-100 hover:shadow-sm active:scale-95"
-                                onClick={() => {
-                                    setActionMenuOpen((prev) => !prev);
-                                }}
-                            >
-                                <EllipsisVertical className="h-8 w-8" />
-                            </button>
                             <MemoEditor
                                 ref={memoEditorRef}
                                 content={memoContent}
                                 onChange={setMemoContent}
                             />
-                            {actionMenuOpen && (
-                                <MemoActionMenu
-                                    ref={menuRef}
-                                    zoom={zoom}
-                                    isEditing={isEditing}
-                                    onChangeColor={(color: string) => {
-                                        setMemoColor(color);
-                                        setActionMenuOpen(false);
-                                    }}
-                                    onHeading={(level) => {
-                                        memoEditorRef.current?.toggleHeading(level);
-                                        setActionMenuOpen(false);
-                                    }}
-                                    onBold={() => {
-                                        memoEditorRef.current?.toggleBold();
-                                        setActionMenuOpen(false);
-                                    }}
-                                    onItalic={() => {
-                                        memoEditorRef.current?.toggleItalic();
-                                        setActionMenuOpen(false);
-                                    }}
-                                    onStrike={() => {
-                                        memoEditorRef.current?.toggleStrike();
-                                        setActionMenuOpen(false);
-                                    }}
-                                    onHorizontalRule={() => {
-                                        memoEditorRef.current?.setHorizontalRule();
-                                        setActionMenuOpen(false);
-                                    }}
-                                    onHighlight={() => {
-                                        memoEditorRef.current?.toggleHighlight();
-                                        setActionMenuOpen(false);
-                                    }}
-                                    onCodeBlock={() => {
-                                        memoEditorRef.current?.toggleCodeBlock();
-                                        setActionMenuOpen(false);
-                                    }}
-                                    onBlockQuote={() => {
-                                        memoEditorRef.current?.toggleBlockQuote();
-                                        setActionMenuOpen(false);
-                                    }}
-                                    onBringToFront={() => {
-                                        onBringToFront();
-                                        setActionMenuOpen(false);
-                                    }}
-                                    onSendToBack={() => {
-                                        onSendToBack();
-                                        setActionMenuOpen(false);
-                                    }}
-                                    onDelete={openDeleteDialog}
-                                />
-                            )}
                         </div>
                     ) : (
                         <div
@@ -245,6 +180,23 @@ export default function MemoCard(props: MemoCardProps) {
                     )}
                 </div>
             </Rnd>
+
+            {isEditing && (
+                <MemoToolBar
+                    onChangeColor={setMemoColor}
+                    onHeading={(level) => memoEditorRef.current?.toggleHeading(level)}
+                    onBold={() => memoEditorRef.current?.toggleBold()}
+                    onItalic={() => memoEditorRef.current?.toggleItalic()}
+                    onStrike={() => memoEditorRef.current?.toggleStrike()}
+                    onHorizontalRule={() => memoEditorRef.current?.setHorizontalRule()}
+                    onHighlight={() => memoEditorRef.current?.toggleHighlight()}
+                    onCodeBlock={() => memoEditorRef.current?.toggleCodeBlock()}
+                    onBlockQuote={() => memoEditorRef.current?.toggleBlockQuote()}
+                    onBringToFront={onBringToFront}
+                    onSendToBack={onSendToBack}
+                    onDelete={openDeleteDialog}
+                />
+            )}
         
             {deleteDialogOpen && (
                 <ConfirmDialog

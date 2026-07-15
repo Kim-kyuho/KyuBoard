@@ -38,7 +38,7 @@ export default function BoardToolBar({
     return (
         <>
             {!cardEditing && (
-            <div className="board-toolbar fixed bottom-16 right-5 z-[50000] flex flex-col items-end gap-1">
+            <div className="board-toolbar toolbar-reveal fixed bottom-16 right-5 z-[50000] flex flex-col items-end gap-1">
                 <div className="flex flex-col items-center gap-0">
                     <PressableButton
                         variant="menu"
@@ -123,6 +123,10 @@ export default function BoardToolBar({
                 </div>
             </div>
             )}
+            <div
+                id="card-tool-portal"
+                className="board-toolbar fixed bottom-16 right-5 z-[50000] flex flex-col items-end gap-1"
+            />
             <BoardZoomControl
                 boardZoom={boardZoom}
                 setBoardZoom={setBoardZoom}

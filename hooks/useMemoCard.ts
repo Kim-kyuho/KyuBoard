@@ -62,10 +62,8 @@ export function useMemoCard({
     onUpdate,
     onDelete,
 }: UseMemoCardOptions) {
-    const [actionMenuOpen, setActionMenuOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
-    const menuRef = useRef<HTMLDivElement | null>(null);
     const memoFocusRef = useRef<HTMLDivElement | null>(null);
     const lastMemoTapRef = useRef(0);
     // 카드 내부에서 드래그하여 카드 외부에서 Pointer up이벤트가 발상한 경우 내용 저장을 방지하기 위한 Ref
@@ -170,10 +168,9 @@ export function useMemoCard({
     };
 
     useEffect(() => {
-        const handlePressOutsideMenu = (event: PointerEvent) => {
+        const handlePressStart = (event: PointerEvent) => {
             const target = event.target as Node;
             const targetElement = target instanceof Element ? target : null;
-            const isPressInsideMenu = menuRef.current?.contains(target);
             const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
             const isPressInsideMemo = targetElement?.closest(`.memo-rnd-${memo.id}`);
             const isPressInsideBoard = targetElement?.closest(".board-scroll-layer");
@@ -181,27 +178,20 @@ export function useMemoCard({
             outsidePressStartedRef.current = Boolean(
                 isPressInsideBoard &&
                 !isPressInsideMemo &&
-                !isPressInsideMenu &&
                 !isPressInsideBoardToolBar
             );
-
-            if (!isPressInsideMenu) {
-                setActionMenuOpen(false);
-            }
         };
 
         const handlePressOutside = (event: PointerEvent) => {
             const target = event.target as Node;
             const targetElement = target instanceof Element ? target : null;
 
-            const isPressInsideMenu = menuRef.current?.contains(target);
             const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
             const isPressInsideMemo = targetElement?.closest(`.memo-rnd-${memo.id}`);
             const isPressInsideBoard = targetElement?.closest(".board-scroll-layer");
             const isPressInsideEmptyBoard = Boolean(
                 isPressInsideBoard &&
                 !isPressInsideMemo &&
-                !isPressInsideMenu &&
                 !isPressInsideBoardToolBar
             );
 
@@ -214,7 +204,7 @@ export function useMemoCard({
                 return;
             }
 
-            if (isPressInsideBoardToolBar || isPressInsideMenu) {
+            if (isPressInsideBoardToolBar) {
                 return;
             }
 
@@ -224,11 +214,11 @@ export function useMemoCard({
 
         };
 
-        document.addEventListener("pointerdown", handlePressOutsideMenu);
+        document.addEventListener("pointerdown", handlePressStart);
         document.addEventListener("pointerup", handlePressOutside);
 
         return () => {
-            document.removeEventListener("pointerdown", handlePressOutsideMenu);
+            document.removeEventListener("pointerdown", handlePressStart);
             document.removeEventListener("pointerup", handlePressOutside);
         };
     }, [isEditing, isFocused, memo.id, saveMemo, onEditingClear, onFocusClear]);
@@ -251,7 +241,6 @@ export function useMemoCard({
     };
 
     const openDeleteDialog = () => {
-        setActionMenuOpen(false);
         setDeleteDialogOpen(true);
     };
 
@@ -266,11 +255,8 @@ export function useMemoCard({
     };
 
     return {
-        actionMenuOpen,
-        setActionMenuOpen,
         memoColor,
         setMemoColor,
-        menuRef,
         isEditing,
         memoFocusRef,
         memoState,

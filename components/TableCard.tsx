@@ -1,13 +1,12 @@
 "use client";
 
 import { Rnd } from "react-rnd";
-import { EllipsisVertical } from "lucide-react";
 import { BoardTable } from "@/hooks/useBoardTables";
 import { useTableCard } from "@/hooks/useTableCard";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 import ConfirmDialog from "./ConfirmDialog";
-import TableActionMenu from "./TableActionMenu";
 import TableGrid from "./TableGrid";
+import CardLayerToolBar from "./CardLayerToolBar";
 
 type TableCardProps = {
     table: BoardTable;
@@ -44,16 +43,12 @@ export default function TableCard({
         cardState,
         dragHandlePressed,
         setDragHandlePressed,
-        actionMenuOpen,
         deleteDialogOpen,
-        menuRef,
         editTable,
         handleDoubleTap,
         handleTablePress,
         handleDragStop,
         handleResizeStop,
-        openActionMenu,
-        closeActionMenu,
         openDeleteDialog,
         closeDeleteDialog,
         confirmDelete,
@@ -73,7 +68,6 @@ export default function TableCard({
         <>
             <Rnd
                 data-editing={isEditing}
-                cancel=".table-action-menu"
                 className={`table-rnd-${table.id} select-none rounded-xl ${isEditing ? "card-editing" : ""}`}
                 style={{ zIndex: isEditing ? ACTIVE_CARD_Z : table.z }}
                 position={{ x: cardState.x, y: cardState.y }}
@@ -94,34 +88,6 @@ export default function TableCard({
                     onDoubleClick={editTable}
                     onPointerDown={handleDoubleTap}
                 >
-                    {isEditing && (
-                        <>
-                            <button
-                                type="button"
-                                aria-label="Table actions"
-                                className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/70 text-neutral-500 opacity-60 backdrop-blur-sm transition hover:text-neutral-900 hover:opacity-100 hover:shadow-sm active:scale-95"
-                                onPointerUp={openActionMenu}
-                            >
-                                <EllipsisVertical className="h-6 w-6" />
-                            </button>
-                            {actionMenuOpen && (
-                                <TableActionMenu
-                                    ref={menuRef}
-                                    zoom={zoom}
-                                    onBringToFront={() => {
-                                        onBringToFront();
-                                        closeActionMenu();
-                                    }}
-                                    onSendToBack={() => {
-                                        onSendToBack();
-                                        closeActionMenu();
-                                    }}
-                                    onDelete={openDeleteDialog}
-                                />
-                            )}
-                        </>
-                    )}
-
                     <TableGrid source={source} isEditing={isEditing} onChange={setSource} />
 
                     {isEditing && (
@@ -138,6 +104,15 @@ export default function TableCard({
 
                 </div>
             </Rnd>
+
+            {isEditing && (
+                <CardLayerToolBar
+                    cardName="table"
+                    onBringToFront={onBringToFront}
+                    onSendToBack={onSendToBack}
+                    onDelete={openDeleteDialog}
+                />
+            )}
 
             {deleteDialogOpen && (
                 <ConfirmDialog

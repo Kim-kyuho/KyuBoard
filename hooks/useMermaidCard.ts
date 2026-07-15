@@ -62,9 +62,7 @@ export function useMermaidCard({
     });
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
-    const menuRef = useRef<HTMLDivElement | null>(null);
     const lastMermaidTapRef = useRef(0);
     const sourceRef = useRef(source);
     const cardStateRef = useRef(cardState);
@@ -142,10 +140,9 @@ export function useMermaidCard({
     };
 
     useEffect(() => {
-        const handlePressOutsideMenu = (event: PointerEvent) => {
+        const handlePressStart = (event: PointerEvent) => {
             const target = event.target as Node;
             const targetElement = target instanceof Element ? target : null;
-            const isPressInsideMenu = menuRef.current?.contains(target);
             const isPressInsideCard = targetElement?.closest(`.mermaid-rnd-${mermaid.id}`);
             const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
             const isPressInsideBoard = targetElement?.closest(".board-scroll-layer");
@@ -153,26 +150,19 @@ export function useMermaidCard({
             outsidePressStartedRef.current = Boolean(
                 isPressInsideBoard &&
                 !isPressInsideCard &&
-                !isPressInsideMenu &&
                 !isPressInsideBoardToolBar
             );
-
-            if (!isPressInsideMenu) {
-                setActionMenuOpen(false);
-            }
         };
 
         const handlePressOutside = (event: PointerEvent) => {
             const target = event.target as Node;
             const targetElement = target instanceof Element ? target : null;
-            const isPressInsideMenu = menuRef.current?.contains(target);
             const isPressInsideCard = targetElement?.closest(`.mermaid-rnd-${mermaid.id}`);
             const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
             const isPressInsideBoard = targetElement?.closest(".board-scroll-layer");
             const isPressInsideEmptyBoard = Boolean(
                 isPressInsideBoard &&
                 !isPressInsideCard &&
-                !isPressInsideMenu &&
                 !isPressInsideBoardToolBar
             );
 
@@ -185,11 +175,11 @@ export function useMermaidCard({
             }
         };
 
-        document.addEventListener("pointerdown", handlePressOutsideMenu);
+        document.addEventListener("pointerdown", handlePressStart);
         document.addEventListener("pointerup", handlePressOutside);
 
         return () => {
-            document.removeEventListener("pointerdown", handlePressOutsideMenu);
+            document.removeEventListener("pointerdown", handlePressStart);
             document.removeEventListener("pointerup", handlePressOutside);
         };
     }, [isEditing, saveMermaidDraft, mermaid.id, onEditingClear]);
@@ -216,17 +206,7 @@ export function useMermaidCard({
         setCardState(nextCardState);
     };
 
-    const openMermaidActionMenu = () => {
-        if (!canEdit) {
-            onPermissionDenied();
-            return;
-        }
-
-        setActionMenuOpen((prev) => !prev);
-    };
-
     const openDeleteDialog = () => {
-        setActionMenuOpen(false);
         setDeleteDialogOpen(true);
     };
 
@@ -241,11 +221,9 @@ export function useMermaidCard({
     };
 
     return {
-        actionMenuOpen,
         cardState,
         source,
         setSource,
-        menuRef,
         isEditing,
         deleteDialogOpen,
         dragHandlePressed,
@@ -255,8 +233,6 @@ export function useMermaidCard({
         handleMermaidPress,
         handleDragStop,
         handleResizeStop,
-        openMermaidActionMenu,
-        closeActionMenu: () => setActionMenuOpen(false),
         openDeleteDialog,
         closeDeleteDialog,
         confirmDelete,

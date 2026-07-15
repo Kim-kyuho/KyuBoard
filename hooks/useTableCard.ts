@@ -34,9 +34,7 @@ export function useTableCard({
         height: table.height,
     });
     const [dragHandlePressed, setDragHandlePressed] = useState(false);
-    const [actionMenuOpen, setActionMenuOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement | null>(null);
     const sourceRef = useRef(source);
     const cardStateRef = useRef(cardState);
     const lastTapRef = useRef(0);
@@ -87,11 +85,10 @@ export function useTableCard({
     };
 
     useEffect(() => {
-        const handlePressOutsideMenu = (event: PointerEvent) => {
+        const handlePressStart = (event: PointerEvent) => {
             const target = event.target;
             const element = target instanceof Element ? target : null;
             const isPressInsideCard = element?.closest(`.table-rnd-${table.id}`);
-            const isPressInsideMenu = menuRef.current?.contains(target as Node);
             const isPressInsideToolBar = element?.closest(".board-toolbar");
             const isPressInsideDialog = element?.closest(".confirm-dialog");
             const isPressInsideBoard = element?.closest(".board-scroll-layer");
@@ -99,28 +96,21 @@ export function useTableCard({
             outsidePressStartedRef.current = Boolean(
                 isPressInsideBoard &&
                 !isPressInsideCard &&
-                !isPressInsideMenu &&
                 !isPressInsideToolBar &&
                 !isPressInsideDialog
             );
-
-            if (!isPressInsideMenu) {
-                setActionMenuOpen(false);
-            }
         };
 
         const handlePressOutside = (event: PointerEvent) => {
             const target = event.target;
             const element = target instanceof Element ? target : null;
             const isPressInsideCard = element?.closest(`.table-rnd-${table.id}`);
-            const isPressInsideMenu = menuRef.current?.contains(target as Node);
             const isPressInsideToolBar = element?.closest(".board-toolbar");
             const isPressInsideDialog = element?.closest(".confirm-dialog");
             const isPressInsideBoard = element?.closest(".board-scroll-layer");
             const isPressInsideEmptyBoard = Boolean(
                 isPressInsideBoard &&
                 !isPressInsideCard &&
-                !isPressInsideMenu &&
                 !isPressInsideToolBar &&
                 !isPressInsideDialog
             );
@@ -134,10 +124,10 @@ export function useTableCard({
             }
         };
 
-        document.addEventListener("pointerdown", handlePressOutsideMenu);
+        document.addEventListener("pointerdown", handlePressStart);
         document.addEventListener("pointerup", handlePressOutside);
         return () => {
-            document.removeEventListener("pointerdown", handlePressOutsideMenu);
+            document.removeEventListener("pointerdown", handlePressStart);
             document.removeEventListener("pointerup", handlePressOutside);
         };
     }, [isEditing, onEditingClear, saveTable, table.id]);
@@ -163,14 +153,6 @@ export function useTableCard({
         setCardState(next);
     };
 
-    const openActionMenu = () => {
-        if (!canEdit) {
-            onPermissionDenied();
-            return;
-        }
-        setActionMenuOpen((prev) => !prev);
-    };
-
     const confirmDelete = () => {
         onDelete(table.id);
         onEditingClear();
@@ -183,18 +165,13 @@ export function useTableCard({
         cardState,
         dragHandlePressed,
         setDragHandlePressed,
-        actionMenuOpen,
         deleteDialogOpen,
-        menuRef,
         editTable,
         handleDoubleTap,
         handleTablePress,
         handleDragStop,
         handleResizeStop,
-        openActionMenu,
-        closeActionMenu: () => setActionMenuOpen(false),
         openDeleteDialog: () => {
-            setActionMenuOpen(false);
             setDeleteDialogOpen(true);
         },
         closeDeleteDialog: () => setDeleteDialogOpen(false),
