@@ -21,7 +21,7 @@ export default function BoardSearchPanel({
 }:BoardPanelProps){
     return(
         <>
-            <div className="fixed bottom-20 left-1/2 z-[50000] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-md">
+            <div className="fixed bottom-20 left-1/2 z-50000 flex -translate-x-1/2 items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-md">
                 <input
                     value={searchText}
                     onChange={(event) => onTextChange(event.target.value)}
