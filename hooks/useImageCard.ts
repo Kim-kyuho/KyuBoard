@@ -75,9 +75,7 @@ export function useImageCard({
         height: image.height,
     });
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
-    const menuRef = useRef<HTMLDivElement | null>(null);
     const lastImageTapRef = useRef(0);
     const imageStateRef = useRef(imageState);
     
@@ -153,27 +151,16 @@ export function useImageCard({
     };
 
     useEffect(() => {
-        const handlePressOutsideMenu = (event: PointerEvent) => {
-            const target = event.target as Node;
-            const isPressInsideMenu = menuRef.current?.contains(target);
-
-            if (!isPressInsideMenu) {
-                setActionMenuOpen(false);
-            }
-        };
-
         const handlePressOutside = (event: PointerEvent) => {
             const target = event.target as Node;
             const targetElement = target instanceof Element ? target : null;
 
-            const isPressInsideMenu = menuRef.current?.contains(target);
             const isPressInsideBoardToolBar = targetElement?.closest(".board-toolbar");
             const isPressInsideImage = targetElement?.closest(`.image-rnd-${image.imageId}`);
             const isPressInsideBoard = targetElement?.closest(".board-scroll-layer");
             const isPressInsideEmptyBoard = Boolean(
                 isPressInsideBoard &&
                 !isPressInsideImage &&
-                !isPressInsideMenu &&
                 !isPressInsideBoardToolBar
             );
 
@@ -181,32 +168,20 @@ export function useImageCard({
                 window.setTimeout(() => {
                     saveImageDraft();
                     onEditingClear();
-                    setActionMenuOpen(false);
                 }, 0);
                 return;
             }
         };
 
-        document.addEventListener("pointerdown", handlePressOutsideMenu);
         document.addEventListener("pointerup", handlePressOutside);
 
         return () => {
-            document.removeEventListener("pointerdown", handlePressOutsideMenu);
             document.removeEventListener("pointerup", handlePressOutside);
         };
     }, [image.imageId, isEditing, onEditingClear, saveImageDraft]);
 
     const handleImagePress = (event: ReactMouseEvent<HTMLDivElement>) => {
         event.stopPropagation();
-    };
-
-    const openImageActionMenu = () => {
-        if (!canEdit) {
-            onPermissionDenied();
-            return;
-        }
-
-        setActionMenuOpen((prev) => !prev);
     };
 
     const handleDragStop = (_event: RndDragEvent, data: DraggableData) => {
@@ -227,7 +202,6 @@ export function useImageCard({
     };
 
     const openDeleteDialog = () => {
-        setActionMenuOpen(false);
         setDeleteDialogOpen(true);
     };
 
@@ -244,13 +218,9 @@ export function useImageCard({
     return {
         imageState,
         deleteDialogOpen,
-        actionMenuOpen,
-        menuRef,
         editImage,
         handleDoubleTap,
         handleImagePress,
-        openImageActionMenu,
-        closeActionMenu: () => setActionMenuOpen(false),
         handleDragStop,
         handleResizeStop,
         openDeleteDialog,

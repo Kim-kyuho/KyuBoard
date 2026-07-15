@@ -1,12 +1,11 @@
 "use client";
 
 import { Rnd } from "react-rnd";
-import { EllipsisVertical } from "lucide-react";
 import { MermaidCardData, useMermaidCard } from "@/hooks/useMermaidCard";
 import { useMermaidRenderer } from "@/hooks/useMermaidRenderer";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
-import MermaidActionMenu from "./MermaidActionMenu";
+import CardLayerToolBar from "./CardLayerToolBar";
 
 type MermaidCardProps = {
     mermaid: MermaidCardData;
@@ -56,11 +55,9 @@ export default function MermaidCard({
     onSendToBack,
 }: MermaidCardProps) {
     const {
-        actionMenuOpen,
         cardState,
         source,
         setSource,
-        menuRef,
         deleteDialogOpen,
         dragHandlePressed,
         setDragHandlePressed,
@@ -69,8 +66,6 @@ export default function MermaidCard({
         handleMermaidPress,
         handleDragStop,
         handleResizeStop,
-        openMermaidActionMenu,
-        closeActionMenu,
         openDeleteDialog,
         closeDeleteDialog,
         confirmDelete,
@@ -94,7 +89,6 @@ export default function MermaidCard({
         <>
             <Rnd
                 data-editing={isEditing}
-                cancel=".mermaid-action-menu"
                 className={`mermaid-rnd-${mermaid.id} select-none rounded-xl ${isEditing ? "card-editing" : ""}`}
                 style={{
                     zIndex: isEditing ? ACTIVE_CARD_Z : mermaid.z,
@@ -127,36 +121,6 @@ export default function MermaidCard({
                     onDoubleClick={editMermaid}
                     onPointerDown={handleDoubleTap}
                 >
-                    {isEditing && (
-                        <>
-                            <button
-                                type="button"
-                                aria-label="Mermaid actions"
-                                className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-neutral-500 opacity-30 backdrop-blur-sm transition duration-150 hover:bg-white/80 hover:text-neutral-900 hover:opacity-100 hover:shadow-sm active:scale-95"
-                                onPointerUp={() => {
-                                    openMermaidActionMenu();
-                                }}
-                            >
-                                <EllipsisVertical className="h-8 w-8" />
-                            </button>
-                            {actionMenuOpen && (
-                                <MermaidActionMenu
-                                    ref={menuRef}
-                                    zoom={zoom}
-                                    onBringToFront={() => {
-                                        onBringToFront();
-                                        closeActionMenu();
-                                    }}
-                                    onSendToBack={() => {
-                                        onSendToBack();
-                                        closeActionMenu();
-                                    }}
-                                    onDelete={openDeleteDialog}
-                                />
-                            )}
-                        </>
-                    )}
-
                     <div className="relative flex h-full w-full flex-col overflow-hidden rounded-xl">
                         {isEditing && (
                             <textarea
@@ -197,6 +161,15 @@ export default function MermaidCard({
                     </div>
                 </div>
             </Rnd>
+
+            {isEditing && (
+                <CardLayerToolBar
+                    cardName="mermaid"
+                    onBringToFront={onBringToFront}
+                    onSendToBack={onSendToBack}
+                    onDelete={openDeleteDialog}
+                />
+            )}
 
             {deleteDialogOpen && (
                 <ConfirmDialog

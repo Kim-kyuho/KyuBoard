@@ -420,6 +420,30 @@ body {
   font-family: var(--font-line-seed);
 }
 
+@keyframes toolbar-reveal {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateX(8px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateX(0) scale(1);
+  }
+}
+
+.toolbar-reveal {
+  animation: toolbar-reveal 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toolbar-reveal {
+    animation: none;
+  }
+}
+
 @layer components {
   .ui-button {
     @apply rounded-xl transition duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 hover:shadow-lg active:translate-y-0.5 active:scale-[0.98] active:bg-white/80;
