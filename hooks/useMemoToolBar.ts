@@ -9,6 +9,7 @@ export function useMemoToolBar({
 }) {
     const [openMemoColorMenu, setOpenMemoColorMenu] = useState(false);
     const [openHeadingMenu, setOpenHeadingMenu] = useState(false);
+    const [toolMode, setToolMode] = useState<"main" | "format" | "block">("main");
 
     const memoColors = [
         { name: "Yellow", value: "#fffadc" },
@@ -46,14 +47,24 @@ export function useMemoToolBar({
         setOpenHeadingMenu(false);
     };
 
+    const changeToolMode = (mode: "main" | "format" | "block") => {
+        setOpenMemoColorMenu(false);
+        setOpenHeadingMenu(false);
+        setToolMode(mode);
+    };
+
     return {
         memoColors,
         headingLevels,
+        toolMode,
         openMemoColorMenu,
         openHeadingMenu,
         toggleColorMenu,
         toggleHeadingMenu,
         handleColorSelect,
         handleHeadingSelect,
+        openMainTools: () => changeToolMode("main"),
+        openFormatTools: () => changeToolMode("format"),
+        openBlockTools: () => changeToolMode("block"),
     };
 }
