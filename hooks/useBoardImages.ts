@@ -31,6 +31,7 @@ type UseBoardImagesOptions = {
 // FUNCTION_PAYLOAD_TOO_LARGE를 막기위해 이미지 업로드 전에 클라이언트에서 이미지를 압축하는 함수
 async function compressImage(file: File) {
     try {
+        const maxFileSize = 4 * 1024 * 1024;
         const image = new Image();
         const imageUrl = URL.createObjectURL(file);
 
@@ -48,25 +49,35 @@ async function compressImage(file: File) {
         );
 
         const canvas = document.createElement("canvas");
-        canvas.width = Math.round(image.width * scale);
-        canvas.height = Math.round(image.height * scale);
+        let width = Math.round(image.width * scale);
+        let height = Math.round(image.height * scale);
+        let blob: Blob;
 
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-            throw new Error("Canvas context is not available.");
-        }
+        do {
+            canvas.width = width;
+            canvas.height = height;
 
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                throw new Error("Canvas context is not available.");
+            }
 
-        const blob = await new Promise<Blob>((resolve, reject) => {
-            canvas.toBlob(
-                (result) => {
-                    if (!result) reject(new Error("Image compression failed."));
-                    else resolve(result);
-                },
-                "image/png"
-            );
-        });
+            ctx.drawImage(image, 0, 0, width, height);
+            blob = await new Promise<Blob>((resolve, reject) => {
+                canvas.toBlob(
+                    (result) => {
+                        if (!result) reject(new Error("Image compression failed."));
+                        else resolve(result);
+                    },
+                    "image/png"
+                );
+            });
+
+            if (blob.size > maxFileSize) {
+                width = Math.max(1, Math.round(width * 0.85));
+                height = Math.max(1, Math.round(height * 0.85));
+            }
+        } while (blob.size > maxFileSize);
 
         URL.revokeObjectURL(imageUrl);
 
