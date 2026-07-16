@@ -4,7 +4,13 @@ import { ButtonHTMLAttributes, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import PressableButton from "./PressableButton";
 
-export function CardToolPortal({ children }: { children: ReactNode }) {
+export function CardToolPortal({
+    children,
+    animate = true,
+}: {
+    children: ReactNode;
+    animate?: boolean;
+}) {
     const portalTarget = typeof document === "undefined"
         ? null
         : document.getElementById("card-tool-portal");
@@ -14,7 +20,7 @@ export function CardToolPortal({ children }: { children: ReactNode }) {
     }
 
     return createPortal(
-        <div className="toolbar-reveal flex flex-col items-end gap-1">
+        <div className={`${animate ? "toolbar-reveal" : ""} flex flex-col items-end gap-1`}>
             {children}
         </div>,
         portalTarget
