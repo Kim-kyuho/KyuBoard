@@ -64,7 +64,8 @@ async function compressImage(file: File) {
                     if (!result) reject(new Error("Image compression failed."));
                     else resolve(result);
                 },
-                "image/png"
+                "image/webp",
+                0.82
             );
         });
 
@@ -72,8 +73,8 @@ async function compressImage(file: File) {
 
         return new File(
             [blob],
-            file.name.replace(/\.[^.]+$/, ".png"),
-            { type: "image/png" }
+            file.name.replace(/\.[^.]+$/, ".webp"),
+            { type: "image/webp" }
         );
     }   catch (error) { 
         console.error("Error compressing image:", error);
