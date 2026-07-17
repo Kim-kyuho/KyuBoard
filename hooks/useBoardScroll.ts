@@ -152,7 +152,7 @@ export function useBoardScroll({ cardEditing, boardScrollRef }: UseBoardScrollOp
         }
 
         let restoreFrame: number | null = null;
-        // let keyboardClearTimer: number | null = null;
+        let keyboardClearTimer: number | null = null;
         const arrowKeys = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
         const restoreBoardScroll = (scrollLeft: number, scrollTop: number) => {
             boardScrollElement.scrollLeft = scrollLeft;
@@ -178,6 +178,19 @@ export function useBoardScroll({ cardEditing, boardScrollRef }: UseBoardScrollOp
             const scrollTop = boardScrollElement.scrollTop;
 
             keyboardScrollRef.current = { scrollLeft, scrollTop };
+            if (keyboardClearTimer !== null) {
+                window.clearTimeout(keyboardClearTimer);
+            }
+            keyboardClearTimer = window.setTimeout(() => {
+                keyboardScrollRef.current = null;
+                keyboardClearTimer = null;
+            }, 160);
+
+            if (!isEditableTarget(event.target)) {
+                event.preventDefault();
+            }
+
+            scheduleBoardScrollRestore(scrollLeft, scrollTop);
         };
 
         const handleTextDragStart = (event: PointerEvent) => {
@@ -226,6 +239,10 @@ export function useBoardScroll({ cardEditing, boardScrollRef }: UseBoardScrollOp
             if (restoreFrame !== null) {
                 window.cancelAnimationFrame(restoreFrame);
             }
+            if (keyboardClearTimer !== null) {
+                window.clearTimeout(keyboardClearTimer);
+            }
+
             textDragScrollRef.current = null;
             keyboardScrollRef.current = null;
             document.removeEventListener("keydown", handleArrowKey, true);
