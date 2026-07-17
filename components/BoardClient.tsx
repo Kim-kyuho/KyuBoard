@@ -116,13 +116,6 @@ export default function BoardClient(
     });
 
     const {
-        boardPanning,
-        handleBoardPanStart,
-        handleBoardPanMove,
-        handleBoardPanEnd,
-    } = useBoardScroll();
-
-    const {
         imageInputRef,
         images,
         setImages,
@@ -230,6 +223,16 @@ export default function BoardClient(
         editingImageId !== null ||
         editingMermaidId !== null ||
         editingTableId !== null;
+
+    const {
+        boardPanning,
+        handleBoardPanStart,
+        handleBoardPanMove,
+        handleBoardPanEnd,
+    } = useBoardScroll({
+        cardEditing: isEditing,
+        boardScrollRef: cardLocationRef,
+    });
 
     const { handleCardLayer } = useCardLayer({
         boardId: currentBoard.boardId,
