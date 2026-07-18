@@ -128,45 +128,6 @@ The goal is to create varied expressions through simple, predictable components.
 - Cloudinary
 - Vercel Analytics
 
-## Getting Started
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Create a local environment file:
-
-```env
-NEON_CONNECTION_STRING=
-AUTH_SECRET=
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-```
-
-Run the development server:
-
-```bash
-npm run dev
-```
-
-Open the application:
-
-```text
-http://localhost:3000
-```
-
-## Scripts
-
-```bash
-npm run dev
-npm run build
-npm run start
-npm run lint
-```
-
 ## Database
 
 KyuBoard uses Neon PostgreSQL through Drizzle ORM.
