@@ -4,8 +4,8 @@ KyuBoard is a spatial Markdown board for capturing fragmented ideas and compilin
 
 Instead of writing from top to bottom, users can place memos, images, tables, and diagrams freely across a visual workspace. KyuBoard then interprets the arrangement using deterministic rules and converts the board into structured Markdown.
 
-![KyuBoard screenshot1](screenshot/IMG_1143.png)
-![KyuBoard screenshot2](screenshot/IMG_1144.png)
+![KyuBoard screenshot1](screenshot/IMG_1143.jpeg)
+![KyuBoard screenshot2](screenshot/IMG_1144.jpeg)
 
 ## Concept
 
