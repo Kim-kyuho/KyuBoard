@@ -1,6 +1,5 @@
 "use client";
 
-import { PointerEvent as ReactPointerEvent, useRef, useState } from "react";
 import {
     BoardStroke,
     StrokePoint,
@@ -8,6 +7,7 @@ import {
     strokeToPath,
 } from "@/lib/board-stroke";
 import type { DrawingTool } from "@/hooks/useBoardDrawing";
+import { useDrawingPointer } from "@/hooks/useDrawingPointer";
 import { ACTIVE_CARD_Z } from "@/lib/zIndex";
 
 type DrawingLayerProps = {
@@ -49,15 +49,23 @@ export default function DrawingLayer({
     onStrokeEnd,
     onErase,
 }: DrawingLayerProps) {
-    const layerRef = useRef<SVGSVGElement | null>(null);
-    const activePointerRef = useRef<number | null>(null);
-    const currentPointsRef = useRef<StrokePoint[]>([]);
-    const previousEraserPointRef = useRef<StrokePoint | null>(null);
-    const [currentPoints, setCurrentPoints] = useState<StrokePoint[]>([]);
-    const [eraserPoint, setEraserPoint] = useState<StrokePoint | null>(null);
-
     const eraserRadius = eraserScreenRadius / zoom;
-    const capturesInput = drawingTool !== "pan";
+    const {
+        layerRef,
+        currentPoints,
+        eraserPoint,
+        capturesInput,
+        handlePointerDown,
+        handlePointerMove,
+        handlePointerUp,
+        handlePointerLeave,
+    } = useDrawingPointer({
+        drawingTool,
+        zoom,
+        eraserRadius,
+        onStrokeEnd,
+        onErase,
+    });
 
     if (!drawingMode) {
         return (
@@ -78,106 +86,6 @@ export default function DrawingLayer({
         );
     }
 
-    const toBoardPoint = (event: ReactPointerEvent<SVGSVGElement>): StrokePoint => {
-        const layerRect = layerRef.current?.getBoundingClientRect();
-
-        if (!layerRect) {
-            return [0, 0];
-        }
-
-        return [
-            (event.clientX - layerRect.left) / zoom,
-            (event.clientY - layerRect.top) / zoom,
-        ];
-    };
-
-    const finishCurrentStroke = () => {
-        const points = currentPointsRef.current;
-        activePointerRef.current = null;
-        currentPointsRef.current = [];
-
-        if (points.length > 1) {
-            onStrokeEnd(points);
-        }
-
-        setCurrentPoints([]);
-    };
-
-    const handlePointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
-        if (!capturesInput || (event.pointerType === "touch" && !event.isPrimary)) {
-            return;
-        }
-
-        event.preventDefault();
-
-        if (activePointerRef.current !== null) {
-            finishCurrentStroke();
-        }
-
-        const boardPoint = toBoardPoint(event);
-        activePointerRef.current = event.pointerId;
-
-        if (drawingTool === "erase") {
-            previousEraserPointRef.current = boardPoint;
-            setEraserPoint(boardPoint);
-            onErase(boardPoint, boardPoint, eraserRadius);
-            return;
-        }
-
-        currentPointsRef.current = [boardPoint];
-        setCurrentPoints([boardPoint]);
-    };
-
-    const handlePointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
-        if (!capturesInput) {
-            return;
-        }
-
-        const boardPoint = toBoardPoint(event);
-        const pressed = event.buttons !== 0 || (event.pointerType === "pen" && event.pressure > 0);
-
-        if (drawingTool === "erase") {
-            setEraserPoint(boardPoint);
-
-            if (activePointerRef.current === event.pointerId && pressed) {
-                const previousPoint = previousEraserPointRef.current ?? boardPoint;
-                onErase(previousPoint, boardPoint, eraserRadius);
-                previousEraserPointRef.current = boardPoint;
-            }
-
-            return;
-        }
-
-        if (activePointerRef.current !== event.pointerId) {
-            return;
-        }
-
-        if (!pressed) {
-            finishCurrentStroke();
-            return;
-        }
-
-        const nextPoints = [...currentPointsRef.current, boardPoint];
-        currentPointsRef.current = nextPoints;
-        setCurrentPoints(nextPoints);
-    };
-
-    const handlePointerUp = (event: ReactPointerEvent<SVGSVGElement>) => {
-        const wasDrawing = activePointerRef.current === event.pointerId;
-
-        if (!wasDrawing) {
-            return;
-        }
-
-        if (drawingTool === "erase") {
-            activePointerRef.current = null;
-            previousEraserPointRef.current = null;
-            return;
-        }
-
-        finishCurrentStroke();
-    };
-
     return (
         <svg
             ref={layerRef}
@@ -196,7 +104,7 @@ export default function DrawingLayer({
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
-            onPointerLeave={() => setEraserPoint(null)}
+            onPointerLeave={handlePointerLeave}
         >
             <StrokePaths strokes={strokes} />
             {currentPoints.length > 0 && (
