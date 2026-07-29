@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { pgTable, serial, text, integer, boolean, timestamp, varchar, check, jsonb } from "drizzle-orm/pg-core";
 import type { TableSource } from "@/lib/table-card";
+import type { BoardStroke } from "@/lib/board-stroke";
 
 export const db_users = pgTable("users", {
     id: serial("id").primaryKey(),
@@ -66,6 +67,17 @@ export const db_mermaids = pgTable("mermaids", {
     z: integer("z").notNull().default(1),
     width: integer("width").notNull(),
     height: integer("height").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const db_drawings = pgTable("drawings", {
+    drawingId: serial("drawing_id").primaryKey(),
+    boardId: integer("board_id")
+        .notNull()
+        .unique()
+        .references(() => db_boards.boardId, { onDelete: "cascade" }),
+    source: jsonb("source").$type<BoardStroke[]>().notNull().default([]),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
