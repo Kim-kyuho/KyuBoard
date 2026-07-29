@@ -174,6 +174,17 @@ const toPath = (points: [number, number][]) => {
 
 입력 타입(`pointerType`)은 구분하지 않는다. 마우스·터치·펜슬 모두 동일하게 처리한다.
 
+### 6.0 모드가 꺼져 있을 때의 레이어
+
+드로잉 모드가 꺼져 있으면 **이벤트 핸들러가 하나도 붙지 않은 표시 전용 SVG**만 남긴다. 저장된 획은 계속 보이되, 입력을 가로챌 여지를 두지 않는다.
+
+```
+드로잉 모드 OFF → <svg pointer-events="none" style="pointer-events:none">  (핸들러 없음)
+드로잉 모드 ON  → <svg> + onPointerDown/Move/Up/Cancel/LostPointerCapture
+```
+
+`pointer-events`를 CSS와 SVG 속성 양쪽으로 지정한다. 두 값을 다르게 해석하는 엔진이 있어도 한쪽이 걸리게 하기 위한 것이다.
+
 ### 6.1 다른 카드 동작 차단
 
 두 경로를 각각 막는다.
@@ -298,6 +309,7 @@ sequenceDiagram
 - **네이티브 앱 수준의 필기감은 나오지 않는다.** WebKit이 `desynchronized` 캔버스와 `getPredictedEvents()`를 제공하지 않아 입력 지연을 줄일 수단이 없다. 천천히 긋는 주석에서는 체감되지 않으나, 빠르게 그으면 선이 따라온다.
 - **손글씨는 앱의 텍스트 기능에서 보이지 않는다.** 획 데이터에는 문자 정보가 없으므로 검색(`useBoardSearch`)에 잡히지 않고 복사도 되지 않는다. 메모를 대체하는 용도로는 사용할 수 없다.
 - **그리기 모드 중 탭이 닫히면 유실된다.** 필요 시 `visibilitychange` + `sendBeacon`으로 보완 가능(11.2).
+- **포인터 캡처는 반드시 명시적으로 해제한다.** 캡처가 남으면 위치·z축과 무관하게 화면 전체의 포인터 입력이 이 레이어로 끌려간다. `pointerup`·`pointercancel`에서 `releasePointerCapture`를 호출하고, `lostpointercapture`로도 상태를 되돌린다. 기존 `useBoardScroll.handleBoardPanEnd`가 쓰는 방식과 같다.
 - **아이패드(WebKit)에서의 동작은 미검증이다.** 이 작업 환경에서는 WebKit 브라우저를 받을 수 없어 Chromium으로만 확인했다. 터치 무시 현상은 `touch-action`을 조건부로 바꾸는 것으로 대응했으나, 실기 확인이 필요하다.
 - **`pointermove`마다 리렌더가 발생한다.** 주석 규모에서는 문제없을 것으로 보이나, 지연이 느껴지면 진행 중인 획만 `ref`로 직접 `<path>`의 `d`를 갱신하도록 전환한다.
 

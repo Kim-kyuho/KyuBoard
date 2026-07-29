@@ -33,13 +33,17 @@ function renderLayer(drawingMode: boolean, drawingTool: DrawingTool) {
 }
 
 describe("DrawingLayer pointer routing", () => {
-    it("stays transparent to input while drawing mode is off", () => {
+    it("renders a display only layer while drawing mode is off", () => {
         const layer = renderLayer(false, "draw");
 
+        // 터치 기기에서 입력을 가로챌 여지를 없애기 위해 속성과 CSS 양쪽으로 막는다
+        expect(layer.getAttribute("pointer-events")).toBe("none");
         expect(layer.style.pointerEvents).toBe("none");
         // touch-action을 남겨두면 아이패드에서 아래쪽 터치가 막힐 수 있다
         expect(layer.style.touchAction).toBe("");
         expect(layer.getAttribute("data-drawing-capture")).toBeNull();
+        // 저장된 획은 계속 보여야 한다
+        expect(layer.querySelectorAll("path")).toHaveLength(1);
     });
 
     it("captures input and blocks board panning while drawing", () => {
@@ -66,6 +70,30 @@ describe("DrawingLayer pointer routing", () => {
         // 스크롤과 패닝은 살아 있어야 한다
         expect(layer.style.touchAction).toBe("");
         expect(layer.closest(canStartBoardPanSelector)).toBeNull();
+    });
+
+    it("attaches no pointer handler while drawing mode is off", () => {
+        const onStrokeEnd = vi.fn();
+        const onErase = vi.fn();
+        const { container } = render(
+            <DrawingLayer
+                strokes={[stroke]}
+                drawingMode={false}
+                drawingTool="draw"
+                penColor={defaultPenColor}
+                penWidth={defaultPenWidth}
+                zoom={0.75}
+                onStrokeEnd={onStrokeEnd}
+                onErase={onErase}
+            />
+        );
+        const layer = container.querySelector("svg")!;
+
+        layer.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+        layer.dispatchEvent(new Event("pointerup", { bubbles: true }));
+
+        expect(onStrokeEnd).not.toHaveBeenCalled();
+        expect(onErase).not.toHaveBeenCalled();
     });
 
     it("renders saved strokes and shows the eraser circle only in erase mode", () => {

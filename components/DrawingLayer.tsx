@@ -21,6 +21,24 @@ type DrawingLayerProps = {
     onErase: (center: StrokePoint, radius: number) => void;
 };
 
+function StrokePaths({ strokes }: { strokes: BoardStroke[] }) {
+    return (
+        <>
+            {strokes.map((stroke) => (
+                <path
+                    key={stroke.id}
+                    d={strokeToPath(stroke.points)}
+                    stroke={stroke.color}
+                    strokeWidth={stroke.width}
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            ))}
+        </>
+    );
+}
+
 // 보드 위에 덮이는 획 레이어
 // 카드들의 z 통합 정렬에 참여하지 않고 항상 최상단에 그려진다
 export default function DrawingLayer({
@@ -40,8 +58,23 @@ export default function DrawingLayer({
 
     // 지우개는 화면 기준 크기를 유지해야 하므로 보드 좌표로 환산한다
     const eraserRadius = eraserScreenRadius / zoom;
-    // 패닝 모드에서는 레이어가 입력을 가로채지 않아야 보드가 움직인다
-    const capturesInput = drawingMode && drawingTool !== "pan";
+    // 패닝 도구일 때는 레이어가 입력을 잡지 않아야 보드가 움직인다
+    const capturesInput = drawingTool !== "pan";
+
+    // 드로잉 모드가 꺼져 있으면 이벤트 핸들러가 하나도 없는 표시 전용 레이어만 남긴다
+    // 터치 기기에서 이 레이어가 입력을 가로챌 여지를 없애기 위한 구성이다
+    if (!drawingMode) {
+        return (
+            <svg
+                pointerEvents="none"
+                aria-hidden="true"
+                className="absolute left-0 top-0 h-full w-full"
+                style={{ zIndex: ACTIVE_CARD_Z - 1, pointerEvents: "none" }}
+            >
+                <StrokePaths strokes={strokes} />
+            </svg>
+        );
+    }
 
     // 화면 좌표를 보드 좌표로 변환 - 메모 생성 위치를 boardZoom으로 나누는 것과 같은 규칙
     const toBoardPoint = (event: ReactPointerEvent<SVGSVGElement>): StrokePoint => {
@@ -55,6 +88,15 @@ export default function DrawingLayer({
             (event.clientX - layerRect.left) / zoom,
             (event.clientY - layerRect.top) / zoom,
         ];
+    };
+
+    // 캡처가 남으면 이후 모든 포인터 이벤트가 이 레이어로 끌려간다. 반드시 풀어준다
+    const releasePointer = (event: ReactPointerEvent<SVGSVGElement>) => {
+        activePointerRef.current = null;
+
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+        }
     };
 
     const handlePointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
@@ -102,10 +144,12 @@ export default function DrawingLayer({
 
     const handlePointerUp = (event: ReactPointerEvent<SVGSVGElement>) => {
         if (activePointerRef.current !== event.pointerId) {
+            // 다른 포인터라도 캡처가 남아 있으면 풀어준다
+            releasePointer(event);
             return;
         }
 
-        activePointerRef.current = null;
+        releasePointer(event);
 
         if (drawingTool === "erase") {
             return;
@@ -113,10 +157,6 @@ export default function DrawingLayer({
 
         onStrokeEnd(currentPoints);
         setCurrentPoints([]);
-    };
-
-    const handlePointerLeave = () => {
-        setEraserPoint(null);
     };
 
     return (
@@ -127,8 +167,7 @@ export default function DrawingLayer({
             className="absolute left-0 top-0 h-full w-full"
             style={{
                 zIndex: ACTIVE_CARD_Z - 1,
-                // 드로잉 모드가 꺼져 있으면 어떤 속성도 남기지 않는다
-                pointerEvents: drawingMode ? "auto" : "none",
+                pointerEvents: "auto",
                 touchAction: capturesInput ? "none" : undefined,
                 cursor: capturesInput ? "crosshair" : undefined,
             }}
@@ -136,19 +175,10 @@ export default function DrawingLayer({
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
-            onPointerLeave={handlePointerLeave}
+            onLostPointerCapture={() => { activePointerRef.current = null; }}
+            onPointerLeave={() => setEraserPoint(null)}
         >
-            {strokes.map((stroke) => (
-                <path
-                    key={stroke.id}
-                    d={strokeToPath(stroke.points)}
-                    stroke={stroke.color}
-                    strokeWidth={stroke.width}
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                />
-            ))}
+            <StrokePaths strokes={strokes} />
             {currentPoints.length > 0 && (
                 <path
                     d={strokeToPath(currentPoints)}
