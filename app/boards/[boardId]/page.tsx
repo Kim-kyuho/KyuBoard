@@ -2,7 +2,7 @@
 
 import BoardClient from "@/components/BoardClient";
 import { getDb } from "@/lib/db";
-import { db_boards, db_images, db_memos, db_mermaids, db_tables } from "@/lib/db/schema";
+import { db_boards, db_drawings, db_images, db_memos, db_mermaids, db_tables } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export default async function BoardPage({
@@ -39,6 +39,13 @@ export default async function BoardPage({
         .select()
         .from(db_tables)
         .where(eq(db_tables.boardId, boardIdNumber));
+
+    // 획은 보드당 한 행이라 없으면 빈 배열로 시작한다
+    const boardDrawings = await db
+        .select({ source: db_drawings.source })
+        .from(db_drawings)
+        .where(eq(db_drawings.boardId, boardIdNumber))
+        .limit(1);
 
     const mappedMemos = allMemos.map((memo) => ({
         id: memo.id,
@@ -94,6 +101,7 @@ export default async function BoardPage({
             mappedMemos={mappedMemos}
             mappedMermaids={mappedMermaids}
             mappedTables={mappedTables}
+            mappedStrokes={boardDrawings[0]?.source ?? []}
         />
     );
 }

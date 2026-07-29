@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { pgTable, serial, text, integer, boolean, timestamp, varchar, check, jsonb } from "drizzle-orm/pg-core";
 import type { TableSource } from "@/lib/table-card";
+import type { BoardStroke } from "@/lib/board-stroke";
 
 export const db_users = pgTable("users", {
     id: serial("id").primaryKey(),
@@ -66,6 +67,19 @@ export const db_mermaids = pgTable("mermaids", {
     z: integer("z").notNull().default(1),
     width: integer("width").notNull(),
     height: integer("height").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// 보드 위에 직접 긋는 획 - 카드가 아니라 보드에 덮이는 레이어라 위치·크기 컬럼이 없다
+// 좌표는 각 점이 직접 들고 있고, board_id에 unique를 걸어 보드당 한 행을 강제한다
+export const db_drawings = pgTable("drawings", {
+    drawingId: serial("drawing_id").primaryKey(),
+    boardId: integer("board_id")
+        .notNull()
+        .unique()
+        .references(() => db_boards.boardId, { onDelete: "cascade" }),
+    source: jsonb("source").$type<BoardStroke[]>().notNull().default([]),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

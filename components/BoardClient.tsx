@@ -12,6 +12,10 @@ import BoardSearchPanel from "./BoardSearchPanel";
 import BoardMarkdownView from "./BoardMarkdownView";
 import MermaidCard from "./MermaidCard";
 import TableCard from "./TableCard";
+import DrawingLayer from "./DrawingLayer";
+import DrawingToolBar from "./DrawingToolBar";
+import type { BoardStroke } from "@/lib/board-stroke";
+import { useBoardDrawing } from "@/hooks/useBoardDrawing";
 import { useCardLayer } from "@/hooks/useCardLayer";
 import { useBoardAuth } from "@/hooks/useBoardAuth";
 import { useBoardImages } from "@/hooks/useBoardImages";
@@ -80,7 +84,7 @@ interface Table {
 
 // 보드 컴포넌트
 export default function BoardClient(
-  {currentBoard, mappedImages, mappedMemos, mappedMermaids, mappedTables}:{currentBoard:Board, mappedImages: Image[], mappedMemos: Memo[], mappedMermaids: Mermaid[], mappedTables: Table[]}
+  {currentBoard, mappedImages, mappedMemos, mappedMermaids, mappedTables, mappedStrokes}:{currentBoard:Board, mappedImages: Image[], mappedMemos: Memo[], mappedMermaids: Mermaid[], mappedTables: Table[], mappedStrokes: BoardStroke[]}
 ) {
     const boardWidth = currentBoard.width;
     const boardHeight = currentBoard.height;
@@ -218,11 +222,33 @@ export default function BoardClient(
         setPermissionMessage,
     });
 
+    const {
+        strokes,
+        drawingMode,
+        penColor,
+        setPenColor,
+        penWidth,
+        setPenWidth,
+        handleToggleDrawingMode,
+        handleStrokeEnd,
+        handleUndoStroke,
+        handleClearStrokes,
+    } = useBoardDrawing({
+        initialStrokes: mappedStrokes,
+        boardId: currentBoard.boardId,
+        canEditCard,
+        showPermissionMessage,
+        setPermissionMessage,
+    });
+
+    // 그리기 모드도 카드 편집과 같은 취급을 한다
+    // 메인 툴바가 숨겨져 카드 생성이 막히고, 보드 드래그 패닝도 중단된다
     const isEditing =
         editingMemoId !== null ||
         editingImageId !== null ||
         editingMermaidId !== null ||
-        editingTableId !== null;
+        editingTableId !== null ||
+        drawingMode;
 
     const {
         boardPanning,
@@ -275,7 +301,19 @@ export default function BoardClient(
             onImageUploadClick={handleImageUploadClick}
             onMermaidCreateClick={handleCreateTempMermaid}
             onTableCreateClick={handleCreateTempTable}
+            onDrawingToggleClick={handleToggleDrawingMode}
         />
+        {drawingMode && (
+            <DrawingToolBar
+                penColor={penColor}
+                penWidth={penWidth}
+                onChangeColor={setPenColor}
+                onChangeWidth={setPenWidth}
+                onUndo={handleUndoStroke}
+                onClear={handleClearStrokes}
+                onDone={handleToggleDrawingMode}
+            />
+        )}
         {searchBarOpen && (
             <BoardSearchPanel
                 searchText={searchText}
@@ -413,6 +451,14 @@ export default function BoardClient(
                             onSendToBack={() => handleCardLayer("table", table.id, "back")}
                         />
                     ))}
+                    <DrawingLayer
+                        strokes={strokes}
+                        drawingMode={drawingMode}
+                        penColor={penColor}
+                        penWidth={penWidth}
+                        zoom={boardZoom}
+                        onStrokeEnd={handleStrokeEnd}
+                    />
                 </div>
             </div>
             </div>
