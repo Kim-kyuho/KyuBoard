@@ -54,6 +54,19 @@ describe("DrawingLayer pointer routing", () => {
         expect(layer.closest(canStartBoardPanSelector)).not.toBeNull();
     });
 
+    it("blocks text selection so a pen stroke does not drag text on iPad", () => {
+        (["draw", "erase", "pan"] as const).forEach((tool) => {
+            const layer = renderLayer(true, tool);
+
+            expect(layer.style.userSelect).toBe("none");
+            expect(layer.style.webkitUserSelect).toBe("none");
+        });
+
+        const displayLayer = renderLayer(false, "draw");
+
+        expect(displayLayer.style.userSelect).toBe("none");
+    });
+
     it("captures input and blocks board panning while erasing", () => {
         const layer = renderLayer(true, "erase");
 

@@ -69,7 +69,14 @@ export default function DrawingLayer({
                 pointerEvents="none"
                 aria-hidden="true"
                 className="absolute left-0 top-0 h-full w-full"
-                style={{ zIndex: ACTIVE_CARD_Z - 1, pointerEvents: "none" }}
+                style={{
+                    zIndex: ACTIVE_CARD_Z - 1,
+                    pointerEvents: "none",
+                    // iPad에서 원치않는 텍스트 선택·드래그 방지
+                    WebkitTouchCallout: "none",
+                    WebkitUserSelect: "none",
+                    userSelect: "none",
+                }}
             >
                 <StrokePaths strokes={strokes} />
             </svg>
@@ -170,6 +177,10 @@ export default function DrawingLayer({
                 pointerEvents: "auto",
                 touchAction: capturesInput ? "none" : undefined,
                 cursor: capturesInput ? "crosshair" : undefined,
+                // 펜으로 그을 때 아래 글씨가 선택되거나 iOS 드래그가 시작되는 것을 막는다
+                WebkitTouchCallout: "none",
+                WebkitUserSelect: "none",
+                userSelect: "none",
             }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
