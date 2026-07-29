@@ -4,6 +4,7 @@ import {
     createStrokeId,
     defaultPenColor,
     defaultPenWidth,
+    eraseStrokesAlongPath,
     eraseStrokesInCircle,
     strokeToPath,
 } from "@/lib/board-stroke";
@@ -82,7 +83,6 @@ describe("eraseStrokesInCircle", () => {
     });
 
     it("drops a fragment that would be left with a single point", () => {
-        // (10,0)만 지워지면 앞쪽에는 점 하나만 남으므로 선이 되지 못하고 버려진다
         const result = eraseStrokesInCircle([line], [10, 0], 5);
 
         expect(result).toHaveLength(1);
@@ -107,6 +107,19 @@ describe("eraseStrokesInCircle", () => {
         const result = eraseStrokesInCircle([line, other], [20, 0], 5);
 
         expect(result.find((stroke) => stroke.id === "other")).toBe(other);
+    });
+});
+
+describe("eraseStrokesAlongPath", () => {
+    it("erases points between two distant pointer positions", () => {
+        const line = {
+            id: "line",
+            color: defaultPenColor,
+            width: defaultPenWidth,
+            points: [[0, 0], [10, 0], [20, 0], [30, 0], [40, 0]] as [number, number][],
+        };
+
+        expect(eraseStrokesAlongPath([line], [5, 0], [35, 0], 2)).toEqual([]);
     });
 });
 

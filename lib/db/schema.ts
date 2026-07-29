@@ -71,8 +71,6 @@ export const db_mermaids = pgTable("mermaids", {
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// 보드 위에 직접 긋는 획 - 카드가 아니라 보드에 덮이는 레이어라 위치·크기 컬럼이 없다
-// 좌표는 각 점이 직접 들고 있고, board_id에 unique를 걸어 보드당 한 행을 강제한다
 export const db_drawings = pgTable("drawings", {
     drawingId: serial("drawing_id").primaryKey(),
     boardId: integer("board_id")

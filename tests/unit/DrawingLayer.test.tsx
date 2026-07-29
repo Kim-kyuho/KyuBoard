@@ -4,7 +4,6 @@ import DrawingLayer from "@/components/DrawingLayer";
 import type { DrawingTool } from "@/hooks/useBoardDrawing";
 import { defaultPenColor, defaultPenWidth, type BoardStroke } from "@/lib/board-stroke";
 
-// useBoardScroll이 보드 패닝을 시작해도 되는지 판단할 때 쓰는 선택자
 const canStartBoardPanSelector =
     "[data-editing='true'], [data-drawing-capture='true'], .board-toolbar, .confirm-dialog, button, input, textarea, a, [contenteditable='true']";
 
@@ -36,13 +35,10 @@ describe("DrawingLayer pointer routing", () => {
     it("renders a display only layer while drawing mode is off", () => {
         const layer = renderLayer(false, "draw");
 
-        // 터치 기기에서 입력을 가로챌 여지를 없애기 위해 속성과 CSS 양쪽으로 막는다
         expect(layer.getAttribute("pointer-events")).toBe("none");
         expect(layer.style.pointerEvents).toBe("none");
-        // touch-action을 남겨두면 아이패드에서 아래쪽 터치가 막힐 수 있다
         expect(layer.style.touchAction).toBe("");
         expect(layer.getAttribute("data-drawing-capture")).toBeNull();
-        // 저장된 획은 계속 보여야 한다
         expect(layer.querySelectorAll("path")).toHaveLength(1);
     });
 
@@ -78,9 +74,7 @@ describe("DrawingLayer pointer routing", () => {
     it("keeps cards blocked but lets the board pan while the hand tool is on", () => {
         const layer = renderLayer(true, "pan");
 
-        // 카드가 눌리면 안 되므로 입력은 계속 레이어가 받는다
         expect(layer.style.pointerEvents).toBe("auto");
-        // 스크롤과 패닝은 살아 있어야 한다
         expect(layer.style.touchAction).toBe("");
         expect(layer.closest(canStartBoardPanSelector)).toBeNull();
     });

@@ -5,7 +5,6 @@ import { boardStrokesSchema } from "@/lib/board-stroke";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-// 보드의 획 GET - 아직 그린 적이 없으면 빈 배열을 리턴
 export async function GET(
     _request: NextRequest,
     { params }: { params: Promise<{ boardId: string }> }
@@ -41,8 +40,6 @@ export async function GET(
     }
 }
 
-// 보드의 획 저장 - 그리기 모드를 끄는 시점에 전체를 한 번에 덮어쓴다
-// board_id가 unique라 onConflictDoUpdate로 최초 생성과 갱신을 한 문으로 처리한다
 export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ boardId: string }> }

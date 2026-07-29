@@ -18,11 +18,8 @@ type DrawingToolBarProps = {
     onDone: () => void;
 };
 
-// 켜져 있는 도구를 알리는 색
 const activeToolColor = "#ec4899";
 
-// 그리기 모드일 때 메인 툴바를 대신하는 도구 모음
-// 카드 툴바들과 같은 자리(#card-tool-portal)에 같은 방식으로 나타난다
 export default function DrawingToolBar({
     drawingTool,
     penColor,
@@ -64,6 +61,9 @@ export default function DrawingToolBar({
 
     return (
         <CardToolPortal>
+            <CardToolButton label="Undo last stroke" onClick={onUndo}>
+                <Undo2 />
+            </CardToolButton>
             <div className="relative">
                 <CardToolButton label="Pen color" onClick={toggleColorMenu}>
                     <Palette style={{ color: penColor }} />
@@ -124,10 +124,6 @@ export default function DrawingToolBar({
                 }}
             >
                 <Hand style={drawingTool === "pan" ? { color: activeToolColor } : undefined} />
-            </CardToolButton>
-
-            <CardToolButton label="Undo last stroke" onClick={onUndo}>
-                <Undo2 />
             </CardToolButton>
 
             <CardToolButton label="Finish drawing" onClick={onDone}>

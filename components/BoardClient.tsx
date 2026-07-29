@@ -244,8 +244,6 @@ export default function BoardClient(
         setPermissionMessage,
     });
 
-    // 카드 편집 상태 - useBoardScroll의 스크롤 잠금이 여기에 걸려 있어서
-    // 드로잉 모드를 섞지 않는다
     const isEditing =
         editingMemoId !== null ||
         editingImageId !== null ||

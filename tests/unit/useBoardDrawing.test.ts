@@ -139,7 +139,7 @@ describe("useBoardDrawing", () => {
         const { result } = setup(true, [crossing]);
 
         act(() => result.current.handleToggleDrawingMode());
-        act(() => result.current.handleErase([20, 0], 5));
+        act(() => result.current.handleErase([20, 0], [20, 0], 5));
 
         expect(result.current.strokes).toHaveLength(2);
         expect(result.current.strokes[0].points).toEqual([[0, 0], [10, 0]]);
@@ -150,7 +150,7 @@ describe("useBoardDrawing", () => {
         const { result } = setup(true, [existingStroke]);
 
         act(() => result.current.handleToggleDrawingMode());
-        act(() => result.current.handleErase([0, 0], 50));
+        act(() => result.current.handleErase([0, 0], [0, 0], 50));
         await act(async () => result.current.handleToggleDrawingMode());
 
         expect(fetch).toHaveBeenCalledTimes(1);
@@ -160,7 +160,7 @@ describe("useBoardDrawing", () => {
         const { result } = setup(true, [existingStroke]);
 
         act(() => result.current.handleToggleDrawingMode());
-        act(() => result.current.handleErase([9999, 9999], 5));
+        act(() => result.current.handleErase([9999, 9999], [9999, 9999], 5));
         await act(async () => result.current.handleToggleDrawingMode());
 
         expect(fetch).not.toHaveBeenCalled();

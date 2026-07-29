@@ -40,7 +40,6 @@ export default async function BoardPage({
         .from(db_tables)
         .where(eq(db_tables.boardId, boardIdNumber));
 
-    // 획은 보드당 한 행이라 없으면 빈 배열로 시작한다
     const boardDrawings = await db
         .select({ source: db_drawings.source })
         .from(db_drawings)
