@@ -98,22 +98,50 @@ export default function DrawingLayer({
     };
 
     // 캡처가 남으면 이후 모든 포인터 이벤트가 이 레이어로 끌려간다. 반드시 풀어준다
+    // 여기서 예외가 나면 획 마무리까지 함께 죽으므로 실패해도 진행한다
     const releasePointer = (event: ReactPointerEvent<SVGSVGElement>) => {
-        activePointerRef.current = null;
+        const layer = event.currentTarget;
 
-        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-            event.currentTarget.releasePointerCapture(event.pointerId);
+        try {
+            if (layer.hasPointerCapture?.(event.pointerId)) {
+                layer.releasePointerCapture(event.pointerId);
+            }
+        } catch {
+            // 캡처 해제에 실패해도 무시한다
         }
     };
 
+    // 진행 중이던 획을 마무리한다. pointerup을 놓친 상황에서도 획을 잃지 않기 위한 것
+    const finishCurrentStroke = (points: StrokePoint[]) => {
+        activePointerRef.current = null;
+
+        if (points.length > 1) {
+            onStrokeEnd(points);
+        }
+
+        setCurrentPoints([]);
+    };
+
     const handlePointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
-        if (!capturesInput || activePointerRef.current !== null) {
+        // 두 번째 손가락은 무시한다
+        if (!capturesInput || !event.isPrimary) {
             return;
+        }
+
+        // 애플펜슬은 살짝 떼어도 호버로 같은 포인터가 살아 있어 pointerup을 놓칠 수 있다
+        // 새로 눌렀다는 것은 확실한 사실이므로 남아 있던 상태보다 우선한다
+        if (activePointerRef.current !== null) {
+            finishCurrentStroke(currentPoints);
         }
 
         const boardPoint = toBoardPoint(event);
         activePointerRef.current = event.pointerId;
-        event.currentTarget.setPointerCapture(event.pointerId);
+
+        try {
+            event.currentTarget.setPointerCapture(event.pointerId);
+        } catch {
+            // 캡처에 실패해도 그리기 자체는 계속한다
+        }
 
         if (drawingTool === "erase") {
             setEraserPoint(boardPoint);
@@ -130,12 +158,14 @@ export default function DrawingLayer({
         }
 
         const boardPoint = toBoardPoint(event);
+        // 펜이 화면에서 떨어진 상태(호버)에서도 pointermove는 계속 들어온다
+        const pressed = event.buttons !== 0;
 
         // 지우개는 누르고 있지 않아도 위치를 보여준다
         if (drawingTool === "erase") {
             setEraserPoint(boardPoint);
 
-            if (activePointerRef.current === event.pointerId) {
+            if (activePointerRef.current === event.pointerId && pressed) {
                 onErase(boardPoint, eraserRadius);
             }
 
@@ -146,24 +176,31 @@ export default function DrawingLayer({
             return;
         }
 
+        // 떼어진 채로 움직이고 있다면 pointerup을 놓친 것이다. 여기서 획을 끝낸다
+        if (!pressed) {
+            finishCurrentStroke(currentPoints);
+            return;
+        }
+
         setCurrentPoints((prev) => [...prev, boardPoint]);
     };
 
     const handlePointerUp = (event: ReactPointerEvent<SVGSVGElement>) => {
-        if (activePointerRef.current !== event.pointerId) {
-            // 다른 포인터라도 캡처가 남아 있으면 풀어준다
-            releasePointer(event);
-            return;
-        }
+        const wasDrawing = activePointerRef.current === event.pointerId;
 
+        // 다른 포인터라도 캡처가 남아 있으면 풀어준다
         releasePointer(event);
 
-        if (drawingTool === "erase") {
+        if (!wasDrawing) {
             return;
         }
 
-        onStrokeEnd(currentPoints);
-        setCurrentPoints([]);
+        if (drawingTool === "erase") {
+            activePointerRef.current = null;
+            return;
+        }
+
+        finishCurrentStroke(currentPoints);
     };
 
     return (
