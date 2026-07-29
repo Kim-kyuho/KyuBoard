@@ -5,7 +5,14 @@ import {
     createStrokeId,
     defaultPenColor,
     defaultPenWidth,
+    eraseStrokesInCircle,
 } from "@/lib/board-stroke";
+
+// 드로잉 모드 안의 하위 모드
+// draw  - 선을 긋는다 (기본)
+// pan   - 선을 긋지 않고 보드만 움직인다
+// erase - 원형 영역에 닿은 부분을 지운다
+export type DrawingTool = "draw" | "pan" | "erase";
 
 type UseBoardDrawingOptions = {
     initialStrokes: BoardStroke[];
@@ -24,6 +31,7 @@ export function useBoardDrawing({
 }: UseBoardDrawingOptions) {
     const [strokes, setStrokes] = useState(initialStrokes);
     const [drawingMode, setDrawingMode] = useState(false);
+    const [drawingTool, setDrawingTool] = useState<DrawingTool>("draw");
     const [penColor, setPenColor] = useState(defaultPenColor);
     const [penWidth, setPenWidth] = useState(defaultPenWidth);
     // 그리기 모드를 끌 때 변경이 있었을 경우에만 저장하기 위한 Ref
@@ -48,6 +56,7 @@ export function useBoardDrawing({
     const handleToggleDrawingMode = () => {
         if (drawingMode) {
             setDrawingMode(false);
+            setDrawingTool("draw");
 
             if (unsavedRef.current) {
                 unsavedRef.current = false;
@@ -63,6 +72,12 @@ export function useBoardDrawing({
         }
 
         setDrawingMode(true);
+        setDrawingTool("draw");
+    };
+
+    // 손바닥·지우개 버튼은 누를 때마다 켜지고 꺼진다. 꺼지면 기본인 그리기로 돌아간다
+    const toggleDrawingTool = (tool: Exclude<DrawingTool, "draw">) => {
+        setDrawingTool((prev) => (prev === tool ? "draw" : tool));
     };
 
     const handleStrokeEnd = (points: StrokePoint[]) => {
@@ -82,6 +97,18 @@ export function useBoardDrawing({
         ]);
     };
 
+    const handleErase = (center: StrokePoint, radius: number) => {
+        setStrokes((prev) => {
+            const nextStrokes = eraseStrokesInCircle(prev, center, radius);
+
+            if (nextStrokes !== prev) {
+                unsavedRef.current = true;
+            }
+
+            return nextStrokes;
+        });
+    };
+
     const handleUndoStroke = () => {
         if (strokes.length === 0) {
             return;
@@ -91,25 +118,19 @@ export function useBoardDrawing({
         setStrokes((prev) => prev.slice(0, -1));
     };
 
-    const handleClearStrokes = () => {
-        if (strokes.length === 0) {
-            return;
-        }
-
-        unsavedRef.current = true;
-        setStrokes([]);
-    };
-
     return {
         strokes,
         drawingMode,
+        drawingTool,
         penColor,
         setPenColor,
         penWidth,
         setPenWidth,
         handleToggleDrawingMode,
+        handleTogglePanTool: () => toggleDrawingTool("pan"),
+        handleToggleEraseTool: () => toggleDrawingTool("erase"),
         handleStrokeEnd,
+        handleErase,
         handleUndoStroke,
-        handleClearStrokes,
     };
 }

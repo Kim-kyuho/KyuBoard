@@ -92,7 +92,7 @@ describe("useBoardDrawing", () => {
         expect(fetch).not.toHaveBeenCalled();
     });
 
-    it("undoes the last stroke and clears every stroke", () => {
+    it("undoes the last stroke", () => {
         const { result } = setup(true, [existingStroke]);
 
         act(() => result.current.handleToggleDrawingMode());
@@ -101,10 +101,69 @@ describe("useBoardDrawing", () => {
 
         expect(result.current.strokes).toHaveLength(1);
         expect(result.current.strokes[0].id).toBe("s1");
+    });
 
-        act(() => result.current.handleClearStrokes());
+    it("toggles the pan and erase tools, and they replace each other", () => {
+        const { result } = setup();
 
-        expect(result.current.strokes).toHaveLength(0);
+        act(() => result.current.handleToggleDrawingMode());
+        expect(result.current.drawingTool).toBe("draw");
+
+        act(() => result.current.handleTogglePanTool());
+        expect(result.current.drawingTool).toBe("pan");
+
+        act(() => result.current.handleToggleEraseTool());
+        expect(result.current.drawingTool).toBe("erase");
+
+        act(() => result.current.handleToggleEraseTool());
+        expect(result.current.drawingTool).toBe("draw");
+    });
+
+    it("returns to the draw tool when drawing mode turns off", async () => {
+        const { result } = setup();
+
+        act(() => result.current.handleToggleDrawingMode());
+        act(() => result.current.handleTogglePanTool());
+        await act(async () => result.current.handleToggleDrawingMode());
+
+        expect(result.current.drawingTool).toBe("draw");
+    });
+
+    it("erases only the part of a stroke inside the circle", () => {
+        const crossing: BoardStroke = {
+            id: "s2",
+            color: defaultPenColor,
+            width: defaultPenWidth,
+            points: [[0, 0], [10, 0], [20, 0], [30, 0], [40, 0]],
+        };
+        const { result } = setup(true, [crossing]);
+
+        act(() => result.current.handleToggleDrawingMode());
+        act(() => result.current.handleErase([20, 0], 5));
+
+        expect(result.current.strokes).toHaveLength(2);
+        expect(result.current.strokes[0].points).toEqual([[0, 0], [10, 0]]);
+        expect(result.current.strokes[1].points).toEqual([[30, 0], [40, 0]]);
+    });
+
+    it("saves after erasing when drawing mode turns off", async () => {
+        const { result } = setup(true, [existingStroke]);
+
+        act(() => result.current.handleToggleDrawingMode());
+        act(() => result.current.handleErase([0, 0], 50));
+        await act(async () => result.current.handleToggleDrawingMode());
+
+        expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not save when the eraser touches nothing", async () => {
+        const { result } = setup(true, [existingStroke]);
+
+        act(() => result.current.handleToggleDrawingMode());
+        act(() => result.current.handleErase([9999, 9999], 5));
+        await act(async () => result.current.handleToggleDrawingMode());
+
+        expect(fetch).not.toHaveBeenCalled();
     });
 
     it("reports a message when saving fails", async () => {

@@ -53,7 +53,7 @@ export function useBoardScroll({ cardEditing, boardScrollRef }: UseBoardScrollOp
         }
 
         return !targetElement.closest(
-            "[data-editing='true'], .board-toolbar, .confirm-dialog, button, input, textarea, a, [contenteditable='true']"
+            "[data-editing='true'], [data-drawing-capture='true'], .board-toolbar, .confirm-dialog, button, input, textarea, a, [contenteditable='true']"
         );
     };
 

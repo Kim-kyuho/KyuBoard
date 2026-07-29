@@ -1,29 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Eraser, Minus, Palette, Undo2 } from "lucide-react";
+import { Check, Eraser, Hand, Minus, Palette, Undo2 } from "lucide-react";
 import { penColors, penWidths } from "@/lib/board-stroke";
+import type { DrawingTool } from "@/hooks/useBoardDrawing";
 import { CardToolButton, CardToolPortal } from "./CardToolPortal";
 
 type DrawingToolBarProps = {
+    drawingTool: DrawingTool;
     penColor: string;
     penWidth: number;
     onChangeColor: (color: string) => void;
     onChangeWidth: (width: number) => void;
+    onTogglePan: () => void;
+    onToggleErase: () => void;
     onUndo: () => void;
-    onClear: () => void;
     onDone: () => void;
 };
+
+// 켜져 있는 도구를 알리는 색
+const activeToolColor = "#ec4899";
 
 // 그리기 모드일 때 메인 툴바를 대신하는 도구 모음
 // 카드 툴바들과 같은 자리(#card-tool-portal)에 같은 방식으로 나타난다
 export default function DrawingToolBar({
+    drawingTool,
     penColor,
     penWidth,
     onChangeColor,
     onChangeWidth,
+    onTogglePan,
+    onToggleErase,
     onUndo,
-    onClear,
     onDone,
 }: DrawingToolBarProps) {
     const [openColorMenu, setOpenColorMenu] = useState(false);
@@ -46,6 +54,11 @@ export default function DrawingToolBar({
 
     const handleWidthSelect = (width: number) => {
         onChangeWidth(width);
+        setOpenWidthMenu(false);
+    };
+
+    const closeMenus = () => {
+        setOpenColorMenu(false);
         setOpenWidthMenu(false);
     };
 
@@ -91,12 +104,32 @@ export default function DrawingToolBar({
                 )}
             </div>
 
+            <CardToolButton
+                label={drawingTool === "erase" ? "Stop erasing" : "Erase"}
+                aria-pressed={drawingTool === "erase"}
+                onClick={() => {
+                    closeMenus();
+                    onToggleErase();
+                }}
+            >
+                <Eraser style={drawingTool === "erase" ? { color: activeToolColor } : undefined} />
+            </CardToolButton>
+
+            <CardToolButton
+                label={drawingTool === "pan" ? "Stop panning" : "Pan the board"}
+                aria-pressed={drawingTool === "pan"}
+                onClick={() => {
+                    closeMenus();
+                    onTogglePan();
+                }}
+            >
+                <Hand style={drawingTool === "pan" ? { color: activeToolColor } : undefined} />
+            </CardToolButton>
+
             <CardToolButton label="Undo last stroke" onClick={onUndo}>
                 <Undo2 />
             </CardToolButton>
-            <CardToolButton label="Clear all strokes" onClick={onClear} className="text-rose-600">
-                <Eraser />
-            </CardToolButton>
+
             <CardToolButton label="Finish drawing" onClick={onDone}>
                 <Check />
             </CardToolButton>

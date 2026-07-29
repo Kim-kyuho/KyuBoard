@@ -225,14 +225,17 @@ export default function BoardClient(
     const {
         strokes,
         drawingMode,
+        drawingTool,
         penColor,
         setPenColor,
         penWidth,
         setPenWidth,
         handleToggleDrawingMode,
+        handleTogglePanTool,
+        handleToggleEraseTool,
         handleStrokeEnd,
+        handleErase,
         handleUndoStroke,
-        handleClearStrokes,
     } = useBoardDrawing({
         initialStrokes: mappedStrokes,
         boardId: currentBoard.boardId,
@@ -241,14 +244,13 @@ export default function BoardClient(
         setPermissionMessage,
     });
 
-    // 그리기 모드도 카드 편집과 같은 취급을 한다
-    // 메인 툴바가 숨겨져 카드 생성이 막히고, 보드 드래그 패닝도 중단된다
+    // 카드 편집 상태 - useBoardScroll의 스크롤 잠금이 여기에 걸려 있어서
+    // 드로잉 모드를 섞지 않는다
     const isEditing =
         editingMemoId !== null ||
         editingImageId !== null ||
         editingMermaidId !== null ||
-        editingTableId !== null ||
-        drawingMode;
+        editingTableId !== null;
 
     const {
         boardPanning,
@@ -290,7 +292,7 @@ export default function BoardClient(
         />
         {/* <BoardNavigator boardIds={boardIds} currentBoardId={currentBoard.boardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/> */}
         <BoardToolBar
-            cardEditing={isEditing}
+            cardEditing={isEditing || drawingMode}
             boardZoom={boardZoom}
             setBoardZoom={setBoardZoom}
             setMenuOpen={setMenuOpen}
@@ -305,12 +307,14 @@ export default function BoardClient(
         />
         {drawingMode && (
             <DrawingToolBar
+                drawingTool={drawingTool}
                 penColor={penColor}
                 penWidth={penWidth}
                 onChangeColor={setPenColor}
                 onChangeWidth={setPenWidth}
+                onTogglePan={handleTogglePanTool}
+                onToggleErase={handleToggleEraseTool}
                 onUndo={handleUndoStroke}
-                onClear={handleClearStrokes}
                 onDone={handleToggleDrawingMode}
             />
         )}
@@ -454,10 +458,12 @@ export default function BoardClient(
                     <DrawingLayer
                         strokes={strokes}
                         drawingMode={drawingMode}
+                        drawingTool={drawingTool}
                         penColor={penColor}
                         penWidth={penWidth}
                         zoom={boardZoom}
                         onStrokeEnd={handleStrokeEnd}
+                        onErase={handleErase}
                     />
                 </div>
             </div>
