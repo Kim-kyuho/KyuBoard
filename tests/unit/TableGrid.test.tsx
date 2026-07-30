@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import TableGrid from "@/components/TableGrid";
 import type { TableSource } from "@/lib/table-card";
 
@@ -15,8 +15,14 @@ const initialSource: TableSource = {
     ],
 };
 
-function TableHarness({ isEditing = true }: { isEditing?: boolean }) {
-    const [source, setSource] = useState(initialSource);
+function TableHarness({
+    isEditing = true,
+    initialValue = initialSource,
+}: {
+    isEditing?: boolean;
+    initialValue?: TableSource;
+}) {
+    const [source, setSource] = useState(initialValue);
     return (
         <>
             <TableGrid source={source} isEditing={isEditing} onChange={setSource} />
@@ -26,12 +32,6 @@ function TableHarness({ isEditing = true }: { isEditing?: boolean }) {
 }
 
 describe("TableGrid", () => {
-    beforeEach(() => {
-        vi.spyOn(crypto, "randomUUID")
-            .mockReturnValueOnce("new-column-id")
-            .mockReturnValueOnce("new-row-id");
-    });
-
     it("keeps cell and column inputs mounted while editing values", () => {
         render(<TableHarness />);
         const columnInput = screen.getAllByLabelText("Column name")[0];
@@ -42,6 +42,8 @@ describe("TableGrid", () => {
 
         expect(columnInput).toHaveValue("Member");
         expect(cellInput).toHaveValue("Kyuho");
+        expect(cellInput.tagName).toBe("TEXTAREA");
+        expect(cellInput).toHaveStyle({ overflowWrap: "anywhere" });
         expect(screen.getByTestId("source")).toHaveTextContent('"name":"Member"');
         expect(screen.getByTestId("source")).toHaveTextContent('"name":"Kyuho"');
     });
@@ -53,11 +55,28 @@ describe("TableGrid", () => {
         fireEvent.click(screen.getByRole("button", { name: /Row$/ }));
 
         const source = JSON.parse(screen.getByTestId("source").textContent ?? "") as TableSource;
-        expect(source.columns.at(-1)).toEqual({ id: "new-column-id", name: "Column 3", width: 160 });
-        expect(source.rows.at(-1)).toEqual({
-            id: "new-row-id",
-            cells: { name: "", role: "", "new-column-id": "" },
-        });
+        const addedColumn = source.columns.at(-1);
+        const addedRow = source.rows.at(-1);
+
+        expect(addedColumn).toMatchObject({ name: "Column 3", width: 160 });
+        expect(addedColumn?.id).toEqual(expect.any(String));
+        expect(addedRow?.id).toEqual(expect.any(String));
+        expect(addedRow?.cells).toEqual({ name: "", role: "", [addedColumn!.id]: "" });
+    });
+
+    it("deletes selected rows while preserving at least one data row", () => {
+        const { unmount } = render(<TableHarness />);
+
+        fireEvent.click(screen.getAllByLabelText("Select row")[0]);
+        fireEvent.click(screen.getByRole("button", { name: "Delete selected rows" }));
+
+        expect(JSON.parse(screen.getByTestId("source").textContent ?? "").rows).toHaveLength(1);
+
+        unmount();
+        render(<TableHarness initialValue={{ ...initialSource, rows: [initialSource.rows[0]] }} />);
+        fireEvent.click(screen.getByLabelText("Select row"));
+
+        expect(screen.getByRole("button", { name: "Delete selected rows" })).toBeDisabled();
     });
 
     it("deletes a column and its cells but never deletes the final column", () => {
@@ -75,8 +94,27 @@ describe("TableGrid", () => {
 
     it("renders values without editing controls in read-only mode", () => {
         render(<TableHarness isEditing={false} />);
+
         expect(screen.getByText("Kyu")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Row$/ })).toBeDisabled();
+        expect(screen.getByRole("button", { name: /Column$/ })).toBeDisabled();
+        screen.getAllByRole("checkbox").forEach((checkbox) => expect(checkbox).toBeDisabled());
         expect(screen.queryByPlaceholderText("Filter table")).not.toBeInTheDocument();
         expect(screen.queryByLabelText("Column name")).not.toBeInTheDocument();
+    });
+
+    it("does not render sorting, filtering, or pagination controls", () => {
+        const rows = Array.from({ length: 10 }, (_, index) => ({
+            id: `row-${index}`,
+            cells: { name: `Name ${index}`, role: "User" },
+        }));
+
+        render(<TableHarness initialValue={{ ...initialSource, rows }} />);
+
+        expect(screen.queryByRole("button", { name: "Sort Name" })).not.toBeInTheDocument();
+        expect(screen.queryByPlaceholderText("Filter table")).not.toBeInTheDocument();
+        expect(screen.queryByText("Previous")).not.toBeInTheDocument();
+        expect(screen.queryByText("Next")).not.toBeInTheDocument();
+        expect(screen.getByDisplayValue("Name 9")).toBeInTheDocument();
     });
 });
