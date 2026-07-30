@@ -2,6 +2,7 @@
   "name": "kyuboard",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development next dev",
     "build": "next build",
