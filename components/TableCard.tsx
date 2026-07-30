@@ -8,6 +8,8 @@ import ConfirmDialog from "./ConfirmDialog";
 import TableGrid from "./TableGrid";
 import TableToolBar from "./TableToolBar";
 
+const TABLE_CARD_MIN_HEIGHT = 128;
+
 type TableCardProps = {
     table: BoardTable;
     zoom: number;
@@ -63,7 +65,6 @@ export default function TableCard({
         onUpdate,
         onDelete,
     });
-
     return (
         <>
             <Rnd
@@ -78,7 +79,7 @@ export default function TableCard({
                 disableDragging={!isEditing || !canEdit}
                 enableResizing={isEditing}
                 minWidth={360}
-                minHeight={240}
+                minHeight={TABLE_CARD_MIN_HEIGHT}
                 onDragStop={handleDragStop}
                 onResizeStop={handleResizeStop}
             >

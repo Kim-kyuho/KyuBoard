@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    createTableItemId,
     defaultTableSource,
     tableSourceSchema,
     tableSourceToMarkdown,
@@ -14,8 +15,20 @@ describe("tableSourceSchema", () => {
         expect(tableSourceSchema.safeParse({ columns: [], rows: [] }).success).toBe(false);
         expect(tableSourceSchema.safeParse({
             columns: [{ id: "name", name: "Name" }],
+            rows: [],
+        }).success).toBe(false);
+        expect(tableSourceSchema.safeParse({
+            columns: [{ id: "name", name: "Name" }],
             rows: [{ id: "row-1", cells: { name: 1 } }],
         }).success).toBe(false);
+    });
+});
+
+describe("createTableItemId", () => {
+    it("creates unique ids without crypto.randomUUID", () => {
+        const ids = new Set(Array.from({ length: 50 }, () => createTableItemId()));
+
+        expect(ids.size).toBe(50);
     });
 });
 

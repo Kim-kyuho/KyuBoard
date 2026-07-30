@@ -13,10 +13,13 @@ const tableRowSchema = z.object({
 
 export const tableSourceSchema = z.object({
     columns: z.array(tableColumnSchema).min(1),
-    rows: z.array(tableRowSchema),
+    rows: z.array(tableRowSchema).min(1),
 });
 
 export type TableSource = z.infer<typeof tableSourceSchema>;
+
+export const createTableItemId = () =>
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
 const escapeTableCell = (value: string) =>
     value
