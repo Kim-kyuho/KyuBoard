@@ -36,7 +36,7 @@ export default function SignUpModal({ onClose }: SignUpModalProps) {
             const data = await response.json();
             setErrorMessages({
                 email:
-                    data.error === "Email already exists"
+                    data.message === "Email already exists"
                         ? "This email address is already registered."
                         : "This email address could not be registered.",
                 password: "",
@@ -159,7 +159,6 @@ export default function SignUpModal({ onClose }: SignUpModalProps) {
                                 {errorMessages.password && <p>{errorMessages.password}</p>}
                             </div>
                         )}
-	                    <div className="flex justify-end gap-2 pt-2"></div>
                     <div className="flex justify-end gap-2 pt-2">
                         <PressableButton
                             className="px-3 py-2 text-sm font-semibold text-neutral-600"

@@ -54,7 +54,7 @@ export default function RenameBoardModal({ boardId, title, onClose, onRenamed }:
                     <PressableButton
                         className="p-1"
                         onClick={onClose}
-                        aria-label="Close create board modal"
+                        aria-label="Close rename board modal"
                     >
                         <X className="h-4 w-4" />
                     </PressableButton>

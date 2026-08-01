@@ -288,7 +288,6 @@ export default function BoardClient(
             currentUser={currentUser}
             onCompileMarkdown={() => setMarkdownViewOpen(true)}
         />
-        {/* <BoardNavigator boardIds={boardIds} currentBoardId={currentBoard.boardId} onInvalidBoard={() => setPermissionMessage("This board does not exist.")}/> */}
         <BoardToolBar
             cardEditing={isEditing || drawingMode}
             boardZoom={boardZoom}
