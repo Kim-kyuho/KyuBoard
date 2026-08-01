@@ -19,6 +19,8 @@ export function useDrawingPointer({
 }: UseDrawingPointerOptions) {
     const layerRef = useRef<SVGSVGElement | null>(null);
     const activePointerRef = useRef<number | null>(null);
+    const activePointerTypeRef = useRef<string | null>(null);
+    const penContactRef = useRef(false);
     const currentPointsRef = useRef<StrokePoint[]>([]);
     const previousEraserPointRef = useRef<StrokePoint | null>(null);
     const [currentPoints, setCurrentPoints] = useState<StrokePoint[]>([]);
@@ -41,6 +43,7 @@ export function useDrawingPointer({
     const finishCurrentStroke = () => {
         const points = currentPointsRef.current;
         activePointerRef.current = null;
+        activePointerTypeRef.current = null;
         currentPointsRef.current = [];
 
         if (points.length > 1) {
@@ -50,19 +53,39 @@ export function useDrawingPointer({
         setCurrentPoints([]);
     };
 
+    const discardCurrentInput = () => {
+        activePointerRef.current = null;
+        activePointerTypeRef.current = null;
+        currentPointsRef.current = [];
+        previousEraserPointRef.current = null;
+        setCurrentPoints([]);
+        setEraserPoint(null);
+    };
+
     const handlePointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
-        if (!capturesInput || (event.pointerType === "touch" && !event.isPrimary)) {
+        if (!capturesInput) {
+            return;
+        }
+
+        if (event.pointerType === "pen") {
+            penContactRef.current = true;
+        } else if (penContactRef.current || (event.pointerType === "touch" && !event.isPrimary)) {
             return;
         }
 
         event.preventDefault();
 
         if (activePointerRef.current !== null) {
-            finishCurrentStroke();
+            if (event.pointerType === "pen" && activePointerTypeRef.current !== "pen") {
+                discardCurrentInput();
+            } else {
+                finishCurrentStroke();
+            }
         }
 
         const boardPoint = toBoardPoint(event);
         activePointerRef.current = event.pointerId;
+        activePointerTypeRef.current = event.pointerType;
 
         if (drawingTool === "erase") {
             previousEraserPointRef.current = boardPoint;
@@ -76,15 +99,26 @@ export function useDrawingPointer({
     };
 
     const handlePointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
-        if (!capturesInput) {
+        if (!capturesInput || (penContactRef.current && event.pointerType !== "pen")) {
             return;
         }
 
         const boardPoint = toBoardPoint(event);
         const pressed = event.buttons !== 0 || (event.pointerType === "pen" && event.pressure > 0);
 
+        if (event.pointerType === "pen" && !pressed) {
+            penContactRef.current = false;
+        }
+
         if (drawingTool === "erase") {
             setEraserPoint(boardPoint);
+
+            if (activePointerRef.current === event.pointerId && !pressed) {
+                activePointerRef.current = null;
+                activePointerTypeRef.current = null;
+                previousEraserPointRef.current = null;
+                return;
+            }
 
             if (activePointerRef.current === event.pointerId && pressed) {
                 const previousPoint = previousEraserPointRef.current ?? boardPoint;
@@ -110,12 +144,17 @@ export function useDrawingPointer({
     };
 
     const handlePointerUp = (event: ReactPointerEvent<SVGSVGElement>) => {
+        if (event.pointerType === "pen") {
+            penContactRef.current = false;
+        }
+
         if (activePointerRef.current !== event.pointerId) {
             return;
         }
 
         if (drawingTool === "erase") {
             activePointerRef.current = null;
+            activePointerTypeRef.current = null;
             previousEraserPointRef.current = null;
             return;
         }

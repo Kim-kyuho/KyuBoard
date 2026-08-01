@@ -64,6 +64,7 @@ export default function BoardMenu(
                             </PressableButton>
                             <PressableButton
                                 variant="menu"
+                                className="font-bold text-pink-500"
                                 onClick={() => {
                                     setMenuOpen(false);
                                     onCompileMarkdown?.();

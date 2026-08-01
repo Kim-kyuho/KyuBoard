@@ -454,6 +454,7 @@ export default function BoardClient(
                         />
                     ))}
                     <DrawingLayer
+                        key={drawingMode ? "drawing-active" : "drawing-inactive"}
                         strokes={strokes}
                         drawingMode={drawingMode}
                         drawingTool={drawingTool}
