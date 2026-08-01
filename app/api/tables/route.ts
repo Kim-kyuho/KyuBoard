@@ -10,19 +10,22 @@ export async function POST(request: NextRequest) {
         const permissionMessage = getCardPermissionMessage(currentUser);
 
         if (permissionMessage) {
-            return NextResponse.json({
-                ok: false,
-                message: permissionMessage,
-            }, { status: 403 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: permissionMessage,
+                },
+                { status: 403 },
+            );
         }
 
         const body = await request.json();
-        const source = tableSourceSchema.safeParse(body.source);
+        const parsedSource = tableSourceSchema.safeParse(body.source);
 
         if (
             !Number.isInteger(body.boardId) ||
             body.boardId <= 0 ||
-            !source.success ||
+            !parsedSource.success ||
             !Number.isInteger(body.x) ||
             !Number.isInteger(body.y) ||
             !Number.isInteger(body.z) ||
@@ -31,10 +34,13 @@ export async function POST(request: NextRequest) {
             body.width <= 0 ||
             body.height <= 0
         ) {
-            return NextResponse.json({
-                ok: false,
-                message: "Invalid request body.",
-            }, { status: 400 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Invalid request body.",
+                },
+                { status: 400 },
+            );
         }
 
         const db = getDb();
@@ -42,7 +48,7 @@ export async function POST(request: NextRequest) {
             .insert(db_tables)
             .values({
                 boardId: body.boardId,
-                source: source.data,
+                source: parsedSource.data,
                 x: body.x,
                 y: body.y,
                 z: body.z,
@@ -51,15 +57,21 @@ export async function POST(request: NextRequest) {
             })
             .returning();
 
-        return NextResponse.json({
-            ok: true,
-            table: newTable[0],
-        }, { status: 201 });
+        return NextResponse.json(
+            {
+                ok: true,
+                table: newTable[0],
+            },
+            { status: 201 },
+        );
     } catch (error) {
         console.error("Error creating table:", error);
-        return NextResponse.json({
-            ok: false,
-            message: "An error occurred while creating the table.",
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                ok: false,
+                message: "An error occurred while creating the table.",
+            },
+            { status: 500 },
+        );
     }
 }

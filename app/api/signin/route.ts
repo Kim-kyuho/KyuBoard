@@ -9,14 +9,17 @@ export async function POST(request: NextRequest) {
     try {
         const db = getDb();
         const body = await request.json();
-        const email = String(body.email ?? "").trim();;
+        const email = String(body.email ?? "").trim();
         const password = String(body.password ?? "");
-        
+
         if (!email || !password) {
-            return NextResponse.json({
-                ok: false,
-                message: "Please enter your email and password.",
-            },{ status: 400 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Please enter your email and password.",
+                },
+                { status: 400 },
+            );
         }
 
         const users = await db
@@ -31,22 +34,28 @@ export async function POST(request: NextRequest) {
             .where(eq(db_users.email, email))
             .limit(1);
         const user = users[0];
-        
+
         if (!user || !(await verifyPassword(password, user.passwordHash))) {
-            return NextResponse.json({
-                ok: false,
-                message: "Email or password is incorrect.",
-            },{ status: 401 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Email or password is incorrect.",
+                },
+                { status: 401 },
+            );
         }
 
-        const response = NextResponse.json({
-            ok: true,
-            user: {
-                email: user.email,
-                isApproved: user.isApproved,
-                role: user.role,
+        const response = NextResponse.json(
+            {
+                ok: true,
+                user: {
+                    email: user.email,
+                    isApproved: user.isApproved,
+                    role: user.role,
+                },
             },
-        },{ status: 200 });
+            { status: 200 },
+        );
 
         response.cookies.set(sessionCookieName, createSessionToken(user.id), {
             httpOnly: true,
@@ -59,9 +68,12 @@ export async function POST(request: NextRequest) {
         return response;
     } catch (error) {
         console.error("Error during sign-in:", error);
-        return NextResponse.json({
-            ok: false,
-            message: "An error occurred during sign-in.",
-        },{ status: 500 }); 
+        return NextResponse.json(
+            {
+                ok: false,
+                message: "An error occurred during sign-in.",
+            },
+            { status: 500 },
+        );
     }
 }

@@ -8,10 +8,13 @@ export async function POST(request: NextRequest) {
         const currentUser = await getCurrentUserFromRequest(request);
         const permissionMessage = getCardPermissionMessage(currentUser);
         if (permissionMessage) {
-            return NextResponse.json({
-                ok: false,
-                message: permissionMessage,
-            }, { status: 403 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: permissionMessage,
+                },
+                { status: 403 },
+            );
         }
 
         const db = getDb();
@@ -30,10 +33,13 @@ export async function POST(request: NextRequest) {
             body.width <= 0 ||
             body.height <= 0
         ) {
-            return NextResponse.json({
-                ok: false,
-                message: "Invalid request body.",
-            }, { status: 400 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Invalid request body.",
+                },
+                { status: 400 },
+            );
         }
 
         const newMermaid = await db
@@ -49,15 +55,21 @@ export async function POST(request: NextRequest) {
             })
             .returning();
 
-        return NextResponse.json({
-            ok: true,
-            mermaid: newMermaid[0],
-        }, { status: 200 });
+        return NextResponse.json(
+            {
+                ok: true,
+                mermaid: newMermaid[0],
+            },
+            { status: 200 },
+        );
     } catch (error) {
         console.error("Error creating mermaid:", error);
-        return NextResponse.json({
-            ok: false,
-            message: "An error occurred while creating the mermaid.",
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                ok: false,
+                message: "An error occurred while creating the mermaid.",
+            },
+            { status: 500 },
+        );
     }
 }

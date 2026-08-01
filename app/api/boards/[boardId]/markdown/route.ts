@@ -27,8 +27,7 @@ turndown.addRule("strikethrough", {
     replacement: (content) => `~~${content}~~`,
 });
 
-const escapeImageLabel = (label: string) =>
-    label.replaceAll("[", "\\[").replaceAll("]", "\\]");
+const escapeImageLabel = (label: string) => label.replaceAll("[", "\\[").replaceAll("]", "\\]");
 
 const compileMarkdown = (rows: CompiledCardRow[]) => {
     const markdownParts: string[] = [];
@@ -63,9 +62,9 @@ const compileMarkdown = (rows: CompiledCardRow[]) => {
 
         if (row.card_type === "table") {
             try {
-                const source = tableSourceSchema.safeParse(JSON.parse(row.card_content));
-                if (source.success) {
-                    markdownParts.push(tableSourceToMarkdown(source.data));
+                const parsedSource = tableSourceSchema.safeParse(JSON.parse(row.card_content));
+                if (parsedSource.success) {
+                    markdownParts.push(tableSourceToMarkdown(parsedSource.data));
                 }
             } catch {
                 return;
@@ -79,33 +78,35 @@ const compileMarkdown = (rows: CompiledCardRow[]) => {
     return markdownParts.join("\n\n");
 };
 
-export async function GET(
-    _request: Request,
-    { params }: { params: Promise<{ boardId: string }> }
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ boardId: string }> }) {
     try {
-        const { boardId } = await params;
-        const boardIdNumber = Number(boardId);
+        const boardId = Number((await params).boardId);
 
-        if (!Number.isInteger(boardIdNumber) || boardIdNumber <= 0) {
-            return NextResponse.json({
-                ok: false,
-                message: "Invalid board id.",
-            }, { status: 400 });
+        if (!Number.isInteger(boardId) || boardId <= 0) {
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Invalid board id.",
+                },
+                { status: 400 },
+            );
         }
 
         const db = getDb();
-        const board = await db
+        const targetBoard = await db
             .select({ boardId: db_boards.boardId })
             .from(db_boards)
-            .where(eq(db_boards.boardId, boardIdNumber))
+            .where(eq(db_boards.boardId, boardId))
             .limit(1);
 
-        if (!board[0]) {
-            return NextResponse.json({
-                ok: false,
-                message: "This board does not exist.",
-            }, { status: 404 });
+        if (!targetBoard[0]) {
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "This board does not exist.",
+                },
+                { status: 404 },
+            );
         }
 
         const result = await db.execute<CompiledCardRow>(sql`
@@ -118,7 +119,7 @@ export async function GET(
                     width,
                     height
                 FROM memos
-                WHERE board_id = ${boardIdNumber}
+                WHERE board_id = ${boardId}
             ),
             memo_contact_points AS (
                 SELECT
@@ -148,7 +149,7 @@ export async function GET(
                     width,
                     height
                 FROM images
-                WHERE board_id = ${boardIdNumber}
+                WHERE board_id = ${boardId}
 
                 UNION ALL
 
@@ -163,7 +164,7 @@ export async function GET(
                     width,
                     height
                 FROM mermaids
-                WHERE board_id = ${boardIdNumber}
+                WHERE board_id = ${boardId}
 
                 UNION ALL
 
@@ -178,7 +179,7 @@ export async function GET(
                     width,
                     height
                 FROM tables
-                WHERE board_id = ${boardIdNumber}
+                WHERE board_id = ${boardId}
             ),
             ranked_cards AS (
                 SELECT
@@ -235,9 +236,12 @@ export async function GET(
         });
     } catch (error) {
         console.error("Error compiling board markdown:", error);
-        return NextResponse.json({
-            ok: false,
-            message: "Markdown document could not be generated.",
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                ok: false,
+                message: "Markdown document could not be generated.",
+            },
+            { status: 500 },
+        );
     }
 }

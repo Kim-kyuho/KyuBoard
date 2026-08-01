@@ -11,33 +11,41 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         const permissionMessage = getCardPermissionMessage(currentUser);
 
         if (permissionMessage) {
-            return NextResponse.json({
-                ok: false,
-                message: permissionMessage,
-            }, { status: 403 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: permissionMessage,
+                },
+                { status: 403 },
+            );
         }
 
-        const { id } = await params;
-        const tableId = Number(id);
+        const tableId = Number((await params).id);
         const body = await request.json();
         const updates: Partial<typeof db_tables.$inferInsert> = {};
 
         if (!Number.isInteger(tableId) || tableId <= 0) {
-            return NextResponse.json({
-                ok: false,
-                message: "Invalid table id.",
-            }, { status: 400 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Invalid table id.",
+                },
+                { status: 400 },
+            );
         }
 
         if (body.source !== undefined) {
-            const source = tableSourceSchema.safeParse(body.source);
-            if (!source.success) {
-                return NextResponse.json({
-                    ok: false,
-                    message: "Invalid table source.",
-                }, { status: 400 });
+            const parsedSource = tableSourceSchema.safeParse(body.source);
+            if (!parsedSource.success) {
+                return NextResponse.json(
+                    {
+                        ok: false,
+                        message: "Invalid table source.",
+                    },
+                    { status: 400 },
+                );
             }
-            updates.source = source.data;
+            updates.source = parsedSource.data;
         }
 
         if (body.boardId !== undefined) {
@@ -78,36 +86,44 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         }
 
         if (Object.keys(updates).length === 0) {
-            return NextResponse.json({
-                ok: false,
-                message: "No update fields were provided.",
-            }, { status: 400 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "No update fields were provided.",
+                },
+                { status: 400 },
+            );
         }
 
         const db = getDb();
-        const updatedTable = await db
-            .update(db_tables)
-            .set(updates)
-            .where(eq(db_tables.tableId, tableId))
-            .returning();
+        const updatedTable = await db.update(db_tables).set(updates).where(eq(db_tables.tableId, tableId)).returning();
 
         if (!updatedTable[0]) {
-            return NextResponse.json({
-                ok: false,
-                message: "Table does not exist.",
-            }, { status: 404 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Table does not exist.",
+                },
+                { status: 404 },
+            );
         }
 
-        return NextResponse.json({
-            ok: true,
-            table: updatedTable[0],
-        }, { status: 200 });
+        return NextResponse.json(
+            {
+                ok: true,
+                table: updatedTable[0],
+            },
+            { status: 200 },
+        );
     } catch (error) {
         console.error("Error updating table:", error);
-        return NextResponse.json({
-            ok: false,
-            message: "An error occurred while updating the table.",
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                ok: false,
+                message: "An error occurred while updating the table.",
+            },
+            { status: 500 },
+        );
     }
 }
 
@@ -117,41 +133,49 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         const permissionMessage = getCardPermissionMessage(currentUser);
 
         if (permissionMessage) {
-            return NextResponse.json({
-                ok: false,
-                message: permissionMessage,
-            }, { status: 403 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: permissionMessage,
+                },
+                { status: 403 },
+            );
         }
 
-        const { id } = await params;
-        const tableId = Number(id);
+        const tableId = Number((await params).id);
 
         if (!Number.isInteger(tableId) || tableId <= 0) {
-            return NextResponse.json({
-                ok: false,
-                message: "Invalid table id.",
-            }, { status: 400 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Invalid table id.",
+                },
+                { status: 400 },
+            );
         }
 
         const db = getDb();
-        const deletedTable = await db
-            .delete(db_tables)
-            .where(eq(db_tables.tableId, tableId))
-            .returning();
+        const deletedTable = await db.delete(db_tables).where(eq(db_tables.tableId, tableId)).returning();
 
         if (!deletedTable[0]) {
-            return NextResponse.json({
-                ok: false,
-                message: "Table does not exist.",
-            }, { status: 404 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Table does not exist.",
+                },
+                { status: 404 },
+            );
         }
 
         return NextResponse.json({ ok: true }, { status: 200 });
     } catch (error) {
         console.error("Error deleting table:", error);
-        return NextResponse.json({
-            ok: false,
-            message: "An error occurred while deleting the table.",
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                ok: false,
+                message: "An error occurred while deleting the table.",
+            },
+            { status: 500 },
+        );
     }
 }
