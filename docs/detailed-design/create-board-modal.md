@@ -2,22 +2,60 @@
 
 소스: `components/CreateBoardModal.tsx`
 
-## 역할
-
-보드 제목과 고정 크기 옵션을 입력받아 새 보드를 생성한다.
-
 ## Props
 
-- `ownerId: string | null`: 현재 사용자 이메일.
-- `onClose`: backdrop, 닫기, Cancel.
-- `onCreated(boardId)`: 성공 후 BoardList가 새 보드로 이동.
+| Prop | 타입 | 사용처 |
+| --- | --- | --- |
+| `ownerId` | `string \| null` | POST body의 `ownerId` (48줄) |
+| `onClose` | `() => void` | 오버레이 클릭(66줄), X 버튼(76줄), Cancel 버튼(122줄) |
+| `onCreated` | `(boardId: number) => void` | 생성 성공 시 `data.board.boardId` 전달 (58줄) |
 
-## 검증과 요청
+## 상수: `boardSizeOptions` (15~23줄)
 
-- 제목은 trim 후 비어 있으면 거부한다.
-- 크기는 사전 정의된 가로형/세로형 1080p, 4K, 8K 계열 옵션만 허용한다.
-- `POST /api/boards`에 title, width, height, ownerId를 전송한다.
-- 실패 메시지는 내부 `BoardMessage type="error"`로 표시한다.
+| label | width | height |
+| --- | --- | --- |
+| "7680 x 4320" | 7680 | 4320 |
+| "3840 x 2160" | 3840 | 2160 (기본 선택값, `<select defaultValue>` 107줄) |
+| "1920 x 1080" | 1920 | 1080 |
+| "4320 x 7680" | 4320 | 7680 |
+| "2160 x 3840" | 2160 | 3840 |
+| "1080 x 1920" | 1080 | 1920 |
 
-모달은 document.body Portal이며 backdrop 70, panel 80이다.
+가로형 3개(16:9 계열)와 그 폭/높이를 뒤집은 세로형 3개로 구성 — 이 6개 문자열 외의 값은 허용되지 않는다.
 
+## State
+
+| State | 초기값 | 갱신 지점 | 소비 지점 |
+| --- | --- | --- | --- |
+| `errorMessage` | `""` | 제목 미입력(31줄), 크기 미선택(35줄), API 실패(54줄) 세 지점에서 각각 다른 메시지로 설정 | `<BoardMessage type="error">` (116줄) |
+
+## 핸들러: `handleCreateBoard(title, sizeValue)` (28~59줄)
+
+1. `boardSizeOptions`에서 `label === sizeValue`인 옵션 조회
+2. `!title.trim()` → "Please enter a board title." 설정 후 종료
+3. `!selectedSize` → "Please select a board size." 설정 후 종료 (사실상 `<select>`가 항상 유효한 label을 보내므로 정상 흐름에서는 도달하기 어려운 방어 코드)
+4. `POST /api/boards` with `{ title: title.trim(), width, height, ownerId }`
+5. `data.ok === false` → `data.message ?? "Board could not be created."` 설정 후 종료
+6. 성공 → `onCreated(data.board.boardId)`
+
+## 폼 제출 흐름 (82~91줄)
+
+1. `event.preventDefault()`
+2. `FormData`에서 `title`, `size` 추출
+3. `handleCreateBoard(title, size)` 호출
+
+## 렌더 구조 / z-index
+
+| 요소 | z-index | 비고 |
+| --- | --- | --- |
+| 오버레이 (63줄) | 70 | 클릭 시 `onClose` |
+| 패널 (68줄) | 80 | `w-[min(24rem,calc(100vw-2rem))]` |
+| Title input (95줄) | - | `required`, 초기값 없음(빈 문자열 시작) |
+| Board size `<select>` (104줄) | - | `defaultValue="3840 x 2160"` |
+| 에러 메시지 (116줄) | - | `errorMessage`가 있을 때만 |
+| Cancel / Create 버튼 (119, 126줄) | - | `type="button"` / `type="submit"` |
+
+## 알려진 특이사항
+
+- `RenameBoardModal`과 z-index(70/80), 레이아웃 클래스, 오버레이·닫기 버튼 구조가 동일 — `aria-label="Close create board modal"`(77줄)이 이 컴포넌트에서는 정확히 맞지만, `RenameBoardModal`이 이 라벨 문자열을 그대로 복사해 써서 그쪽에서는 틀린 라벨이 된 것으로 보인다(상세: `rename-board-modal.md`).
+- fetch 자체가 실패(네트워크 오류)하는 경우에 대한 처리가 없다 — 다른 모달들과 동일한 패턴의 공백.
