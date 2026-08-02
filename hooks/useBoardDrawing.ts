@@ -16,6 +16,7 @@ type UseBoardDrawingOptions = {
     canEditCard: boolean;
     showPermissionMessage: () => void;
     setPermissionMessage: (message: string) => void;
+    onPreviewUpdate: () => void;
 };
 
 export function useBoardDrawing({
@@ -24,6 +25,7 @@ export function useBoardDrawing({
     canEditCard,
     showPermissionMessage,
     setPermissionMessage,
+    onPreviewUpdate,
 }: UseBoardDrawingOptions) {
     const [strokes, setStrokes] = useState(initialStrokes);
     const [drawingMode, setDrawingMode] = useState(false);
@@ -44,7 +46,10 @@ export function useBoardDrawing({
 
         if (!response.ok || !data.ok) {
             setPermissionMessage(data.message ?? "Drawing could not be saved.");
+            return;
         }
+
+        onPreviewUpdate();
     };
 
     const handleToggleDrawingMode = () => {

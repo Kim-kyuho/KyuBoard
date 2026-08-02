@@ -24,8 +24,7 @@ const typeOrder: Record<CardLayerType, number> = {
 const isCardLayerType = (value: unknown): value is CardLayerType =>
     value === "memo" || value === "image" || value === "mermaid" || value === "table";
 
-const isCardLayerAction = (value: unknown): value is CardLayerAction =>
-    value === "front" || value === "back";
+const isCardLayerAction = (value: unknown): value is CardLayerAction => value === "front" || value === "back";
 
 const normalizeLayerCards = (cards: LayerCard[]) =>
     [...cards]
@@ -70,10 +69,26 @@ async function getLayerCards(boardId: number) {
     ]);
 
     return [
-        ...memos.map((memo) => ({ type: "memo" as const, id: memo.id, z: memo.z })),
-        ...images.map((image) => ({ type: "image" as const, id: image.id, z: image.z })),
-        ...mermaids.map((mermaid) => ({ type: "mermaid" as const, id: mermaid.id, z: mermaid.z })),
-        ...tables.map((table) => ({ type: "table" as const, id: table.id, z: table.z })),
+        ...memos.map((memo) => ({
+            type: "memo" as const,
+            id: memo.id,
+            z: memo.z,
+        })),
+        ...images.map((image) => ({
+            type: "image" as const,
+            id: image.id,
+            z: image.z,
+        })),
+        ...mermaids.map((mermaid) => ({
+            type: "mermaid" as const,
+            id: mermaid.id,
+            z: mermaid.z,
+        })),
+        ...tables.map((table) => ({
+            type: "table" as const,
+            id: table.id,
+            z: table.z,
+        })),
     ];
 }
 
@@ -81,34 +96,22 @@ async function updateCardZ(card: LayerCard) {
     const db = getDb();
 
     if (card.type === "memo") {
-        await db
-            .update(db_memos)
-            .set({ z: card.z })
-            .where(eq(db_memos.id, card.id));
+        await db.update(db_memos).set({ z: card.z }).where(eq(db_memos.id, card.id));
         return;
     }
 
     if (card.type === "image") {
-        await db
-            .update(db_images)
-            .set({ z: card.z })
-            .where(eq(db_images.imageId, card.id));
+        await db.update(db_images).set({ z: card.z }).where(eq(db_images.imageId, card.id));
         return;
     }
 
     if (card.type === "mermaid") {
-        await db
-            .update(db_mermaids)
-            .set({ z: card.z })
-            .where(eq(db_mermaids.mermaidId, card.id));
+        await db.update(db_mermaids).set({ z: card.z }).where(eq(db_mermaids.mermaidId, card.id));
         return;
     }
 
     if (card.type === "table") {
-        await db
-            .update(db_tables)
-            .set({ z: card.z })
-            .where(eq(db_tables.tableId, card.id));
+        await db.update(db_tables).set({ z: card.z }).where(eq(db_tables.tableId, card.id));
         return;
     }
 }
@@ -123,16 +126,28 @@ async function sendCardToBack(type: CardLayerType, id: number, boardId: number) 
     await Promise.all([
         type === "memo"
             ? db.update(db_memos).set({ z: 1 }).where(eq(db_memos.id, id))
-            : db.update(db_memos).set({ z: sql`${db_memos.z} + 1` }).where(eq(db_memos.boardId, boardId)),
+            : db
+                  .update(db_memos)
+                  .set({ z: sql`${db_memos.z} + 1` })
+                  .where(eq(db_memos.boardId, boardId)),
         type === "image"
             ? db.update(db_images).set({ z: 1 }).where(eq(db_images.imageId, id))
-            : db.update(db_images).set({ z: sql`${db_images.z} + 1` }).where(eq(db_images.boardId, boardId)),
+            : db
+                  .update(db_images)
+                  .set({ z: sql`${db_images.z} + 1` })
+                  .where(eq(db_images.boardId, boardId)),
         type === "mermaid"
             ? db.update(db_mermaids).set({ z: 1 }).where(eq(db_mermaids.mermaidId, id))
-            : db.update(db_mermaids).set({ z: sql`${db_mermaids.z} + 1` }).where(eq(db_mermaids.boardId, boardId)),
+            : db
+                  .update(db_mermaids)
+                  .set({ z: sql`${db_mermaids.z} + 1` })
+                  .where(eq(db_mermaids.boardId, boardId)),
         type === "table"
             ? db.update(db_tables).set({ z: 1 }).where(eq(db_tables.tableId, id))
-            : db.update(db_tables).set({ z: sql`${db_tables.z} + 1` }).where(eq(db_tables.boardId, boardId)),
+            : db
+                  .update(db_tables)
+                  .set({ z: sql`${db_tables.z} + 1` })
+                  .where(eq(db_tables.boardId, boardId)),
     ]);
 
     if (type === "memo") {
@@ -182,10 +197,13 @@ export async function POST(request: NextRequest) {
         const permissionMessage = getCardPermissionMessage(currentUser);
 
         if (permissionMessage) {
-            return NextResponse.json({
-                ok: false,
-                message: permissionMessage,
-            }, { status: 403 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: permissionMessage,
+                },
+                { status: 403 },
+            );
         }
 
         const body = await request.json();
@@ -202,20 +220,26 @@ export async function POST(request: NextRequest) {
             !isCardLayerType(type) ||
             !isCardLayerAction(action)
         ) {
-            return NextResponse.json({
-                ok: false,
-                message: "Invalid card layer request.",
-            }, { status: 400 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Invalid card layer request.",
+                },
+                { status: 400 },
+            );
         }
 
         const cards = await getLayerCards(boardId);
         const targetCard = cards.find((card) => card.type === type && card.id === id);
 
         if (!targetCard) {
-            return NextResponse.json({
-                ok: false,
-                message: "Card does not exist.",
-            }, { status: 404 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Card does not exist.",
+                },
+                { status: 404 },
+            );
         }
 
         const maxZ = Math.max(...cards.map((card) => card.z), 1);
@@ -225,15 +249,11 @@ export async function POST(request: NextRequest) {
             const nextZ = maxZ + 1;
 
             await bringCardToFront(type, id, nextZ);
-            nextCards = cards.map((card) =>
-                card.type === type && card.id === id ? { ...card, z: nextZ } : card
-            );
+            nextCards = cards.map((card) => (card.type === type && card.id === id ? { ...card, z: nextZ } : card));
         } else {
             await sendCardToBack(type, id, boardId);
             nextCards = cards.map((card) =>
-                card.type === type && card.id === id
-                    ? { ...card, z: 1 }
-                    : { ...card, z: card.z + 1 }
+                card.type === type && card.id === id ? { ...card, z: 1 } : { ...card, z: card.z + 1 },
             );
         }
 
@@ -247,9 +267,12 @@ export async function POST(request: NextRequest) {
         });
     } catch (error) {
         console.error("Error updating card layer:", error);
-        return NextResponse.json({
-            ok: false,
-            message: "An error occurred while updating the card layer.",
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                ok: false,
+                message: "An error occurred while updating the card layer.",
+            },
+            { status: 500 },
+        );
     }
 }

@@ -27,6 +27,7 @@ type UseBoardImagesOptions = {
     canEditCard: boolean;
     showPermissionMessage: () => void;
     setPermissionMessage: (message: string) => void;
+    onPreviewUpdate: () => void;
 };
 // FUNCTION_PAYLOAD_TOO_LARGE를 막기위해 이미지 업로드 전에 클라이언트에서 이미지를 압축하는 함수
 async function compressImage(file: File) {
@@ -100,6 +101,7 @@ export function useBoardImages({
     canEditCard,
     showPermissionMessage,
     setPermissionMessage,
+    onPreviewUpdate,
 }: UseBoardImagesOptions) {
     const imageInputRef = useRef<HTMLInputElement | null>(null);
     const [images, setImages] = useState(initialImages);
@@ -219,6 +221,7 @@ export function useBoardImages({
             )
         );
         setEditingImageId(data.image.imageId);
+        onPreviewUpdate();
     };
 
     const handleUpdateImage = async (imageId: number, boardId: number, publicId: string, secureUrl: string, fileName: string | null, x: number, y: number, z: number, width: number, height: number) => {
@@ -241,6 +244,7 @@ export function useBoardImages({
                 image.imageId === imageId ? { ...image, boardId, publicId, secureUrl, fileName, x, y, z, width, height } : image
             )
         );
+        onPreviewUpdate();
     };
 
     const handleDeleteImage = async (imageId: number) => {

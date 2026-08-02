@@ -1,5 +1,5 @@
-import { getDb } from "@/lib/db";
 import { getCardPermissionMessage, getCurrentUserFromRequest } from "@/lib/auth/current-user";
+import { getDb } from "@/lib/db";
 import { db_memos } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -8,10 +8,13 @@ export async function POST(request: NextRequest) {
         const currentUser = await getCurrentUserFromRequest(request);
         const permissionMessage = getCardPermissionMessage(currentUser);
         if (permissionMessage) {
-            return NextResponse.json({
-                ok: false,
-                message: permissionMessage,
-            },{ status: 403 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: permissionMessage,
+                },
+                { status: 403 },
+            );
         }
 
         const db = getDb();
@@ -30,34 +33,44 @@ export async function POST(request: NextRequest) {
             typeof body.color !== "string" ||
             !body.color.trim()
         ) {
-            return NextResponse.json({
-                ok: false,
-                message: "Invalid request body.",
-            }, { status: 400 });
+            return NextResponse.json(
+                {
+                    ok: false,
+                    message: "Invalid request body.",
+                },
+                { status: 400 },
+            );
         }
 
         const newMemo = await db
-        .insert(db_memos)
-        .values({
-            boardId: body.boardId,
-            content: body.content,
-            x: body.x,
-            y: body.y,
-            z: body.z,
-            width: body.width,
-            height: body.height,
-            color: body.color,
-        }).returning();
-        
-        return NextResponse.json({ 
-            ok: true, 
-            memo: newMemo[0] 
-        }, { status: 200 });
+            .insert(db_memos)
+            .values({
+                boardId: body.boardId,
+                content: body.content,
+                x: body.x,
+                y: body.y,
+                z: body.z,
+                width: body.width,
+                height: body.height,
+                color: body.color,
+            })
+            .returning();
+
+        return NextResponse.json(
+            {
+                ok: true,
+                memo: newMemo[0],
+            },
+            { status: 200 },
+        );
     } catch (error) {
         console.error("Error creating memo:", error);
-        return NextResponse.json({
-            ok: false,
-            message: "An error occurred while creating the memo.",
-        },{ status: 500 });
+        return NextResponse.json(
+            {
+                ok: false,
+                message: "An error occurred while creating the memo.",
+            },
+            { status: 500 },
+        );
     }
 }

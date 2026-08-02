@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { EllipsisVertical, Plus } from "lucide-react";
 import { useState } from "react";
 import BoardMenu from "./BoardMenu";
@@ -16,6 +17,7 @@ import { BoardListBoard, useBoardList } from "@/hooks/useBoardList";
 
 export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [failedPreviewIds, setFailedPreviewIds] = useState<Set<number>>(new Set());
     const {
         signInOpen,
         setSignInOpen,
@@ -123,24 +125,40 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                                     href={`/boards/${board.boardId}`}
                                     className="block overflow-hidden rounded-lg"
                                     draggable={false}
-                                    onClick={handleBoardClick}
+                                    onClick={() => {
+                                        handleBoardClick(
+                                            board.boardId,
+                                            !board.previewUrl || failedPreviewIds.has(board.boardId),
+                                        );
+                                    }}
                                 >
                                     <div>
                                         {/* 보드 미리보기 영역 */}
-                                        <div className="aspect-video overflow-hidden bg-white">
-                                            <iframe
-                                                src={`/boards/${board.boardId}`}
-                                                sandbox=""
-                                                className="origin-top-left border-0"
-                                                style={{
-                                                    width: "1920px",
-                                                    height: "1080px",
-                                                    transform: "scale(0.5)",
-                                                    pointerEvents: "none",
-                                                }}
-                                                
-                                            />
-                                            <div className="absolute inset-0" />
+                                        <div
+                                            className="relative aspect-video overflow-hidden bg-white"
+                                            style={{
+                                                backgroundImage: "radial-gradient(#d4d4d8 1px, transparent 1px)",
+                                                backgroundSize: "12px 12px",
+                                            }}
+                                        >
+                                            {board.previewUrl && !failedPreviewIds.has(board.boardId) && (
+                                                <Image
+                                                    src={board.previewUrl}
+                                                    alt={`${board.title} preview`}
+                                                    fill
+                                                    unoptimized
+                                                    draggable={false}
+                                                    sizes="(max-width: 768px) 50vw, 448px"
+                                                    className="object-cover"
+                                                    onError={() => {
+                                                        setFailedPreviewIds((prev) => {
+                                                            const next = new Set(prev);
+                                                            next.add(board.boardId);
+                                                            return next;
+                                                        });
+                                                    }}
+                                                />
+                                            )}
                                         </div>
                                         {/* 보드 제목 영역 */}
                                         <div className="border-t border-neutral-100 px-3 py-2">

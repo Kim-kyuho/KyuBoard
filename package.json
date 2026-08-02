@@ -29,6 +29,7 @@
     "@vercel/analytics": "^2.0.1",
     "cloudinary": "^2.10.0",
     "drizzle-orm": "^0.45.2",
+    "html-to-image": "^1.11.13",
     "lucide-react": "^1.11.0",
     "mermaid": "^11.15.0",
     "next": "16.2.4",

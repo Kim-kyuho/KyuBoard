@@ -20,6 +20,7 @@ type UseBoardTablesOptions = {
     cardLocationRef: RefObject<HTMLDivElement | null>;
     showPermissionMessage: () => void;
     setPermissionMessage: (message: string) => void;
+    onPreviewUpdate: () => void;
 };
 
 export function useBoardTables({
@@ -30,6 +31,7 @@ export function useBoardTables({
     cardLocationRef,
     showPermissionMessage,
     setPermissionMessage,
+    onPreviewUpdate,
 }: UseBoardTablesOptions) {
     const [tables, setTables] = useState<BoardTable[]>(initialTables);
     const [editingTableId, setEditingTableId] = useState<number | null>(null);
@@ -91,6 +93,7 @@ export function useBoardTables({
                 }
                 : item)
         );
+        onPreviewUpdate();
     };
 
     const handleUpdateTable = async (table: BoardTable) => {
@@ -107,6 +110,7 @@ export function useBoardTables({
         }
 
         setTables((prev) => prev.map((item) => item.id === table.id ? table : item));
+        onPreviewUpdate();
     };
 
     const handleDeleteTable = async (id: number) => {

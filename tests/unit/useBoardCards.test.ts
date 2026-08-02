@@ -49,11 +49,12 @@ describe("board card collection hooks", () => {
         const setup = (canEditCard = true) => {
             const showPermissionMessage = vi.fn();
             const setPermissionMessage = vi.fn();
+            const onPreviewUpdate = vi.fn();
             const hook = renderHook(() => useBoardMemos({
                 initialMemos: [memo], boardId: 5, boardZoom: 2, cardLocationRef: locationRef,
-                canEditCard, showPermissionMessage, setPermissionMessage,
+                canEditCard, showPermissionMessage, setPermissionMessage, onPreviewUpdate,
             }));
-            return { ...hook, showPermissionMessage, setPermissionMessage };
+            return { ...hook, showPermissionMessage, setPermissionMessage, onPreviewUpdate };
         };
 
         it("creates an editable temporary memo in the visible center", () => {
@@ -79,7 +80,7 @@ describe("board card collection hooks", () => {
                 .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ ok: true, memo: inserted }) })
                 .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ ok: true }) })
                 .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ ok: true }) }));
-            const { result } = setup();
+            const { result, onPreviewUpdate } = setup();
             act(() => result.current.handleCreateTempMemo());
 
             await act(async () => result.current.handleInsertMemo(-1000, 5, "created", 1, 2, 3, 300, 200, "#fff"));
@@ -87,6 +88,7 @@ describe("board card collection hooks", () => {
 
             await act(async () => result.current.handleUpdateMemo(10, 5, "updated", 4, 5, 6, 320, 220, "#000"));
             expect(result.current.memos.find((item) => item.id === 10)).toMatchObject({ content: "updated", z: 6 });
+            expect(onPreviewUpdate).toHaveBeenCalledTimes(2);
 
             await act(async () => result.current.handleDeleteMemo(10));
             expect(result.current.memos.some((item) => item.id === 10)).toBe(false);
@@ -108,6 +110,7 @@ describe("board card collection hooks", () => {
         const setup = () => renderHook(() => useBoardMermaids({
             initialMermaids: [mermaid], boardId: 5, boardZoom: 2, cardLocationRef: locationRef,
             canEditCard: true, showPermissionMessage: vi.fn(), setPermissionMessage: vi.fn(),
+            onPreviewUpdate: vi.fn(),
         }));
 
         it("creates a centered editable Mermaid card", () => {
@@ -135,6 +138,7 @@ describe("board card collection hooks", () => {
         const setup = () => renderHook(() => useBoardTables({
             initialTables: [table], boardId: 5, boardZoom: 2, cardLocationRef: locationRef,
             canEditCard: true, showPermissionMessage: vi.fn(), setPermissionMessage: vi.fn(),
+            onPreviewUpdate: vi.fn(),
         }));
 
         it("creates an independent default table at the visible center", () => {
@@ -168,6 +172,7 @@ describe("board card collection hooks", () => {
             const allowed = renderHook(() => useBoardImages({
                 initialImages: [image], boardId: 5, boardZoom: 2, cardLocationRef: locationRef,
                 canEditCard: true, showPermissionMessage: vi.fn(), setPermissionMessage: vi.fn(),
+                onPreviewUpdate: vi.fn(),
             }));
             const click = vi.fn();
             allowed.result.current.imageInputRef.current = { click } as unknown as HTMLInputElement;
@@ -179,6 +184,7 @@ describe("board card collection hooks", () => {
             const denied = renderHook(() => useBoardImages({
                 initialImages: [image], boardId: 5, boardZoom: 2, cardLocationRef: locationRef,
                 canEditCard: false, showPermissionMessage, setPermissionMessage: vi.fn(),
+                onPreviewUpdate: vi.fn(),
             }));
             act(() => denied.result.current.handleImageUploadClick());
             expect(showPermissionMessage).toHaveBeenCalledOnce();
@@ -191,6 +197,7 @@ describe("board card collection hooks", () => {
             const { result } = renderHook(() => useBoardImages({
                 initialImages: [image], boardId: 5, boardZoom: 2, cardLocationRef: locationRef,
                 canEditCard: true, showPermissionMessage: vi.fn(), setPermissionMessage: vi.fn(),
+                onPreviewUpdate: vi.fn(),
             }));
             await act(async () => result.current.handleUpdateImage(2, 5, "new-public", "new-url", "new.png", 1, 2, 3, 4, 5));
             expect(result.current.images[0]).toMatchObject({ publicId: "new-public", z: 3, width: 4 });

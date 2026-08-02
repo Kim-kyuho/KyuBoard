@@ -7,6 +7,7 @@ import { connection } from "next/server";
 export default async function Home() {
   await connection();
   const db = getDb();
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const boards = await db
       .select({
           boardId: db_boards.boardId,
@@ -17,5 +18,12 @@ export default async function Home() {
       .from(db_boards)
       .orderBy(asc(db_boards.boardId));
 
-  return <BoardList boards={boards} />;
+  const boardsWithPreview = boards.map((board) => ({
+      ...board,
+      previewUrl: cloudName
+          ? `https://res.cloudinary.com/${cloudName}/image/upload/kyuboard/boards/${board.boardId}/PreviewIMG.webp`
+          : null,
+  }));
+
+  return <BoardList boards={boardsWithPreview} />;
 }
