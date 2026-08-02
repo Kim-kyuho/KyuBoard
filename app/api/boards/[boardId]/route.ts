@@ -1,6 +1,6 @@
 import { getCurrentUserFromRequest } from "@/lib/auth/current-user";
 import { getDb } from "@/lib/db";
-import { db_boards, db_images, db_memos, db_mermaids } from "@/lib/db/schema";
+import { db_boards, db_drawings, db_images, db_memos, db_mermaids, db_tables } from "@/lib/db/schema";
 import { v2 as cloudinary } from "cloudinary";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -143,6 +143,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         await db.delete(db_memos).where(eq(db_memos.boardId, boardId));
 
         await db.delete(db_mermaids).where(eq(db_mermaids.boardId, boardId));
+
+        await db.delete(db_drawings).where(eq(db_drawings.boardId, boardId));
+
+        await db.delete(db_tables).where(eq(db_tables.boardId, boardId));
 
         const deletedBoard = await db.delete(db_boards).where(eq(db_boards.boardId, boardId)).returning();
 

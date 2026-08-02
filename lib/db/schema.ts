@@ -27,7 +27,7 @@ export const db_boards = pgTable("boards", {
 
 export const db_memos = pgTable("memos", {
     id: serial("id").primaryKey(),
-    boardId : integer("board_id").references(() => db_boards.boardId).notNull(),
+    boardId : integer("board_id").notNull(),
     content: text("content").notNull(),
     x: integer("x").notNull().default(0),
     y: integer("y").notNull().default(0),
@@ -41,9 +41,7 @@ export const db_memos = pgTable("memos", {
 
 export const db_images = pgTable("images", {
     imageId: serial("image_id").primaryKey(),
-    boardId: integer("board_id")
-        .notNull()
-        .references(() => db_boards.boardId, { onDelete: "cascade" }),
+    boardId: integer("board_id").notNull(),
     publicId: text("public_id").notNull().unique(),
     secureUrl: text("secure_url").notNull(),
     fileName: text("filename"),
@@ -58,9 +56,7 @@ export const db_images = pgTable("images", {
 
 export const db_mermaids = pgTable("mermaids", {
     mermaidId: serial("mermaid_id").primaryKey(),
-    boardId: integer("board_id")
-        .notNull()
-        .references(() => db_boards.boardId, { onDelete: "cascade" }),
+    boardId: integer("board_id").notNull(),
     source: text("source").notNull(),
     x: integer("x").notNull().default(0),
     y: integer("y").notNull().default(0),
@@ -73,10 +69,7 @@ export const db_mermaids = pgTable("mermaids", {
 
 export const db_drawings = pgTable("drawings", {
     drawingId: serial("drawing_id").primaryKey(),
-    boardId: integer("board_id")
-        .notNull()
-        .unique()
-        .references(() => db_boards.boardId, { onDelete: "cascade" }),
+    boardId: integer("board_id").notNull().unique(),
     source: jsonb("source").$type<BoardStroke[]>().notNull().default([]),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -84,9 +77,7 @@ export const db_drawings = pgTable("drawings", {
 
 export const db_tables = pgTable("tables", {
     tableId: serial("table_id").primaryKey(),
-    boardId: integer("board_id")
-        .notNull()
-        .references(() => db_boards.boardId, { onDelete: "cascade" }),
+    boardId: integer("board_id").notNull(),
     source: jsonb("source").$type<TableSource>().notNull(),
     x: integer("x").notNull().default(0),
     y: integer("y").notNull().default(0),
