@@ -12,6 +12,7 @@ const existingStroke: BoardStroke = {
 
 const showPermissionMessage = vi.fn();
 const setPermissionMessage = vi.fn();
+const onPreviewUpdate = vi.fn();
 
 function setup(canEditCard = true, initialStrokes: BoardStroke[] = []) {
     return renderHook(() => useBoardDrawing({
@@ -20,11 +21,13 @@ function setup(canEditCard = true, initialStrokes: BoardStroke[] = []) {
         canEditCard,
         showPermissionMessage,
         setPermissionMessage,
+        onPreviewUpdate,
     }));
 }
 
 describe("useBoardDrawing", () => {
     beforeEach(() => {
+        vi.clearAllMocks();
         vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({ ok: true }),
@@ -81,6 +84,7 @@ describe("useBoardDrawing", () => {
         expect(fetch).toHaveBeenCalledWith("/api/drawings/5", expect.objectContaining({
             method: "PATCH",
         }));
+        expect(onPreviewUpdate).toHaveBeenCalledOnce();
     });
 
     it("does not save when nothing was drawn", async () => {
@@ -178,5 +182,6 @@ describe("useBoardDrawing", () => {
         await act(async () => result.current.handleToggleDrawingMode());
 
         expect(setPermissionMessage).toHaveBeenCalledWith("Please sign in before editing cards.");
+        expect(onPreviewUpdate).not.toHaveBeenCalled();
     });
 });

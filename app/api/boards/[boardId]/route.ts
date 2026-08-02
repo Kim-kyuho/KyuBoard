@@ -1,8 +1,8 @@
 import { getCurrentUserFromRequest } from "@/lib/auth/current-user";
 import { getDb } from "@/lib/db";
 import { db_boards, db_images, db_memos, db_mermaids } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import { v2 as cloudinary } from "cloudinary";
+import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ boardId: string }> }) {
@@ -60,11 +60,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             { status: 200 },
         );
     } catch (error) {
-        console.error("Error updating memo:", error);
+        console.error("Error updating board:", error);
         return NextResponse.json(
             {
                 ok: false,
-                message: "An error occurred while updating the memo.",
+                message: "An error occurred while updating the board.",
             },
             { status: 500 },
         );

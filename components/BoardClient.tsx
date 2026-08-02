@@ -27,6 +27,7 @@ import { useBoardMemos } from "@/hooks/useBoardMemos";
 import { useBoardScroll } from "@/hooks/useBoardScroll";
 import { useBoardSearch } from "@/hooks/useBoardSearch";
 import { useBoardZoom } from "@/hooks/useBoardZoom";
+import { useBoardPreview } from "@/hooks/useBoardPreview";
 
 interface Board {
   boardId: number;
@@ -89,6 +90,10 @@ export default function BoardClient(
     const boardWidth = currentBoard.width;
     const boardHeight = currentBoard.height;
     const cardLocationRef = useRef<HTMLDivElement | null>(null);
+    const { schedulePreviewUpdate } = useBoardPreview({
+        boardId: currentBoard.boardId,
+        boardViewportRef: cardLocationRef,
+    });
     const [menuOpen, setMenuOpen] = useState(false);
     const [markdownViewOpen, setMarkdownViewOpen] = useState(false);
     const [permissionMessage, setPermissionMessage] = useState("");
@@ -138,6 +143,7 @@ export default function BoardClient(
         canEditCard,
         showPermissionMessage,
         setPermissionMessage,
+        onPreviewUpdate: schedulePreviewUpdate,
     });
 
     const {
@@ -157,6 +163,7 @@ export default function BoardClient(
         canEditCard,
         showPermissionMessage,
         setPermissionMessage,
+        onPreviewUpdate: schedulePreviewUpdate,
     });
 
     const {
@@ -201,6 +208,7 @@ export default function BoardClient(
         cardLocationRef,
         showPermissionMessage,
         setPermissionMessage,
+        onPreviewUpdate: schedulePreviewUpdate,
     });
 
     const {
@@ -220,6 +228,7 @@ export default function BoardClient(
         cardLocationRef,
         showPermissionMessage,
         setPermissionMessage,
+        onPreviewUpdate: schedulePreviewUpdate,
     });
 
     const {
@@ -242,6 +251,7 @@ export default function BoardClient(
         canEditCard,
         showPermissionMessage,
         setPermissionMessage,
+        onPreviewUpdate: schedulePreviewUpdate,
     });
 
     const isEditing =

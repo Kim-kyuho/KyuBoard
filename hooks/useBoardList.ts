@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CurrentUser } from "@/hooks/useBoardAuth";
+import { boardPreviewSessionKey } from "@/lib/board-preview";
 
 export type BoardListBoard = {
     boardId: number;
     title: string;
     width: number;
     height: number;
+    previewUrl: string | null;
 };
 
 type UseBoardListOptions = {
@@ -61,6 +63,7 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
 
     const handleBoardCreated = (boardId: number) => {
         setCreateBoardOpen(false);
+        window.sessionStorage.setItem(boardPreviewSessionKey, String(boardId));
         router.push(`/boards/${boardId}`);
     };
     const openBoardActionMenu = (boardId: number) => {
@@ -74,8 +77,12 @@ export function useBoardList({ boards, currentUser }: UseBoardListOptions) {
         setActionMenuOpen((prev) => selectedBoardId === boardId ? !prev : true);
     };
 
-    const handleBoardClick = () => {
+    const handleBoardClick = (boardId: number, previewMissing: boolean) => {
         setActionMenuOpen(false);
+
+        if (previewMissing) {
+            window.sessionStorage.setItem(boardPreviewSessionKey, String(boardId));
+        }
     };
 
     const openDeleteDialog = () => {

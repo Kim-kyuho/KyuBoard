@@ -19,6 +19,7 @@ type UseBoardMermaidsOptions = {
     cardLocationRef: RefObject<HTMLDivElement | null>;
     showPermissionMessage: () => void;
     setPermissionMessage: (message: string) => void;
+    onPreviewUpdate: () => void;
 };
 
 type BoardPoint = {
@@ -37,6 +38,7 @@ export function useBoardMermaids({
     cardLocationRef,
     showPermissionMessage,
     setPermissionMessage,
+    onPreviewUpdate,
 }: UseBoardMermaidsOptions) {
     const [mermaids, setMermaids] = useState<BoardMermaid[]>(initialMermaids);
     const [editingMermaidId, setEditingMermaidId] = useState<number | null>(null);
@@ -115,6 +117,7 @@ export function useBoardMermaids({
                     : mermaid
             )
         );
+        onPreviewUpdate();
     };
 
     const handleUpdateMermaid = async (
@@ -148,6 +151,7 @@ export function useBoardMermaids({
                     : mermaid
             )
         );
+        onPreviewUpdate();
     };
 
     const handleDeleteMermaid = async (id: number) => {

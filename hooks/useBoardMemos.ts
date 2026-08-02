@@ -20,6 +20,7 @@ type UseBoardMemosOptions = {
     canEditCard: boolean;
     showPermissionMessage: () => void;
     setPermissionMessage: (message: string) => void;
+    onPreviewUpdate: () => void;
 };
 
 export function useBoardMemos({
@@ -30,6 +31,7 @@ export function useBoardMemos({
     canEditCard,
     showPermissionMessage,
     setPermissionMessage,
+    onPreviewUpdate,
 }: UseBoardMemosOptions) {
     const [memos, setMemos] = useState(initialMemos);
     const [editingMemoId, setEditingMemoId] = useState<number | null>(null);
@@ -89,6 +91,7 @@ export function useBoardMemos({
                 memo.id === tempId ? { ...data.memo, isNew: false } : memo
             )
         );
+        onPreviewUpdate();
     };
 
     const handleUpdateMemo = async (id: number, boardId: number, content: string, x: number, y: number, z: number, width: number, height: number, color: string) => {
@@ -109,6 +112,7 @@ export function useBoardMemos({
                 memo.id === id ? { ...memo, content, x, y, z, width, height, color } : memo
             )
         );
+        onPreviewUpdate();
     };
 
     const handleDeleteMemo = async (id: number) => {

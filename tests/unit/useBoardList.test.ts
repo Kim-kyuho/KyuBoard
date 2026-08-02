@@ -7,12 +7,15 @@ vi.mock("next/navigation", () => ({ useRouter: () => router }));
 import { useBoardList } from "@/hooks/useBoardList";
 
 const boards = [
-    { boardId: 1, title: "One", width: 100, height: 100 },
-    { boardId: 2, title: "Two", width: 200, height: 200 },
+    { boardId: 1, title: "One", width: 100, height: 100, previewUrl: "https://example.com/1.webp" },
+    { boardId: 2, title: "Two", width: 200, height: 200, previewUrl: "https://example.com/2.webp" },
 ];
 
 describe("useBoardList", () => {
-    afterEach(() => vi.unstubAllGlobals());
+    afterEach(() => {
+        window.sessionStorage.clear();
+        vi.unstubAllGlobals();
+    });
 
     it("allows only administrators to open create and action controls", () => {
         const denied = renderHook(() => useBoardList({ boards, currentUser: null }));
@@ -44,6 +47,17 @@ describe("useBoardList", () => {
         expect(result.current.boardList[1].title).toBe("Renamed");
         act(() => result.current.handleBoardCreated(9));
         expect(router.push).toHaveBeenCalledWith("/boards/9");
+    });
+
+    it("schedules an initial preview when a board preview is missing", () => {
+        const { result } = renderHook(() => useBoardList({
+            boards,
+            currentUser: null,
+        }));
+
+        act(() => result.current.handleBoardClick(1, true));
+
+        expect(window.sessionStorage.getItem("kyuboard-preview-board-id")).toBe("1");
     });
 
     it("deletes the selected board and refreshes the route", async () => {

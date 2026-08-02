@@ -1,8 +1,8 @@
 import { getDb } from "@/lib/db";
 import { db_users } from "@/lib/db/schema";
+import { randomBytes, scrypt } from "crypto";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
-import { randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
 
 const scryptAsync = promisify(scrypt);
