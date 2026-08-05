@@ -37,7 +37,6 @@ const renderMermaidSvg = async (renderId: string, source: string) => {
     await mermaidReady;
 
     try {
-        await mermaidRenderer.parse(source);
         const { svg } = await mermaidRenderer.render(renderId, source);
 
         return makeMermaidSvgResponsive(svg);
@@ -47,8 +46,13 @@ const renderMermaidSvg = async (renderId: string, source: string) => {
 };
 
 const removeMermaidRenderArtifacts = (renderId: string) => {
-    document.getElementById(renderId)?.remove();
     document.getElementById(`d${renderId}`)?.remove();
+    document.getElementById(`i${renderId}`)?.remove();
+
+    const renderElement = document.getElementById(renderId);
+    if (renderElement && !renderElement.closest(".mermaid-rendered")) {
+        renderElement.remove();
+    }
 };
 
 export function useMermaidRenderer({ source, mermaidId }: UseMermaidRendererOptions) {
