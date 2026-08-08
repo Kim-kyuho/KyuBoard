@@ -4,7 +4,7 @@
 
 ## 사용 여부 (검증됨)
 
-`components/BoardClient.tsx:291`에서 `{/* <BoardNavigator .../> */}`로 주석 처리돼 있어 **현재 화면에 렌더되지 않는다.** 코드는 살아있지만 데드 컴포넌트 상태.
+현재 `BoardNavigator`를 import하거나 렌더링하는 컴포넌트는 없다. 코드는 남아 있지만 런타임 화면에는 포함되지 않는 미사용 컴포넌트다.
 
 ## Props
 
@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | `currentBoardId` | `number` | `boardIds.indexOf(currentBoardId)`로 현재 위치 계산 (14줄) |
 | `boardIds` | `number[]` | 이전/다음 보드 id 조회 (15~18줄) |
-| `onInvalidBoard` | `() => void` | 이동 대상이 없을 때 호출 (22줄) — `BoardClient`의 주석에는 `setPermissionMessage("This board does not exist.")`가 연결되어 있었다 |
+| `onInvalidBoard` | `() => void` | 이동 대상이 없을 때 호출. 현재 호출자가 없어 실제 콜백 연결은 없다. |
 
 ## State
 

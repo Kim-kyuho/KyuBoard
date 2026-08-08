@@ -37,7 +37,7 @@
 | 오버레이 `div` (44줄) | 항상 렌더 | 70 | 클릭 시 `onClose` |
 | 모달 패널 `div` (48줄) | 항상 렌더 | 80 | `fixed left-1/2 top-1/2`로 중앙 고정, `-translate-x/y-1/2` |
 | 제목 `h2` | 항상 | - | 텍스트 "Rename board" 고정 |
-| 닫기 버튼 (54줄) | 항상 | - | `aria-label="Close create board modal"` — **CreateBoardModal에서 복붙된 라벨로 추정, 실제 문맥과 불일치** |
+| 닫기 버튼 (54줄) | 항상 | - | `aria-label="Close rename board modal"` |
 | `input[name=title]` (74줄) | 항상 | - | `defaultValue={title}`, `required`, 비제어 컴포넌트(uncontrolled) — 리렌더링돼도 `title` prop이 다시 반영되지 않음 |
 | `BoardMessage` (83줄) | `errorMessage`가 truthy일 때만 실질적으로 보임 | - | error 타입 고정 |
 | Cancel 버튼 (86줄) | 항상 | - | `type="button"`, `onClose` 호출 |
@@ -51,6 +51,5 @@
 
 ## 알려진 특이사항 (코드 그대로 기술, 개선 제안 아님)
 
-- `aria-label`이 "Close create board modal"로 되어 있어 실제 컴포넌트 이름(RenameBoardModal)과 불일치.
 - fetch 실패(네트워크 에러) 시 별도 처리 없이 unhandled rejection이 됨 — `errorMessage`는 갱신되지 않음.
 - PATCH 성공 후 모달 자체를 닫는 로직이 이 컴포넌트 안에는 없음(부모의 `onRenamed` 구현에 위임).

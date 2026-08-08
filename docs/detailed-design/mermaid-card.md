@@ -75,14 +75,19 @@
 2. `source`가 공백뿐이면 마이크로태스크에서 `svg`/`renderError`를 빈 문자열로 초기화(티켓이 최신일 때만)
 3. `renderId = "kyuboard-mermaid-{|mermaidId|}-{전역 카운터}"` — 전역 `mermaidRenderIndex`를 매 렌더마다 증가시켜 **DOM id 충돌 방지**
 4. `renderMermaidSvg` 성공/실패 각각에서 **`renderTicketRef.current !== renderTicket`이면 결과를 버림** — 빠르게 타이핑할 때 이전 렌더 결과가 최신 소스를 덮어쓰는 것을 방지
-5. `finally`에서 `removeMermaidRenderArtifacts(renderId)` — Mermaid가 렌더 중 생성한 임시 DOM(`#renderId`, `#d{renderId}`)을 제거
+5. `finally`에서 `removeMermaidRenderArtifacts(renderId)` — Mermaid가 렌더 중 생성한 `#d{renderId}`, `#i{renderId}`와 미사용 render element를 제거
 
 ### `renderMermaidSvg` (36~47줄)
 1. `mermaidReady` 대기(zenUml 등록 완료 보장)
-2. `mermaidRenderer.parse(source)`로 문법 검증(실패 시 예외)
-3. `render(renderId, source)` → SVG 문자열
-4. `makeMermaidSvgResponsive`로 고정 `width`/`height` 속성 제거 + `preserveAspectRatio="xMidYMid meet"` 삽입(카드 크기에 맞춰 반응형으로 표시되게 함)
-5. `finally`에서 `removeZenUmlGlobalStyles()` 호출 — ZenUML이 주입하는 전역 `<style>` 중 `.zenuml .sequence-diagram`과 `--tw-ring-shadow`를 동시에 포함한 것을 찾아 제거(Tailwind ring 유틸리티와의 전역 스타일 충돌 방지)
+2. `render(renderId, source)`로 문법 처리와 SVG 생성을 한 번에 수행한다. 별도의 `parse()`를 선행하지 않아 동일 소스를 중복 처리하지 않는다.
+3. `makeMermaidSvgResponsive`로 고정 `width`/`height` 속성 제거 + `preserveAspectRatio="xMidYMid meet"` 삽입(카드 크기에 맞춰 반응형으로 표시되게 함)
+4. `finally`에서 `removeZenUmlGlobalStyles()` 호출 — ZenUML이 주입하는 전역 `<style>` 중 `.zenuml .sequence-diagram`과 `--tw-ring-shadow`를 동시에 포함한 것을 찾아 제거(Tailwind ring 유틸리티와의 전역 스타일 충돌 방지)
+
+`removeMermaidRenderArtifacts()`는 `.mermaid-rendered` 안에 삽입된 실제 결과 SVG를 제거하지 않는다. 동일 ID가 있더라도 결과 컨테이너 내부이면 보존하고 Mermaid의 임시 DOM만 정리한다.
+
+## 보드 미리보기 연결
+
+`useBoardMermaids`는 INSERT 또는 UPDATE 성공 후 `onPreviewUpdate()`를 호출한다. 삭제와 레이어 변경은 현재 미리보기 갱신을 예약하지 않는다.
 
 ## 알려진 특이사항
 

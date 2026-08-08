@@ -70,3 +70,4 @@
 
 - 카드 이동은 반드시 `.table-drag-handle`(하단 바)에서만 시작된다 — 표 영역을 직접 드래그해도 카드가 움직이지 않는다(shell 자체의 `disableDragging`은 `dragHandleClassName`으로 시작점이 제한됨).
 - 전역 `pointerdown`/`pointerup` 리스너가 테이블 카드 인스턴스마다 하나씩 등록된다 — 보드에 표 카드가 많으면 그만큼 리스너도 늘어난다(다른 카드 타입, 예: `useMemoCard`도 유사 패턴을 쓰는지 비교 확인 필요 시 해당 문서 참조).
+- `useBoardTables`는 INSERT/UPDATE 성공 후 `onPreviewUpdate()`를 호출한다. 삭제와 레이어 변경은 현재 미리보기 갱신을 예약하지 않는다.

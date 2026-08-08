@@ -57,5 +57,5 @@
 
 ## 알려진 특이사항
 
-- `RenameBoardModal`과 z-index(70/80), 레이아웃 클래스, 오버레이·닫기 버튼 구조가 동일 — `aria-label="Close create board modal"`(77줄)이 이 컴포넌트에서는 정확히 맞지만, `RenameBoardModal`이 이 라벨 문자열을 그대로 복사해 써서 그쪽에서는 틀린 라벨이 된 것으로 보인다(상세: `rename-board-modal.md`).
+- `RenameBoardModal`과 z-index(70/80), 레이아웃 클래스, 오버레이·닫기 버튼 구조가 동일하다. 두 컴포넌트는 각각 문맥에 맞는 닫기 버튼 `aria-label`을 사용한다.
 - fetch 자체가 실패(네트워크 오류)하는 경우에 대한 처리가 없다 — 다른 모달들과 동일한 패턴의 공백.
