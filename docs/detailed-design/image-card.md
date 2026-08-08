@@ -81,11 +81,16 @@
 5. `images` 배열에 추가하고 `editingImageId`를 그 임시 id로 설정 → **업로드 즉시 편집 모드로 진입**
 
 ### `handleInsertImage` (190~222줄)
-`FormData`로 `multipart/form-data` POST(`/api/images`) → 성공 시 임시 카드의 Object URL을 `revokeObjectURL`로 해제하고 서버가 반환한 실제 `image` 객체로 교체, `editingImageId`를 새 id로 갱신(계속 편집 상태 유지).
+`FormData`로 `multipart/form-data` POST(`/api/images`) → 성공 시 임시 카드의 Object URL을 `revokeObjectURL`로 해제하고 서버가 반환한 실제 `image` 객체로 교체, `editingImageId`를 새 id로 갱신(계속 편집 상태 유지)한 뒤 `onPreviewUpdate()`를 호출한다.
+
+### `handleUpdateImage`
+PATCH 성공 시 로컬 카드의 메타데이터·좌표·크기를 교체하고 `onPreviewUpdate()`를 호출한다.
 
 ### `handleDeleteImage` (246~270줄)
 - `imageId < 0`(미저장 임시 카드): Object URL 해제 + 로컬 배열에서 제거, API 호출 없음
 - 저장된 이미지: `DELETE /api/images/{id}` → 성공 시 로컬 제거
+
+삭제와 레이어 변경은 현재 보드 미리보기 갱신을 예약하지 않는다.
 
 ## 알려진 특이사항
 

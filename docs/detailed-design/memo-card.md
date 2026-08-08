@@ -82,3 +82,4 @@
 - `memoState`/`memoContent`/`memoColor`가 Ref 미러 없이 `useCallback` 의존성 배열로만 최신값을 보장하는 방식은 다른 카드 훅(Table/Image/Mermaid)의 "Ref 미러" 패턴과 다르다 — 동작은 동일하지만 이 프로젝트 안에 두 가지 스타일이 공존한다.
 - 편집 중에는 `memo-focused` 클래스가 적용되지 않는다(106줄의 삼항 연산자가 `isEditing`을 우선시) — 시각적으로 "포커스됨"과 "편집 중"을 구분하려는 의도인지, 단순히 편집 중엔 `card-editing`이 이미 강조 스타일을 담당해서인지는 CSS 정의를 봐야 확정할 수 있다.
 - 빈 보드 클릭 시 포커스 해제(`onFocusClear`)가 저장 로직과 같은 리스너 안에 있어, 저장 조건(`isEditing && ...`)이 거짓이어도 포커스 해제 조건은 별도로 평가된다 — 편집 중이 아닐 때 카드를 포커스한 상태에서 빈 보드를 클릭하면 포커스만 해제되고 저장은 애초에 대상이 없다.
+- `useBoardMemos`는 INSERT/UPDATE 성공 후 `onPreviewUpdate()`를 호출한다. 삭제와 레이어 변경은 현재 미리보기 갱신을 예약하지 않는다.

@@ -65,6 +65,8 @@
 - 이미 그리기 모드 → 모드 종료 + `drawingTool`을 `"draw"`로 리셋 + `unsavedRef`가 true면 `saveStrokes(strokes)`(`PATCH /api/drawings/{boardId}`) 호출 후 플래그 초기화
 - 아니면 → `canEditCard`가 false면 `showPermissionMessage()`로 거부, true면 모드 진입 + 도구를 `"draw"`로 리셋
 
+`saveStrokes` 성공 후에는 `onPreviewUpdate()`를 호출해 저장된 획이 보드 목록 미리보기에 반영되도록 예약한다.
+
 ### `toggleDrawingTool(tool)` (72~74줄)
 같은 도구를 다시 누르면 `"draw"`로 되돌아가는 **토글** 방식 — `handleTogglePanTool`/`handleToggleEraseTool`이 이를 감쌈.
 

@@ -1,6 +1,6 @@
 # KyuBoard 기본설계서
 
-작성 기준: 현재 워크스페이스 구현
+작성 기준: 2026-08-08 현재 워크스페이스 구현
 
 이 문서는 기존 `kyuboard-detailed-design.md`의 시스템 설계와 `drawing-basic-design.md`의 드로잉 설계를 합친 KyuBoard 기준 문서다. 컴포넌트 내부 구현은 [상세설계 폴더](./detailed-design/)에서 관리한다.
 
@@ -29,6 +29,7 @@ KyuBoard는 큰 보드 위에 메모, 이미지, Mermaid 다이어그램, 표와
 | 카드 이동 | `react-rnd` |
 | 메모 편집 | TipTap StarterKit, Highlight, HardBreak |
 | 이미지 | Cloudinary, Next Image |
+| 보드 미리보기 | html-to-image, Canvas, Cloudinary |
 | 다이어그램 | Mermaid, Mermaid ZenUML 플러그인 |
 | 표 | TanStack Table |
 | Markdown | Turndown, React Markdown, remark-gfm |
@@ -64,9 +65,10 @@ flowchart TD
 ### 4.1 보드 목록 `/`
 
 1. `app/page.tsx`가 보드를 ID 오름차순으로 조회한다.
-2. `BoardList`가 목록, 미리보기 iframe, 생성 카드와 개별 액션 메뉴를 렌더링한다.
-3. 일반 사용자는 보드 열람만 가능하다.
-4. 관리자만 보드 생성, 이름 변경, 삭제를 실행할 수 있다.
+2. `app/page.tsx`가 각 보드의 고정 Cloudinary 미리보기 URL을 조립한다.
+3. `BoardList`가 정적 미리보기 이미지, 생성 카드와 개별 액션 메뉴를 렌더링한다.
+4. 일반 사용자는 보드 열람만 가능하다.
+5. 관리자만 보드 생성, 이름 변경, 삭제를 실행할 수 있다.
 
 ### 4.2 보드 `/boards/[boardId]`
 
@@ -107,6 +109,7 @@ BoardClient
 | 레이어 변경 | `useCardLayer` |
 | 드로잉 컬렉션과 도구 | `useBoardDrawing` |
 | 현재 획과 포인터 소유권 | `useDrawingPointer` |
+| 보드 미리보기 캡처와 업로드 예약 | `useBoardPreview` |
 
 `editingMemoId`, `editingImageId`, `editingMermaidId`, `editingTableId` 중 하나가 존재하거나 드로잉 모드이면 일반 보드 툴바를 숨긴다.
 
@@ -274,7 +277,22 @@ boardY = (clientY - svgRect.top) / zoom
 - 획 추가, 삭제, undo는 미저장 상태를 설정한다.
 - 완료 버튼으로 모드를 끝낼 때 변경이 있으면 전체 획 배열을 PATCH한다.
 
-## 13. Markdown 컴파일
+## 13. 보드 미리보기
+
+보드 목록은 보드 페이지를 다시 실행하는 `iframe` 대신 Cloudinary에 저장된 정적 WebP 이미지를 사용한다.
+
+1. 카드 INSERT/UPDATE 또는 드로잉 저장 성공 시 `schedulePreviewUpdate()`를 호출한다.
+2. 500ms 동안 연속 요청을 합치고, 업로드 중 새 요청이 생기면 완료 후 한 번 더 캡처한다.
+3. 두 번의 `requestAnimationFrame` 후 현재 `.board-scroll-layer` 뷰포트를 `html-to-image`의 Canvas로 캡처한다.
+4. 보이는 이미지 카드는 DOM 캡처에서 제외한 뒤 원본 이미지를 Canvas에 직접 그려 CORS·복제 오차를 줄인다.
+5. Canvas를 WebP로 변환해 `PUT /api/boards/[boardId]/preview`로 전송한다.
+6. Cloudinary의 `kyuboard/boards/{boardId}/PreviewIMG.webp`를 overwrite해 파일이 누적되지 않게 한다.
+
+새 보드 또는 미리보기 로드에 실패한 보드를 열 때는 `sessionStorage`에 보드 ID를 기록한다. 해당 보드가 마운트되면 최초 미리보기 생성을 한 번 예약한다.
+
+현재 삭제와 레이어 순서 변경은 미리보기 갱신 예약을 호출하지 않는다. 미리보기는 영속 데이터 자체가 아니라 목록 표시용 스냅샷이다.
+
+## 14. Markdown 컴파일
 
 `GET /api/boards/[boardId]/markdown`은 메모를 ID순으로 정렬하고 각 메모 꼭짓점을 포함하는 이미지, Mermaid, 표 중 z가 가장 높은 카드를 선택한다.
 
@@ -294,7 +312,7 @@ boardY = (clientY - svgRect.top) / zoom
 
 프리뷰는 Mermaid 블록을 분리해 공통 렌더러로 표시하고, 일반 섹션은 React Markdown + GFM + sanitize로 렌더링한다. 원문은 `.md` Blob으로 다운로드한다.
 
-## 14. 인증과 권한
+## 15. 인증과 권한
 
 1. 로그인 성공 시 사용자 ID와 HMAC-SHA256 서명을 결합한 HttpOnly 쿠키를 발급한다.
 2. API는 서명을 검증하고 DB에서 현재 사용자를 조회한다.
@@ -302,21 +320,21 @@ boardY = (clientY - svgRect.top) / zoom
 4. 보드 생성, 이름 변경, 삭제는 `role === "admin"`을 요구한다.
 5. 비밀번호는 랜덤 salt와 scrypt 결과를 `salt:hash`로 저장한다.
 
-## 15. 데이터베이스
+## 16. 데이터베이스
 
 | 테이블 | 핵심 데이터 | 관계 |
 | --- | --- | --- |
 | `users` | email, password_hash, permission_flg, role | 독립 |
 | `boards` | title, width, height, owner_id | 루트 |
-| `memos` | HTML, color, x/y/z, size | board 참조 |
-| `images` | Cloudinary ID/URL, x/y/z, size | board 참조, cascade |
-| `mermaids` | source, x/y/z, size | board 참조, cascade |
-| `tables` | source JSONB, x/y/z, size | board 참조, cascade |
-| `drawings` | 보드별 획 배열 JSONB | board 1:0..1, cascade |
+| `memos` | HTML, color, x/y/z, size | `board_id` 보유 |
+| `images` | Cloudinary ID/URL, x/y/z, size | `board_id` 보유 |
+| `mermaids` | source, x/y/z, size | `board_id` 보유 |
+| `tables` | source JSONB, x/y/z, size | `board_id` 보유 |
+| `drawings` | 보드별 획 배열 JSONB | `board_id` unique |
 
-`memos.board_id`는 외래키지만 cascade 옵션이 없어 보드 삭제 API가 관련 행을 명시적으로 삭제한다.
+현재 스키마는 카드·드로잉의 `board_id`에 외래키를 두지 않는다. 보드 삭제 API가 DB에 저장된 이미지의 Cloudinary 원본을 먼저 삭제하고 `images`, `memos`, `mermaids`, `drawings`, `tables`, `boards` 순서로 관련 행을 명시적으로 삭제한다.
 
-## 16. API 목록
+## 17. API 목록
 
 | Method | Path | 역할 |
 | --- | --- | --- |
@@ -329,11 +347,13 @@ boardY = (clientY - svgRect.top) / zoom
 | POST | `/api/cards/layer` | 레이어 이동과 정규화 |
 | GET/PATCH | `/api/drawings/[boardId]` | 획 조회, 전체 교체 |
 | GET | `/api/boards/[boardId]/markdown` | Markdown 컴파일 |
+| PUT | `/api/boards/[boardId]/preview` | 보드 미리보기 WebP 덮어쓰기 |
 
-## 17. 변경 원칙
+## 18. 변경 원칙
 
 - 새 카드 종류는 DB, 서버 조회, BoardClient 컬렉션, CRUD API, 레이어 API, Markdown 컴파일을 함께 검토한다.
 - 보드 좌표는 DB와 카드 로컬 상태 모두 확대 전 기준을 유지한다.
 - 전역 pointer listener에는 제외 영역 판정과 cleanup을 함께 정의한다.
 - 비동기 INSERT가 임시 ID를 실제 ID로 교체하는 흐름을 유지한다.
 - 드로잉 입력은 pen, touch, mouse와 draw, erase, pan 조합을 각각 검증한다.
+- 카드·드로잉의 영속 상태를 바꾸는 흐름은 보드 미리보기 갱신 필요 여부를 함께 검토한다.
