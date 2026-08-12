@@ -80,7 +80,11 @@ export default function RenameBoardModal({ boardId, title, onClose, onRenamed }:
                         />
                     </label>
 
-                    <BoardMessage type="error" message={errorMessage}/>
+                    <BoardMessage
+                        type="error"
+                        message={errorMessage}
+                        onDismiss={() => setErrorMessage("")}
+                    />
 
                     <div className="flex justify-end gap-2 pt-2">
                         <PressableButton

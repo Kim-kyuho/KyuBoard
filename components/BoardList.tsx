@@ -98,7 +98,11 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                 />
             )}
 
-            <BoardMessage type = "permission" message = {boardListMessage} />
+            <BoardMessage
+                type="permission"
+                message={boardListMessage}
+                onDismiss={() => setBoardListMessage("")}
+            />
 
             <main className="min-h-screen bg-neutral-100 px-6 py-24" 
                 onClick={() => 

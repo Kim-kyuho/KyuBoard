@@ -352,8 +352,16 @@ export default function BoardClient(
                 onClose={() => setMarkdownViewOpen(false)}
             />
         )}
-        <BoardMessage type = "permission" message = {permissionMessage} />
-        <BoardMessage type = "memo" message = {memoMessage} />
+        <BoardMessage
+            type="permission"
+            message={permissionMessage}
+            onDismiss={() => setPermissionMessage("")}
+        />
+        <BoardMessage
+            type="memo"
+            message={memoMessage}
+            onDismiss={() => setMemoMessage("")}
+        />
     
          <main
             className="h-screen w-screen select-none bg-neutral-200"

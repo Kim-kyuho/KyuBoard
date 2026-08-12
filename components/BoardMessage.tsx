@@ -1,12 +1,33 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 type BoardMessageType = "permission" | "memo" | "error"
 type BoardMessageProps = {
     message: string
     type: BoardMessageType
+    onDismiss?: () => void
 }
 
-export default function BoardMessage({ message, type }:BoardMessageProps){
+export default function BoardMessage({ message, type, onDismiss }:BoardMessageProps){
+    const onDismissRef = useRef(onDismiss);
+
+    useEffect(() => {
+        onDismissRef.current = onDismiss;
+    }, [onDismiss]);
+
+    useEffect(() => {
+        if (!message) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => {
+            onDismissRef.current?.();
+        }, 3500);
+
+        return () => window.clearTimeout(timer);
+    }, [message]);
+
     if(type === "permission"){
         return(
             <>

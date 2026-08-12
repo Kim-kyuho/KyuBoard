@@ -113,7 +113,11 @@ export default function CreateBoardModal({ ownerId, onClose, onCreated }: Create
                             ))}
                         </select>
                     </label>
-                    <BoardMessage type="error" message={errorMessage}/>
+                    <BoardMessage
+                        type="error"
+                        message={errorMessage}
+                        onDismiss={() => setErrorMessage("")}
+                    />
 
                     <div className="flex justify-end gap-2 pt-2">
                         <PressableButton
