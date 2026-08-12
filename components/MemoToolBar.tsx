@@ -89,7 +89,7 @@ export default function MemoToolBar({
                                 <Palette />
                             </CardToolButton>
                             {openMemoColorMenu && (
-                                <div className="absolute right-full top-0 mr-2 flex items-center gap-1 rounded-md bg-white p-1 shadow-md">
+                                <div className="absolute right-full top-0 mr-2 grid w-40 grid-cols-4 place-items-center gap-1.5 rounded-md bg-white p-2 shadow-md">
                                     {memoColors.map((color) => (
                                         <button
                                             key={color.value}

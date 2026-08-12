@@ -41,7 +41,7 @@
 | --- | --- | --- |
 | Undo (64줄) | 항상 | 클릭 즉시 `onUndo()`, 활성/비활성 조건 없음(스택이 비어도 버튼은 항상 눌림 가능 — 실제 무동작 처리는 `useBoardDrawing.handleUndoStroke`가 담당) |
 | Pen color (68줄) | 항상 | 팔레트 아이콘 색을 `penColor`로 동적 지정 |
-| 색상 팝업 (71줄) | `openColorMenu`일 때만 | `lib/board-stroke.ts`의 `penColors`(5색: Ink/Red/Blue/Green/Purple) 순회, 원형 스와치 버튼 |
+| 색상 팝업 (71줄) | `openColorMenu`일 때만 | `lib/board-stroke.ts`의 `penColors`(7색: Ink/Red/Yellow/Green/Sky/Blue/Purple) 순회, 원형 스와치 버튼 |
 | Pen width (89줄) | 항상 | `Minus` 아이콘의 `strokeWidth`로 현재 굵기 시각화 |
 | 굵기 팝업 (92줄) | `openWidthMenu`일 때만 | `penWidths`(Thin 2 / Medium 4 / Bold 8) 순회 |
 | Erase (107줄) | 항상, `aria-pressed={drawingTool==="erase"}` | 라벨이 상태에 따라 "Erase" ↔ "Stop erasing"으로 바뀜, 활성 시 아이콘이 `#ec4899`(activeToolColor) |

@@ -21,6 +21,8 @@ type DrawingLayerProps = {
     onErase: (start: StrokePoint, end: StrokePoint, radius: number) => void;
 };
 
+const markerStrokeOpacity = 0.82;
+
 function StrokePaths({ strokes }: { strokes: BoardStroke[] }) {
     return (
         <>
@@ -33,6 +35,7 @@ function StrokePaths({ strokes }: { strokes: BoardStroke[] }) {
                     fill="none"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    strokeOpacity={markerStrokeOpacity}
                 />
             ))}
         </>
@@ -115,6 +118,7 @@ export default function DrawingLayer({
                     fill="none"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    strokeOpacity={markerStrokeOpacity}
                 />
             )}
             {drawingTool === "erase" && eraserPoint && (
