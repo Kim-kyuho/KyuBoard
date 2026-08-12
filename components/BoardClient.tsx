@@ -300,6 +300,7 @@ export default function BoardClient(
         />
         <BoardToolBar
             cardEditing={isEditing || drawingMode}
+            drawingMode={drawingMode}
             boardZoom={boardZoom}
             setBoardZoom={setBoardZoom}
             setMenuOpen={setMenuOpen}
@@ -322,7 +323,6 @@ export default function BoardClient(
                 onTogglePan={handleTogglePanTool}
                 onToggleErase={handleToggleEraseTool}
                 onUndo={handleUndoStroke}
-                onDone={handleToggleDrawingMode}
             />
         )}
         {searchBarOpen && (
