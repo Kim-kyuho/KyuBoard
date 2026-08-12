@@ -16,10 +16,12 @@ export type BoardStroke = z.infer<typeof boardStrokeSchema>;
 
 export const penColors = [
     { name: "Ink", value: "#1f2937" },
-    { name: "Red", value: "#fc0c0c" },
-    { name: "Blue", value: "#3e5afe" },
-    { name: "Green", value: "#00b241" },
-    { name: "Purple", value: "#a00cfc" },
+    { name: "Red", value: "#f27f78" },
+    { name: "Yellow", value: "#edc34f" },
+    { name: "Green", value: "#6fba69" },
+    { name: "Sky", value: "#56b2d8" },
+    { name: "Blue", value: "#6678cf" },
+    { name: "Purple", value: "#ab70ce" },
 ];
 
 export const penWidths = [

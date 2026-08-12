@@ -16,6 +16,10 @@ export function useMemoToolBar({
         { name: "Pink", value: "#ffe4ec" },
         { name: "Blue", value: "#e0f2fe" },
         { name: "Green", value: "#dcfce7" },
+        { name: "Lavender", value: "#ede9fe" },
+        { name: "Peach", value: "#ffedd5" },
+        { name: "Mint", value: "#ccfbf1" },
+        { name: "Gray", value: "#f1f5f9" },
     ];
 
     const headingLevels = [
