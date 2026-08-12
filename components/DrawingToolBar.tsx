@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Eraser, Hand, Minus, Palette, Undo2 } from "lucide-react";
+import { Eraser, Hand, Minus, Palette, Undo2 } from "lucide-react";
 import { penColors, penWidths } from "@/lib/board-stroke";
 import type { DrawingTool } from "@/hooks/useBoardDrawing";
 import { CardToolButton, CardToolPortal } from "./CardToolPortal";
@@ -15,7 +15,6 @@ type DrawingToolBarProps = {
     onTogglePan: () => void;
     onToggleErase: () => void;
     onUndo: () => void;
-    onDone: () => void;
 };
 
 const activeToolColor = "#ec4899";
@@ -29,7 +28,6 @@ export default function DrawingToolBar({
     onTogglePan,
     onToggleErase,
     onUndo,
-    onDone,
 }: DrawingToolBarProps) {
     const [openColorMenu, setOpenColorMenu] = useState(false);
     const [openWidthMenu, setOpenWidthMenu] = useState(false);
@@ -124,10 +122,6 @@ export default function DrawingToolBar({
                 }}
             >
                 <Hand style={drawingTool === "pan" ? { color: activeToolColor } : undefined} />
-            </CardToolButton>
-
-            <CardToolButton label="Finish drawing" onClick={onDone}>
-                <Check />
             </CardToolButton>
         </CardToolPortal>
     );

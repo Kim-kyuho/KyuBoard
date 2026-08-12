@@ -14,7 +14,6 @@
 | `onTogglePan` | `() => void` | Pan 버튼 클릭(123줄) |
 | `onToggleErase` | `() => void` | Erase 버튼 클릭(112줄) |
 | `onUndo` | `() => void` | Undo 버튼 클릭(64줄) |
-| `onDone` | `() => void` | Check(완료) 버튼 클릭(130줄) |
 
 ## State (34~35줄)
 
@@ -46,7 +45,6 @@
 | 굵기 팝업 (92줄) | `openWidthMenu`일 때만 | `penWidths`(Thin 2 / Medium 4 / Bold 8) 순회 |
 | Erase (107줄) | 항상, `aria-pressed={drawingTool==="erase"}` | 라벨이 상태에 따라 "Erase" ↔ "Stop erasing"으로 바뀜, 활성 시 아이콘이 `#ec4899`(activeToolColor) |
 | Pan (118줄) | 항상, `aria-pressed={drawingTool==="pan"}` | 라벨 "Pan the board" ↔ "Stop panning", 활성 시 동일 강조색 |
-| Finish drawing (129줄) | 항상 | `Check` 아이콘, `onDone()` |
 
 ## 도구 상태 소유자: `useBoardDrawing` (`hooks/useBoardDrawing.ts`)
 
@@ -75,5 +73,5 @@
 
 ## 알려진 특이사항
 
-- 저장은 "완료" 버튼(모드 종료) 시점에만 일어난다 — 그리는 도중에는 서버에 반영되지 않으므로, 그리기 모드에서 벗어나지 않고 새로고침하면 미저장 획을 잃는다.
+- 저장은 `BoardToolBar` 왼쪽 아래의 `Check` 버튼으로 모드를 종료하는 시점에만 일어난다 — 그리는 도중에는 서버에 반영되지 않으므로, 그리기 모드에서 벗어나지 않고 새로고침하면 미저장 획을 잃는다.
 - Undo 버튼은 항상 클릭 가능하게 렌더되며(disabled 처리 없음) 빈 스택에서는 `handleUndoStroke`가 조용히 아무 것도 하지 않는다 — 사용자에게 "더 이상 undo할 게 없다"는 피드백이 없다.
