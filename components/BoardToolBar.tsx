@@ -130,7 +130,7 @@ export default function BoardToolBar({
                 </>
             )}
             {(!cardEditing || drawingMode) && (
-                <div className="board-toolbar toolbar-reveal fixed bottom-10 left-7 z-50000">
+                <div className="board-toolbar fixed bottom-10 left-10 z-50000">
                     <PressableButton
                         className="flex h-12 w-12 items-center justify-center rounded-full bg-white/80 p-0 shadow-md active:scale-90"
                         aria-label={drawingMode ? "Finish drawing" : "Start drawing"}
