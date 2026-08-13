@@ -14,6 +14,7 @@
 | `currentUser` | `CurrentUser \| null` | 로그인/비로그인 분기 (77줄) |
 | `onSignOut` | `() => void` | "Sign-out" 버튼 `onClick` (87줄) |
 | `onCompileMarkdown` | `(() => void) \| undefined` | "Compile to Markdown" 클릭 시 `setMenuOpen(false)` 후 옵셔널 체이닝으로 호출 (70줄) |
+| `onAbout` | `() => void` | 최하단 "About" 클릭 시 메뉴를 닫고 About 모달을 연다 |
 
 ## State
 
@@ -30,6 +31,7 @@
 | "Compile to Markdown" 항목 (65줄) | `currentBoard?.title`이 있을 때만 | 메뉴 닫고 `onCompileMarkdown?.()` |
 | 로그인 정보 블록 (78줄) | `currentUser`가 truthy | `[{role}]`과 이메일 표시, "Sign-out" 버튼 |
 | Sign-in/Sign-up 블록 (92줄) | `currentUser`가 falsy | 두 버튼 각각 메뉴를 닫고 대응 모달 오픈 상태를 true로 |
+| "About" 항목 | 메뉴가 열리면 항상 | 인증 영역 아래 최하단에 표시, `Info` 아이콘 사용 |
 
 ## 알려진 특이사항
 

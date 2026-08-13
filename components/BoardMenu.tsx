@@ -2,7 +2,7 @@
 
 import PressableButton from "./PressableButton";
 import { Dispatch, SetStateAction } from "react";
-import { EllipsisIcon } from "lucide-react";
+import { EllipsisIcon, FileText, Info } from "lucide-react";
 import Link from "next/link";
 import { CurrentUser } from "@/hooks/useBoardAuth";
 
@@ -17,6 +17,7 @@ type BoardMenuProps = {
     currentUser: CurrentUser | null;
     onSignOut: () => void;
     onCompileMarkdown?: () => void;
+    onAbout: () => void;
 };
 
 export default function BoardMenu( 
@@ -29,6 +30,7 @@ export default function BoardMenu(
     currentUser,
     onSignOut,
     onCompileMarkdown,
+    onAbout,
 }: BoardMenuProps) {
     return(
         <>
@@ -64,12 +66,13 @@ export default function BoardMenu(
                             </PressableButton>
                             <PressableButton
                                 variant="menu"
-                                className="font-bold text-pink-500"
+                                className="flex items-center gap-2 font-bold text-pink-500"
                                 onClick={() => {
                                     setMenuOpen(false);
                                     onCompileMarkdown?.();
                                 }}
                             >
+                                <FileText aria-hidden="true" className="h-4 w-4 shrink-0" />
                                 Compile to Markdown
                             </PressableButton>
                         </>
@@ -108,6 +111,19 @@ export default function BoardMenu(
                             </PressableButton>
                         </div>
                     )}
+                    <div className="mt-2 border-t border-neutral-200 pt-2">
+                        <PressableButton
+                            variant="menu"
+                            className="flex items-center gap-2 font-bold text-neutral-700"
+                            onClick={() => {
+                                setMenuOpen(false);
+                                onAbout();
+                            }}
+                        >
+                            <Info aria-hidden="true" className="h-4 w-4 shrink-0" />
+                            About
+                        </PressableButton>
+                    </div>
                 </div>
             )}
         </>

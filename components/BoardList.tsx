@@ -12,11 +12,13 @@ import CreateBoardModal from "./CreateBoardModal";
 import RenameBoardModal from "./RenameBoardModal";
 import ConfirmDialog from "./ConfirmDialog";
 import BoardActionMenu from "./BoardActionMenu";
+import AboutModal from "./AboutModal";
 import { useBoardAuth } from "@/hooks/useBoardAuth";
 import { BoardListBoard, useBoardList } from "@/hooks/useBoardList";
 
 export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [aboutOpen, setAboutOpen] = useState(false);
     const [failedPreviewIds, setFailedPreviewIds] = useState<Set<number>>(new Set());
     const {
         signInOpen,
@@ -66,7 +68,12 @@ export default function BoardList({ boards }: { boards: BoardListBoard[] }) {
                 setSignUpOpen={setSignUpOpen}
                 currentUser={currentUser}
                 onSignOut={handleSignOut}
+                onAbout={() => setAboutOpen(true)}
             />
+
+            {aboutOpen && (
+                <AboutModal onClose={() => setAboutOpen(false)} />
+            )}
 
             {signInOpen && (
                 <SignInModal
