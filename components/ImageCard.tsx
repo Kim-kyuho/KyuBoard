@@ -112,8 +112,8 @@ export default function ImageCard(props: ImageCardProps) {
                 }}
                 bounds="parent"
                 scale={zoom}
-                minWidth={180}
-                minHeight={180}
+                minWidth={48}
+                minHeight={48}
                 disableDragging={!isEditing}
                 enableResizing={isEditing}
                 onDragStop={handleDragStop}
