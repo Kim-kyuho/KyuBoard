@@ -123,6 +123,8 @@ export default function MemoCard(props: MemoCardProps) {
                 }}
                 bounds="parent"
                 scale={zoom}
+                minWidth={180}
+                minHeight={180}
                 dragHandleClassName="memo-drag-handle"
                 disableDragging={!isEditing || !canEdit}
                 enableResizing={isEditing}

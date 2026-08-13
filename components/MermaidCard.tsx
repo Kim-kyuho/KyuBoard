@@ -109,6 +109,8 @@ export default function MermaidCard({
                 }}
                 bounds="parent"
                 scale={zoom}
+                minWidth={180}
+                minHeight={180}
                 dragHandleClassName="mermaid-drag-handle"
                 disableDragging={!isEditing || !canEdit}
                 enableResizing={isEditing}
