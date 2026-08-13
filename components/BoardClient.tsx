@@ -10,6 +10,7 @@ import BoardToolBar from "./BoardToolBar";
 import BoardMessage from "./BoardMessage";
 import BoardSearchPanel from "./BoardSearchPanel";
 import BoardMarkdownView from "./BoardMarkdownView";
+import AboutModal from "./AboutModal";
 import MermaidCard from "./MermaidCard";
 import TableCard from "./TableCard";
 import DrawingLayer from "./DrawingLayer";
@@ -95,6 +96,7 @@ export default function BoardClient(
         boardViewportRef: cardLocationRef,
     });
     const [menuOpen, setMenuOpen] = useState(false);
+    const [aboutOpen, setAboutOpen] = useState(false);
     const [markdownViewOpen, setMarkdownViewOpen] = useState(false);
     const [permissionMessage, setPermissionMessage] = useState("");
     const showPermissionMessage = () => {
@@ -297,6 +299,7 @@ export default function BoardClient(
             onSignOut={handleSignOut}
             currentUser={currentUser}
             onCompileMarkdown={() => setMarkdownViewOpen(true)}
+            onAbout={() => setAboutOpen(true)}
         />
         <BoardToolBar
             cardEditing={isEditing || drawingMode}
@@ -351,6 +354,9 @@ export default function BoardClient(
                 boardId={currentBoard.boardId}
                 onClose={() => setMarkdownViewOpen(false)}
             />
+        )}
+        {aboutOpen && (
+            <AboutModal onClose={() => setAboutOpen(false)} />
         )}
         <BoardMessage
             type="permission"

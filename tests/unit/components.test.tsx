@@ -4,6 +4,8 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import CreateBoardModal from "@/components/CreateBoardModal";
 import PressableButton from "@/components/PressableButton";
 import RenameBoardModal from "@/components/RenameBoardModal";
+import AboutModal from "@/components/AboutModal";
+import BoardMenu from "@/components/BoardMenu";
 
 describe("PressableButton", () => {
     it("applies and clears touch feedback while forwarding callbacks", () => {
@@ -33,6 +35,40 @@ describe("ConfirmDialog", () => {
         fireEvent.click(screen.getByRole("button", { name: "No" }));
         expect(onConfirm).toHaveBeenCalledOnce();
         expect(onCancel).toHaveBeenCalledOnce();
+    });
+});
+
+describe("BoardMenu and AboutModal", () => {
+    it("renders the Compile and About icons", () => {
+        render(
+            <BoardMenu
+                menuOpen
+                currentBoard={{ title: "KyuBoard" }}
+                setMenuOpen={vi.fn()}
+                setSignInOpen={vi.fn()}
+                setSignUpOpen={vi.fn()}
+                currentUser={null}
+                onSignOut={vi.fn()}
+                onCompileMarkdown={vi.fn()}
+                onAbout={vi.fn()}
+            />
+        );
+
+        expect(screen.getByRole("button", { name: "Compile to Markdown" }).querySelector(".lucide-file-text")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "About" }).querySelector(".lucide-info")).toBeInTheDocument();
+    });
+
+    it("renders contact links and closes About with Escape", () => {
+        const onClose = vi.fn();
+        render(<AboutModal onClose={onClose} />);
+
+        expect(screen.getByRole("dialog", { name: "About" })).toBeVisible();
+        expect(screen.getByRole("link", { name: /Email:/ })).toHaveAttribute("href", "mailto:kgh9002@icloud.com");
+        expect(screen.getByRole("link", { name: /GitHub:/ })).toHaveAttribute("href", "https://github.com/Kim-kyuho/");
+        expect(screen.getByRole("link", { name: /Blog:/ })).toHaveAttribute("href", "https://kyulog.vercel.app");
+
+        fireEvent.keyDown(document, { key: "Escape" });
+        expect(onClose).toHaveBeenCalledOnce();
     });
 });
 
