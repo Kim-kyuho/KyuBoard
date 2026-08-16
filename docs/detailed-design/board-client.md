@@ -46,6 +46,7 @@
 | `useBoardDrawing` | 획·드로잉 모드·도구 | DrawingLayer와 DrawingToolBar |
 | `useBoardScroll` | 보드 패닝과 입력 보호 | `.board-scroll-layer` pointer 이벤트 |
 | `useCardLayer` | 네 카드 타입의 z 갱신 | 각 카드 전용 툴바의 front/back |
+| `useAiAssistant` | AI 채팅, 사용 가능 여부, 미저장 AI 카드 | 메모·Mermaid·표 컬렉션의 setter와 insert/update 핸들러를 주입 |
 
 ## 파생 편집 상태
 
@@ -77,6 +78,8 @@ BoardNavigator (boardNavigatorOpen)
 SignInModal / SignUpModal
 BoardMarkdownView (markdownViewOpen)
 AboutModal (aboutOpen)
+AiAssistantButton
+AiChatPanel (aiPanelOpen)
 BoardMessage(permission / memo)
 main
 └ board-scroll-layer
@@ -124,6 +127,7 @@ key={drawingMode ? "drawing-active" : "drawing-inactive"}
 | 보드 pointer down/move/up | `handleBoardPanStart` / `Move` / `End` |
 | BoardMenu Compile | `setMarkdownViewOpen(true)` |
 | BoardMenu About | `setAboutOpen(true)` |
+| AI 어시스턴트 버튼 | `handleToggleAiPanel` — 권한과 서버 AI 설정 여부를 확인한 뒤 채팅 패널을 연다 |
 | BoardToolBar 탐색/검색 토글 | `setBoardNavigatorOpen` / `setSearchBarOpen` — 한쪽을 열면 다른 쪽과 `menuOpen`을 닫는다 |
 | main click | `setPermissionMessage("")`, `setMemoMessage("")` |
 

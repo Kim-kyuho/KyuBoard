@@ -12,6 +12,8 @@ import BoardSearchPanel from "./BoardSearchPanel";
 import BoardNavigator from "./BoardNavigator";
 import BoardMarkdownView from "./BoardMarkdownView";
 import AboutModal from "./AboutModal";
+import AiAssistantButton from "./AiAssistantButton";
+import AiChatPanel from "./AiChatPanel";
 import MermaidCard from "./MermaidCard";
 import TableCard from "./TableCard";
 import DrawingLayer from "./DrawingLayer";
@@ -30,6 +32,7 @@ import { useBoardScroll } from "@/hooks/useBoardScroll";
 import { useBoardSearch } from "@/hooks/useBoardSearch";
 import { useBoardZoom } from "@/hooks/useBoardZoom";
 import { useBoardPreview } from "@/hooks/useBoardPreview";
+import { useAiAssistant } from "@/hooks/useAiAssistant";
 
 interface Board {
   boardId: number;
@@ -239,6 +242,39 @@ export default function BoardClient(
     });
 
     const {
+        aiPanelOpen,
+        messages: aiMessages,
+        sending: aiSending,
+        saving: aiSaving,
+        hasPendingCards: hasPendingAiCards,
+        handleToggleAiPanel,
+        handleSendMessage,
+        handleSavePendingCards,
+        discardPendingCards,
+    } = useAiAssistant({
+        boardId: currentBoard.boardId,
+        boardWidth,
+        boardHeight,
+        boardZoom,
+        cardLocationRef,
+        canEditCard,
+        showPermissionMessage,
+        setPermissionMessage,
+        memos,
+        mermaids,
+        tables,
+        setMemos,
+        setMermaids,
+        setTables,
+        onInsertMemo: handleInsertMemo,
+        onInsertMermaid: handleInsertMermaid,
+        onInsertTable: handleInsertTable,
+        onUpdateMemo: handleUpdateMemo,
+        onUpdateMermaid: handleUpdateMermaid,
+        onUpdateTable: handleUpdateTable,
+    });
+
+    const {
         strokes,
         drawingMode,
         drawingTool,
@@ -372,6 +408,22 @@ export default function BoardClient(
         )}
         {aboutOpen && (
             <AboutModal onClose={() => setAboutOpen(false)} />
+        )}
+        <AiAssistantButton
+            aiPanelOpen={aiPanelOpen}
+            onToggle={handleToggleAiPanel}
+        />
+        {aiPanelOpen && (
+            <AiChatPanel
+                messages={aiMessages}
+                sending={aiSending}
+                saving={aiSaving}
+                hasPendingCards={hasPendingAiCards}
+                onSend={handleSendMessage}
+                onSave={handleSavePendingCards}
+                onDiscard={discardPendingCards}
+                onClose={handleToggleAiPanel}
+            />
         )}
         <BoardMessage
             type="permission"

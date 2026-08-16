@@ -15,6 +15,7 @@ KyuBoard는 큰 보드 위에 메모, 이미지, Mermaid 다이어그램, 표와
 - Apple Pencil, 터치, 마우스 기반 자유 드로잉
 - 카드 배치를 Markdown 문서로 컴파일하고 다운로드
 - 로그인, 관리자 승인 기반 편집 권한
+- AI 어시스턴트로 메모·표·Mermaid 카드 생성
 - 프로젝트 정보와 외부 링크 안내
 
 드로잉은 카드가 아니다. 하나의 보드에 속한 획 목록을 보드 전체 SVG 레이어에서 렌더링하며 Markdown 컴파일 대상에 포함하지 않는다.
@@ -34,6 +35,7 @@ KyuBoard는 큰 보드 위에 메모, 이미지, Mermaid 다이어그램, 표와
 | 다이어그램 | Mermaid, Mermaid ZenUML 플러그인 |
 | 표 | TanStack Table |
 | Markdown | Turndown, React Markdown, remark-gfm |
+| AI 어시스턴트 | Google Gen AI SDK(Gemini), function calling, 모델 폴백 |
 | 검증 | Zod 및 API별 수동 검증 |
 | 테스트 | Vitest, Testing Library, Playwright |
 
@@ -90,6 +92,8 @@ BoardClient
 ├── BoardNavigator
 ├── BoardMarkdownView
 ├── AboutModal
+├── AiAssistantButton
+├── AiChatPanel
 ├── BoardMessage
 ├── MemoCard[] / MemoEditor / MemoToolBar
 ├── ImageCard[] / ImageToolBar
@@ -119,6 +123,7 @@ BoardClient
 | 드로잉 컬렉션과 도구 | `useBoardDrawing` |
 | 현재 획과 포인터 소유권 | `useDrawingPointer` |
 | 보드 미리보기 캡처와 업로드 예약 | `useBoardPreview` |
+| AI 채팅, 사용 가능 여부, 미저장 AI 카드 | `useAiAssistant` |
 
 `editingMemoId`, `editingImageId`, `editingMermaidId`, `editingTableId` 중 하나가 존재하거나 드로잉 모드이면 일반 보드 툴바를 숨긴다.
 
@@ -226,6 +231,7 @@ stateDiagram-v2
 편집 카드 z             ACTIVE_CARD_Z = 49999
 드로잉 SVG z            ACTIVE_CARD_Z - 1
 보드 메뉴/툴바 z        50000
+AI 어시스턴트 버튼 z    50001
 Markdown 모달 z         60000 / 60001
 ```
 
@@ -353,7 +359,49 @@ erase와 pan은 토글이며 같은 도구를 다시 누르면 draw로 되돌아
 
 프리뷰는 Mermaid 블록을 분리해 공통 렌더러로 표시하고, 일반 섹션은 React Markdown + GFM + sanitize로 렌더링한다. 원문은 `.md` Blob으로 다운로드한다.
 
-## 16. 인증과 권한
+## 16. AI 어시스턴트
+
+자연어 요청을 받아 메모, 표, Mermaid 카드를 만들어 보드에 올리거나, 이미 있는 카드를 다시 배치한다. 이미지 카드는 생성 대상이 아니다. 재배치는 좌표만 바꾸며, 문서 순서는 메모 생성 순서로 고정되어 있어 재배치로 바꿀 수 없다.
+
+### 16.1 사용 조건
+
+- Gemini API 키는 서버 환경변수 `AI_API_KEY` 하나를 쓴다. 배포 환경에서는 Vercel 프로젝트 설정에 넣으며 클라이언트로는 내려가지 않는다.
+- 채팅 요청은 카드 편집과 같은 권한, 즉 로그인과 관리자 승인을 요구한다.
+- 호출 비용은 서버 소유자의 Google 계정에 청구되므로, 승인 게이트가 곧 비용 통제 수단이다.
+
+### 16.2 생성 흐름
+
+1. 보드 메뉴 아래의 `AiAssistantButton`을 누르면 `GET /api/ai/status`로 사용 가능 여부를 확인한다.
+2. 쓸 수 없으면 이유를 메시지로 띄우고, 쓸 수 있으면 화면 아래 `AiChatPanel`을 연다.
+3. 요청을 `POST /api/ai/chat`으로 보낸다.
+4. 서버는 `create_board_cards` 함수 하나만 선언하고, 모델이 넘긴 인자를 zod로 다시 검증한다.
+5. 검증된 계획을 클라이언트가 임시 카드로 보드에 올린다. 이 시점까지 DB 쓰기는 없다.
+6. 사용자가 저장을 누르면 메모, Mermaid, 표 순서로 INSERT한다. 취소하면 로컬에서 제거한다.
+
+### 16.3 좌표를 모델에게 맡기지 않는다
+
+Markdown 컴파일이 메모 꼭짓점 포함 여부로 카드를 고르므로 좌표가 조금만 어긋나도 문서 구조가 달라진다. 모델은 섹션 목록이라는 논리 구조만 만들고, 좌표는 `layoutBoardPlan`이 결정한다.
+
+- 배치 방식은 모델이 `column`, `grid`, `tree` 중에서 고른다. 한 줄기 문서는 column, 대등한 항목 나열은 grid, 상위-하위 구조가 있는 설계는 tree다.
+- `tree`는 깊이를 x축, 형제 순서를 y축으로 쓴다. 모델은 `parentIndex`로 상위 섹션만 지정하고 좌표는 지정하지 않는다.
+- 메모 폭은 300 고정, 높이는 블록 수로 추정해 200에서 460 사이로 정한다.
+- 첨부 카드는 해당 메모의 오른쪽 위 꼭짓점을 `attachmentOverlap`(24)만큼 겹쳐 감싼다.
+- 다음 섹션까지의 간격은 `max(메모 높이, 첨부 높이 - 겹침) + sectionGap`(80)이다.
+- `sectionGap`이 `attachmentOverlap`보다 크므로 첨부 카드가 같은 열 위쪽 메모의 꼭짓점을 덮지 않는다.
+- 열 간격이 첨부 카드의 오른쪽 끝보다 크므로 옆 열 메모의 꼭짓점도 덮지 않는다.
+- 카드는 보드 밖으로 나가지 않는다. 자리가 모자라면 그 섹션을 배치하지 않고 사용자에게 알린다.
+
+이 관계가 깨지면 카드가 엉뚱한 메모에 붙는다. `tests/unit/ai-board-plan.test.ts`가 컴파일 SQL과 같은 판정식으로 검증한다.
+
+### 16.4 메모 본문 생성
+
+모델은 HTML을 만들지 않는다. `heading`, `paragraph`, `bulletList`, `orderedList`, `codeBlock`, `blockquote` 블록만 내놓고 `memoBlocksToHtml`이 이스케이프해 TipTap 호환 HTML로 바꾼다. 메모 표시 모드가 `dangerouslySetInnerHTML`을 쓰므로 이 경계가 XSS 방어선이다.
+
+### 16.5 저장 순서
+
+문서 순서는 메모의 serial ID 순서다. 임시 카드를 저장할 때 메모를 계획 순서대로 하나씩 INSERT해야 ID 순서가 문서 순서와 일치한다.
+
+## 17. 인증과 권한
 
 1. 로그인 성공 시 사용자 ID와 HMAC-SHA256 서명을 결합한 HttpOnly 쿠키를 발급한다.
 2. API는 서명을 검증하고 DB에서 현재 사용자를 조회한다.
@@ -361,7 +409,7 @@ erase와 pan은 토글이며 같은 도구를 다시 누르면 draw로 되돌아
 4. 보드 생성, 이름 변경, 삭제는 `role === "admin"`을 요구한다.
 5. 비밀번호는 랜덤 salt와 scrypt 결과를 `salt:hash`로 저장한다.
 
-## 17. 데이터베이스
+## 18. 데이터베이스
 
 | 테이블 | 핵심 데이터 | 관계 |
 | --- | --- | --- |
@@ -375,7 +423,7 @@ erase와 pan은 토글이며 같은 도구를 다시 누르면 draw로 되돌아
 
 현재 스키마는 카드·드로잉의 `board_id`에 외래키를 두지 않는다. 보드 삭제 API가 DB에 저장된 이미지의 Cloudinary 원본을 먼저 삭제하고 `images`, `memos`, `mermaids`, `drawings`, `tables`, `boards` 순서로 관련 행을 명시적으로 삭제한다.
 
-## 18. API 목록
+## 19. API 목록
 
 | Method | Path | 역할 |
 | --- | --- | --- |
@@ -389,8 +437,10 @@ erase와 pan은 토글이며 같은 도구를 다시 누르면 draw로 되돌아
 | GET/PATCH | `/api/drawings/[boardId]` | 획 조회, 전체 교체 |
 | GET | `/api/boards/[boardId]/markdown` | Markdown 컴파일 |
 | PUT | `/api/boards/[boardId]/preview` | 보드 미리보기 WebP 덮어쓰기 |
+| GET | `/api/ai/status` | AI 어시스턴트 사용 가능 여부 |
+| POST | `/api/ai/chat` | AI 어시스턴트 대화와 카드 계획 생성 |
 
-## 19. 변경 원칙
+## 20. 변경 원칙
 
 - 새 카드 종류는 DB, 서버 조회, BoardClient 컬렉션, CRUD API, 레이어 API, Markdown 컴파일을 함께 검토한다.
 - 보드 좌표는 DB와 카드 로컬 상태 모두 확대 전 기준을 유지한다.
@@ -398,3 +448,5 @@ erase와 pan은 토글이며 같은 도구를 다시 누르면 draw로 되돌아
 - 비동기 INSERT가 임시 ID를 실제 ID로 교체하는 흐름을 유지한다.
 - 드로잉 입력은 pen, touch, mouse와 draw, erase, pan 조합을 각각 검증한다.
 - 카드·드로잉의 영속 상태를 바꾸는 흐름은 보드 미리보기 갱신 필요 여부를 함께 검토한다.
+- 카드 배치 상수나 컴파일 접점 규칙을 바꾸면 `layoutBoardPlan`의 배치 관계도 함께 검토한다.
+- 모델이 만든 문자열은 어떤 경로로도 HTML로 신뢰하지 않는다.
