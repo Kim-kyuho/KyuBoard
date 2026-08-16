@@ -2,13 +2,17 @@ import { describe, expect, it } from "vitest";
 import {
     attachmentOverlap,
     layoutModes,
+    boardDeletionSchema,
+    boardEditSchema,
     boardPlanSchema,
     estimateMemoHeight,
     getPlanCapacity,
     layoutArrangement,
     layoutBoardPlan,
+    maxMemoHeight,
     memoBlocksToHtml,
     memoWidth,
+    minMemoHeight,
     planTableToSource,
     type BoardPlan,
     type PlannedBoard,
@@ -79,12 +83,57 @@ describe("memoBlocksToHtml", () => {
 describe("estimateMemoHeight", () => {
     it("stays within the configured bounds", () => {
         const short = estimateMemoHeight([{ type: "paragraph", text: "hi" }]);
-        const long = estimateMemoHeight([
-            { type: "bulletList", items: Array.from({ length: 40 }, () => "a long bullet item text") },
+        const huge = estimateMemoHeight([
+            { type: "bulletList", items: Array.from({ length: 200 }, () => "a long bullet item text") },
         ]);
 
-        expect(short).toBe(200);
-        expect(long).toBe(460);
+        expect(short).toBe(minMemoHeight);
+        expect(huge).toBe(maxMemoHeight);
+    });
+
+    it("grows vertically as content grows", () => {
+        const heights = [1, 5, 15, 30].map((count) =>
+            estimateMemoHeight([
+                { type: "bulletList", items: Array.from({ length: count }, () => "bullet item") },
+            ])
+        );
+
+        heights.slice(1).forEach((height, index) => {
+            expect(height).toBeGreaterThanOrEqual(heights[index]);
+        });
+        expect(heights.at(-1)).toBeGreaterThan(heights[0]);
+    });
+
+    // 한글은 반각 글자의 두 배 폭을 쓴다. 글자 수만 세면 카드 밖으로 넘친다.
+    it("reserves more height for wide characters than for latin text", () => {
+        const latin = estimateMemoHeight([{ type: "paragraph", text: "a".repeat(200) }]);
+        const korean = estimateMemoHeight([{ type: "paragraph", text: "가".repeat(200) }]);
+
+        expect(korean).toBeGreaterThan(latin);
+    });
+
+    it("counts explicit line breaks as separate lines", () => {
+        const single = estimateMemoHeight([{ type: "paragraph", text: "one line" }]);
+        const multi = estimateMemoHeight([{ type: "paragraph", text: "a\nb\nc\nd\ne\nf\ng\nh" }]);
+
+        expect(multi).toBeGreaterThan(single);
+    });
+
+    it("gives headings more height than a paragraph of the same text", () => {
+        const paragraph = estimateMemoHeight([{ type: "paragraph", text: "제목으로 쓸 문장" }]);
+        const heading = estimateMemoHeight([{ type: "heading", level: 1, text: "제목으로 쓸 문장" }]);
+
+        expect(heading).toBeGreaterThanOrEqual(paragraph);
+    });
+});
+
+describe("memo card sizing", () => {
+    it("keeps memo width at the 400 maximum", () => {
+        expect(memoWidth).toBe(400);
+    });
+
+    it("allows memos to grow well past the old fixed height", () => {
+        expect(maxMemoHeight).toBeGreaterThan(minMemoHeight * 2);
     });
 });
 
@@ -599,5 +648,104 @@ describe("layout modes", () => {
 
             expect(owners).toHaveLength(1);
         });
+    });
+});
+
+describe("boardEditSchema", () => {
+    it("accepts partial memo edits", () => {
+        expect(
+            boardEditSchema.safeParse({ memos: [{ id: 3, color: "#e0f2fe" }] }).success
+        ).toBe(true);
+        expect(
+            boardEditSchema.safeParse({
+                memos: [{ id: 3, blocks: [{ type: "paragraph", text: "new" }] }],
+            }).success
+        ).toBe(true);
+    });
+
+    it("accepts an empty object because every card type is optional", () => {
+        expect(boardEditSchema.safeParse({}).success).toBe(true);
+    });
+
+    // 임시 카드(음수 ID)는 아직 서버에 없으므로 고칠 대상이 될 수 없다.
+    it("rejects non-positive card ids", () => {
+        expect(boardEditSchema.safeParse({ memos: [{ id: -1, color: "#e0f2fe" }] }).success).toBe(false);
+        expect(boardEditSchema.safeParse({ mermaids: [{ id: 0, source: "x" }] }).success).toBe(false);
+    });
+
+    it("rejects a colour outside the palette", () => {
+        expect(boardEditSchema.safeParse({ memos: [{ id: 1, color: "#123456" }] }).success).toBe(false);
+    });
+
+    it("rejects an empty mermaid source", () => {
+        expect(boardEditSchema.safeParse({ mermaids: [{ id: 1, source: "" }] }).success).toBe(false);
+    });
+});
+
+describe("boardDeletionSchema", () => {
+    it("accepts id lists for every card type", () => {
+        const result = boardDeletionSchema.safeParse({
+            memoIds: [1, 2],
+            mermaidIds: [3],
+            tableIds: [4],
+            imageIds: [5],
+        });
+
+        expect(result.success).toBe(true);
+    });
+
+    it("rejects non-positive ids so temporary cards cannot be targeted", () => {
+        expect(boardDeletionSchema.safeParse({ memoIds: [-1] }).success).toBe(false);
+        expect(boardDeletionSchema.safeParse({ tableIds: [0] }).success).toBe(false);
+    });
+});
+
+describe("image attachments", () => {
+    const imagePlan: BoardPlan = {
+        sections: [
+            {
+                blocks: [{ type: "paragraph", text: "with picture" }],
+                attachment: { type: "image", prompt: "a calm blue mountain", alt: "mountain" },
+            },
+            { blocks: [{ type: "paragraph", text: "no picture" }] },
+        ],
+    };
+
+    it("accepts an image attachment with a prompt", () => {
+        expect(boardPlanSchema.safeParse(imagePlan).success).toBe(true);
+    });
+
+    it("rejects an image attachment without a prompt", () => {
+        const result = boardPlanSchema.safeParse({
+            sections: [
+                { blocks: [{ type: "paragraph", text: "x" }], attachment: { type: "image", alt: "a" } },
+            ],
+        });
+
+        expect(result.success).toBe(false);
+    });
+
+    it("places a generated image at the owning memo's corner", () => {
+        const planned = layoutBoardPlan(imagePlan, { x: 0, y: 0 }, largeBoard, [
+            { sectionIndex: 0, data: "AAAA", mimeType: "image/png", alt: "mountain" },
+        ]);
+
+        expect(planned.images).toHaveLength(1);
+        expect(planned.images[0].data).toBe("AAAA");
+
+        const owner = planned.memos[0];
+        expect(containsCorner(planned.images[0], { x: owner.x + owner.width, y: owner.y })).toBe(true);
+
+        // 다른 메모에는 절대 걸리지 않는다.
+        getMemoCorners(planned.memos[1]).forEach((corner) => {
+            expect(containsCorner(planned.images[0], corner)).toBe(false);
+        });
+    });
+
+    it("leaves the memo without an attachment when image generation failed", () => {
+        const planned = layoutBoardPlan(imagePlan, { x: 0, y: 0 }, largeBoard, []);
+
+        expect(planned.images).toHaveLength(0);
+        expect(planned.memos).toHaveLength(2);
     });
 });

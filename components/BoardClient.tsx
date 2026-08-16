@@ -272,6 +272,13 @@ export default function BoardClient(
         onUpdateMemo: handleUpdateMemo,
         onUpdateMermaid: handleUpdateMermaid,
         onUpdateTable: handleUpdateTable,
+        images,
+        setImages,
+        onInsertImage: handleInsertImage,
+        onDeleteMemo: handleDeleteMemo,
+        onDeleteMermaid: handleDeleteMermaid,
+        onDeleteTable: handleDeleteTable,
+        onDeleteImage: handleDeleteImage,
     });
 
     const {

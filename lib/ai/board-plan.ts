@@ -16,12 +16,19 @@ export const memoBlockSchema = z.discriminatedUnion("type", [
     z.object({ type: z.literal("blockquote"), text: z.string() }),
 ]);
 
+export const planTableSchema = z.object({
+    columns: z.array(z.string()).min(1).max(8),
+    rows: z.array(z.array(z.string())).min(1).max(20),
+});
+
 export const planAttachmentSchema = z.discriminatedUnion("type", [
     z.object({ type: z.literal("mermaid"), source: z.string().min(1) }),
+    z.object({ type: z.literal("table"), ...planTableSchema.shape }),
+    // 이미지는 사용자가 명시적으로 요청했을 때만 붙인다. 생성 비용과 저장 용량이 따로 든다.
     z.object({
-        type: z.literal("table"),
-        columns: z.array(z.string()).min(1).max(8),
-        rows: z.array(z.array(z.string())).min(1).max(20),
+        type: z.literal("image"),
+        prompt: z.string().min(1).max(600),
+        alt: z.string().max(120).optional(),
     }),
 ]);
 
@@ -71,6 +78,36 @@ export const boardArrangementSchema = z.object({
     sections: z.array(arrangementSectionSchema).min(1).max(64),
 });
 
+// 이미 보드에 있는 카드의 내용을 고칠 때 쓰는 계획. 좌표와 크기는 건드리지 않는다.
+export const boardEditSchema = z.object({
+    memos: z
+        .array(
+            z.object({
+                id: z.number().int().positive(),
+                blocks: z.array(memoBlockSchema).min(1).optional(),
+                color: z.enum(planMemoColors).optional(),
+            })
+        )
+        .max(24)
+        .optional(),
+    mermaids: z
+        .array(z.object({ id: z.number().int().positive(), source: z.string().min(1) }))
+        .max(24)
+        .optional(),
+    tables: z
+        .array(z.object({ id: z.number().int().positive(), ...planTableSchema.shape }))
+        .max(24)
+        .optional(),
+});
+
+// 카드를 지우는 계획. 저장 전까지는 화면에서만 사라진다.
+export const boardDeletionSchema = z.object({
+    memoIds: z.array(z.number().int().positive()).max(64).optional(),
+    mermaidIds: z.array(z.number().int().positive()).max(64).optional(),
+    tableIds: z.array(z.number().int().positive()).max(64).optional(),
+    imageIds: z.array(z.number().int().positive()).max(64).optional(),
+});
+
 export type MemoBlock = z.infer<typeof memoBlockSchema>;
 export type PlanAttachment = z.infer<typeof planAttachmentSchema>;
 export type PlanSection = z.infer<typeof planSectionSchema>;
@@ -78,20 +115,36 @@ export type BoardPlan = z.infer<typeof boardPlanSchema>;
 export type LayoutMode = z.infer<typeof layoutModeSchema>;
 export type ArrangementSection = z.infer<typeof arrangementSectionSchema>;
 export type BoardArrangement = z.infer<typeof boardArrangementSchema>;
+export type BoardEdit = z.infer<typeof boardEditSchema>;
+export type BoardDeletion = z.infer<typeof boardDeletionSchema>;
+
+/**
+ * 서버가 이미지 모델로 만들어 낸 결과. 모델은 프롬프트만 내놓고 바이트는 만들 수 없으므로,
+ * 계획과 분리해 섹션 인덱스로 이어 붙인다.
+ */
+export type GeneratedImage = {
+    sectionIndex: number;
+    /** data URI가 아니라 순수 base64 문자열. */
+    data: string;
+    mimeType: string;
+    alt: string;
+};
 
 // 배치 상수. 값 사이의 관계가 컴파일 정확성을 좌우하므로 개별로 바꾸지 않는다.
 // - attachmentOverlap < 카드 최소 변: 카드가 꼭짓점을 "엄격히" 포함해야 한다.
 // - sectionGap > attachmentOverlap: 첨부 카드가 이전 메모의 아래쪽 꼭짓점을 덮으면 안 된다.
 // - columnGap > 0: 열이 넘어갈 때 옆 열 메모의 꼭짓점을 덮으면 안 된다.
-export const memoWidth = 300;
+// 메모는 가로를 400으로 고정하고 내용에 맞춰 세로로 늘린다. 글이 카드 밖으로 넘치면 안 된다.
+export const memoWidth = 400;
 export const minMemoHeight = 200;
-export const maxMemoHeight = 460;
+export const maxMemoHeight = 1200;
 export const attachmentOverlap = 24;
 export const sectionGap = 80;
 export const columnGap = 60;
 export const boardMargin = 40;
 export const mermaidSize = { width: 480, height: 360 };
 export const tableSize = { width: 560, height: 360 };
+export const imageSize = { width: 400, height: 300 };
 
 export type BoardBounds = { width: number; height: number };
 
@@ -120,10 +173,23 @@ export type PlannedTable = {
     height: number;
 };
 
+/** 이미지는 생성 결과를 저장 시점에 업로드하므로, 배치 단계에서는 바이트를 그대로 들고 있는다. */
+export type PlannedImage = {
+    /** data URI가 아니라 순수 base64 문자열. */
+    data: string;
+    mimeType: string;
+    alt: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+};
+
 export type PlannedBoard = {
     memos: PlannedMemo[];
     mermaids: PlannedMermaid[];
     tables: PlannedTable[];
+    images: PlannedImage[];
     /** 보드에 자리가 없어 배치하지 못하고 버린 섹션 수. */
     droppedSections: number;
 };
@@ -164,22 +230,55 @@ export const memoBlocksToHtml = (blocks: MemoBlock[]) =>
         })
         .join("");
 
+// 메모 본문 높이 추정용 상수. 실제 렌더 폭(memoWidth - 좌우 패딩)에서 나온 값이다.
+// 넘치는 것보다 남는 쪽이 안전하므로 전부 넉넉하게 잡는다.
+const memoVerticalPadding = 40;
+const memoLineHeight = 28;
+const memoBlockGap = 12;
+/** 폭 400 카드 한 줄에 들어가는 반각 기준 글자 수. */
+const unitsPerLine = 46;
+
+// 한글·한자·가나는 반각 글자의 두 배 폭을 차지한다. 글자 수만 세면 한국어 메모에서 글이 넘친다.
+const wideCharacter = /[\u1100-\u11FF\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFF60]/;
+
+const getVisualUnits = (text: string) =>
+    [...text].reduce((total, character) => total + (wideCharacter.test(character) ? 2 : 1), 0);
+
+// 줄바꿈은 그대로 한 줄을 더 쓰고, 긴 줄은 폭에 맞춰 접힌다.
+const countWrappedLines = (text: string, capacity: number) =>
+    text
+        .split(/\r?\n/)
+        .reduce((total, line) => total + Math.max(1, Math.ceil(getVisualUnits(line) / capacity)), 0);
+
+// 제목은 글자가 커서 줄 높이도 높고 한 줄에 들어가는 글자도 적다.
+const headingScale: Record<number, number> = { 1: 2, 2: 1.7, 3: 1.4, 4: 1.2, 5: 1.1, 6: 1 };
+
 const countBlockLines = (block: MemoBlock) => {
     if (block.type === "bulletList" || block.type === "orderedList") {
-        return block.items.reduce((total, item) => total + Math.max(1, Math.ceil(item.length / 32)), 0);
+        // 불릿 기호와 들여쓰기만큼 한 줄에 들어가는 글자가 줄어든다.
+        return block.items.reduce(
+            (total, item) => total + countWrappedLines(item, unitsPerLine - 6),
+            0
+        );
     }
     if (block.type === "codeBlock") {
-        return block.text.split("\n").length;
+        return countWrappedLines(block.text, unitsPerLine - 8);
     }
     if (block.type === "heading") {
-        return 1;
+        const scale = headingScale[block.level] ?? 1;
+
+        return countWrappedLines(block.text, Math.max(8, unitsPerLine / scale)) * scale;
     }
-    return Math.max(1, Math.ceil(block.text.length / 32));
+    if (block.type === "blockquote") {
+        return countWrappedLines(block.text, unitsPerLine - 6);
+    }
+
+    return countWrappedLines(block.text, unitsPerLine);
 };
 
 export const estimateMemoHeight = (blocks: MemoBlock[]) => {
     const lines = blocks.reduce((total, block) => total + countBlockLines(block), 0);
-    const estimated = 96 + lines * 26;
+    const estimated = memoVerticalPadding + lines * memoLineHeight + blocks.length * memoBlockGap;
 
     return Math.min(maxMemoHeight, Math.max(minMemoHeight, Math.round(estimated)));
 };
@@ -198,8 +297,13 @@ export const planTableToSource = (columns: string[], rows: string[][]): TableSou
     };
 };
 
-const getAttachmentSize = (attachment: PlanAttachment) =>
-    attachment.type === "mermaid" ? mermaidSize : tableSize;
+const getAttachmentSize = (attachment: PlanAttachment) => {
+    if (attachment.type === "mermaid") {
+        return mermaidSize;
+    }
+
+    return attachment.type === "image" ? imageSize : tableSize;
+};
 
 type Size = { width: number; height: number };
 
@@ -448,7 +552,8 @@ export const getPlanCapacity = (bounds: BoardBounds) => {
 export const layoutBoardPlan = (
     plan: BoardPlan,
     origin: { x: number; y: number },
-    bounds: BoardBounds
+    bounds: BoardBounds,
+    generatedImages: GeneratedImage[] = []
 ): PlannedBoard => {
     const memoHeights = plan.sections.map((section) => estimateMemoHeight(section.blocks));
     const items: LayoutItem[] = plan.sections.map((section, index) => ({
@@ -458,7 +563,8 @@ export const layoutBoardPlan = (
     }));
 
     const { placements, droppedCount } = placeItems(items, bounds, origin, plan.layout ?? "column");
-    const planned: PlannedBoard = { memos: [], mermaids: [], tables: [], droppedSections: droppedCount };
+    const imageBySection = new Map(generatedImages.map((image) => [image.sectionIndex, image]));
+    const planned: PlannedBoard = { memos: [], mermaids: [], tables: [], images: [], droppedSections: droppedCount };
 
     placements.forEach((placement, index) => {
         if (!placement) {
@@ -488,6 +594,20 @@ export const layoutBoardPlan = (
                 y: placement.attachment.y,
                 ...size,
             });
+        } else if (section.attachment.type === "image") {
+            // 이미지 생성에 실패한 섹션은 첨부 없이 메모만 남긴다.
+            const generated = imageBySection.get(index);
+
+            if (generated) {
+                planned.images.push({
+                    data: generated.data,
+                    mimeType: generated.mimeType,
+                    alt: generated.alt,
+                    x: placement.attachment.x,
+                    y: placement.attachment.y,
+                    ...size,
+                });
+            }
         } else {
             planned.tables.push({
                 source: planTableToSource(section.attachment.columns, section.attachment.rows),

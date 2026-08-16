@@ -69,10 +69,8 @@ export default function AiChatPanel({
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3">
                 {messages.length === 0 ? (
-                    <p className="py-6 text-center text-xs leading-5 text-neutral-400">
-                        &ldquo;마이크로서비스 아키텍처를 설계해줘&rdquo; 처럼 요청하면
-                        <br />
-                        메모·표·다이어그램 카드를 보드에 올려 드립니다.
+                    <p className="py-6 text-center text-sm leading-6 text-neutral-400">
+                        무엇을 도와드릴까요?
                     </p>
                 ) : (
                     <ul className="flex flex-col gap-3">
@@ -131,7 +129,7 @@ export default function AiChatPanel({
                     className="h-9 flex-1 rounded-md bg-neutral-50 px-3 text-sm text-neutral-900 outline-none"
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
-                    placeholder="무엇을 설계할까요?"
+                    placeholder="메시지를 입력하세요"
                     aria-label="AI assistant message"
                     disabled={sending}
                 />

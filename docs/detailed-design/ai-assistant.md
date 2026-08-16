@@ -1,13 +1,18 @@
 # AI 어시스턴트 상세설계
 
-소스: `components/AiAssistantButton.tsx`, `components/AiChatPanel.tsx`, `components/GeminiIcon.tsx`, `hooks/useAiAssistant.ts`, `lib/ai/board-plan.ts`, `lib/ai/assistant.ts`
+소스: `components/AiAssistantButton.tsx`, `components/AiChatPanel.tsx`, `components/GeminiIcon.tsx`, `hooks/useAiAssistant.ts`, `lib/ai/board-plan.ts`, `lib/ai/assistant.ts`, `lib/ai/kyuboard-guide.ts`
 
 ## 역할
 
-자연어 요청을 받아 두 가지 일을 한다. 저장 여부는 두 경우 모두 사용자가 결정한다.
+자연어 요청을 받아 다섯 가지 일을 한다. 보드를 바꾸는 네 가지는 모두 저장 여부를 사용자가 결정한다.
 
-- **생성**: 메모, 표, Mermaid 카드를 임시 카드로 만들어 보드에 올린다. 이미지 카드는 만들지 않는다.
+- **생성**: 메모, 표, Mermaid 카드를 임시 카드로 만들어 보드에 올린다.
 - **재배치**: 이미 보드에 있는 카드의 위치를 다시 잡는다. 내용은 바꾸지 않고 좌표만 바꾼다.
+- **고치기**: 이미 있는 카드의 내용을 바꾼다. 좌표와 크기는 건드리지 않는다.
+- **지우기**: 이미 있는 카드를 지운다. 저장 전까지는 화면에서만 사라진다.
+- **사용법 안내**: KyuBoard 조작법 질문에 함수 호출 없이 말로 답한다.
+
+이미지 카드는 사용자가 그림을 **명시적으로 요청했을 때만** 만든다. 그냥 문서를 만들어 달라는 요청에는 붙이지 않는다.
 
 ## AiAssistantButton
 
@@ -43,6 +48,9 @@ lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼�
 | `messages` | `[]` | 대화 기록. 서버에는 최근 20건만 보낸다 |
 | `sending` / `saving` | `false` | 중복 요청 방지 |
 | `pendingCards` | 빈 배열 3종 | 아직 저장하지 않은 AI 카드의 임시 ID |
+| `pendingImageIds` | `[]` | 아직 업로드하지 않은 AI 이미지 카드의 임시 ID |
+| `pendingEdits` | 빈 배열 3종 | 고치기 전 카드 원본. Discard가 이 값으로 되돌린다 |
+| `pendingDeletions` | 빈 배열 4종 | 지운 카드 원본. Discard가 그대로 되살린다 |
 
 카드 컬렉션은 소유하지 않는다. `useBoardMemos`/`useBoardMermaids`/`useBoardTables`의 setter와 insert 핸들러를 주입받아 쓴다.
 
@@ -99,6 +107,37 @@ lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼�
 
 > 초기 구현에는 이 경계 처리가 없어 한 열로 계속 아래로만 쌓았고, 3840x2160 보드에서 카드가 y=3322까지 내려가 보드 밖에 배치되는 버그가 있었다. `tests/unit/ai-board-plan.test.ts`의 `layoutBoardPlan board bounds`가 이 회귀를 막는다.
 
+## 고치기와 지우기
+
+둘 다 **이미 저장된 카드(양수 ID)만** 대상이다. 스키마가 ID를 양수로 제한하므로 아직 저장되지 않은 임시 카드는 모델이 지목할 수 없다.
+
+- 고치기는 부분 수정이 아니라 **전체 교체**다. 메모 본문을 바꿀 때 모델은 그 메모의 blocks 전체를 다시 보낸다. 일부만 보내면 나머지가 사라지므로 프롬프트에서 명시적으로 막는다.
+- 고치기는 좌표와 크기를 건드리지 않는다. 사용자가 맞춰 둔 배치를 AI가 흔들지 않는다.
+- 지우기는 저장 전까지 로컬 배열에서만 제거하고 원본을 `pendingDeletions`에 보관한다. Discard를 누르면 그대로 되살아난다.
+- 저장할 때 지우기를 **가장 마지막에** 실행한다. 앞 단계가 실패해도 원본이 남아 있게 하기 위해서다.
+- 같은 카드를 연달아 고치면 `pendingEdits`는 맨 처음 값을 유지한다. Discard가 항상 AI가 손대기 전 상태로 돌아간다.
+- 모델이 목록에 없는 ID를 지어내면 적용 단계에서 걸러지고 "찾지 못했습니다" 안내가 나간다.
+
+## 이미지 생성
+
+기본적으로 만들지 않는다. 사용자가 그림을 명시적으로 요청했을 때만 계획에 `image` 첨부가 붙는다.
+
+1. 모델은 바이트를 만들 수 없으므로 `prompt`와 `alt`만 낸다.
+2. 서버가 `assistantImageModels` 순서대로 이미지 모델을 호출해 base64를 받는다. 한 번에 최대 `maxGeneratedImages`(3)장이다.
+3. 결과는 계획과 분리된 `GeneratedImage[]`로 내려가고, 섹션 인덱스로 다시 이어 붙는다.
+4. 클라이언트가 base64를 `File`로 바꿔 임시 이미지 카드에 담는다. 미리보기는 수동 업로드와 같은 Object URL이다.
+5. **Cloudinary 업로드는 저장을 눌렀을 때 일어난다.** Discard하면 업로드도 저장도 없고 Object URL만 해제한다.
+
+한 장이 실패해도 나머지는 살린다. 실패한 섹션은 첨부 없이 메모만 남고 채팅에 몇 장을 건너뛰었는지 알린다.
+
+> 2026-08-17 실측: 무료 티어 키로는 이미지 모델이 429(quota exceeded)로 거절된다. 생성·게이팅·폴백 경로는 정상 동작하지만 실제 그림을 받으려면 결제가 설정된 계정이 필요하다.
+
+## 사용법 안내
+
+`lib/ai/kyuboard-guide.ts`가 조작법을 사용자 관점으로 정리해 두고, 시스템 프롬프트 끝에 그대로 붙는다. 조작법 질문에는 함수를 호출하지 않고 이 내용을 근거로 답하게 하고, 여기 없는 기능은 없다고 답하도록 못박는다.
+
+조작 방식이나 컴파일 규칙이 바뀌면 이 파일도 함께 고쳐야 한다. 코드와 자동으로 연결되지 않는다.
+
 ## 재배치 (`layoutArrangement`)
 
 모델은 좌표가 아니라 `layout`과 `{ memoId, parentIndex?, attachment?: { type, cardId } }` 목록만 낸다. 좌표는 생성과 같은 `placeItems`가 정하므로 컴파일 접점 규칙이 그대로 지켜진다.
@@ -136,12 +175,12 @@ lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼�
 ## 모델 호출 (`lib/ai/assistant.ts`)
 
 - 공급자는 Google Gemini(`@google/genai`)다.
-- 모델은 `assistantModels` 순서대로 시도해 첫 성공을 쓴다. 기본 순서는 `gemini-3.6-flash` → `gemini-3.5-flash`다.
+- 모델은 `assistantModels` 순서대로 시도해 첫 성공을 쓴다. 기본 순서는 `gemini-3.7-flash` → `gemini-3.6-flash` → `gemini-3.5-flash`다.
 - `GEMINI_MODEL`을 지정하면 그 모델을 맨 앞에 두고, 나머지는 폴백으로 남긴다.
 - 429·500·503·NOT_FOUND는 다음 모델로 넘어간다. 그 외 오류(잘못된 요청 등)는 재시도해도 같으므로 즉시 던진다.
 - 모든 모델이 실패하면 `AssistantUnavailableError`를 던지고 라우트가 503과 안내 문구로 응답한다.
-- 함수 선언은 `create_board_cards`(생성)와 `rearrange_board_cards`(재배치) 둘이고, 스키마는 `parametersJsonSchema`로 일반 JSON Schema를 그대로 넘긴다.
-- 두 함수가 동시에 호출되면 재배치를 우선 처리한다.
+- 함수 선언은 `create_board_cards`, `rearrange_board_cards`, `edit_board_cards`, `delete_board_cards` 넷이고, 스키마는 `parametersJsonSchema`로 일반 JSON Schema를 그대로 넘긴다.
+- 여러 함수가 동시에 호출되면 파괴적인 순서로 하나만 고른다. 지우기 > 고치기 > 재배치 > 생성.
 - Gemini는 어시스턴트 역할을 `model`로 부르므로 `toGeminiContents`가 역할 이름을 변환한다.
 - 함수 호출이 없으면 계획 없이 답변만 반환한다.
 - 함수 인자는 `boardPlanSchema`로 다시 검증한다. JSON Schema를 통과해도 모델 출력은 신뢰하지 않는다.
@@ -150,7 +189,7 @@ lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼�
 
 - 대화 기록은 컴포넌트 state에만 있고 저장하지 않는다. 새로고침하면 사라진다.
 - 새 계획이 오면 이전 미저장 카드를 먼저 걷어낸다. 한 번에 하나의 제안만 보드에 남는다.
-- `isValidApiKeyFormat`은 접두사를 고정하지 않는다. Google이 키 형식을 `AIza...`에서 `AQ....`로 전환하는 중이라, 접두사를 하드코딩하면 정상 키가 거부된다. 형식 검사는 오타를 거르는 사전 필터일 뿐이고 진짜 관문은 `models.list()` 호출이다.
 - 저장 도중 일부 INSERT가 실패하면 성공한 카드는 남는다. 실패 메시지는 각 컬렉션 훅이 표시한다.
 - 호출 횟수 제한이 없다. 승인된 사용자가 여러 명이 되면 요청 제한을 함께 검토해야 한다.
-- 최신 모델일수록 503(과부하)이 잦다. 기본값을 최신으로 올릴 때는 폴백 목록도 함께 확인한다.
+- 혼잡(503)은 모델과 시간대에 따라 다르다. 실측으로 순서를 정하고, 폴백 목록을 항상 함께 둔다.
+- 이미지 생성 쿼터는 대화 모델과 별개다. 대화가 되는 키라도 그림은 429가 날 수 있다.
