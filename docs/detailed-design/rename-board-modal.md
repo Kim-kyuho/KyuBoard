@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | `boardId` | `number` | PATCH 요청 경로(`/api/boards/{boardId}`) 및 body의 `boardId` (21, 27줄) |
 | `title` | `string` | input의 `defaultValue` 초기값 (78줄) |
-| `onClose` | `() => void` | 오버레이 클릭(46줄), X 버튼(56줄), Cancel 버튼(89줄) 3곳에서 호출 |
+| `onClose` | `() => void` | 오버레이 클릭(46줄), X 버튼(56줄), Cancel 버튼(93줄) 3곳에서 호출 |
 | `onRenamed` | `(boardId: number, title: string) => void` | PATCH 성공 시 `data.board.boardId`, `data.board.title`을 그대로 전달 (38줄) |
 
 ## State
@@ -39,9 +39,9 @@
 | 제목 `h2` | 항상 | - | 텍스트 "Rename board" 고정 |
 | 닫기 버튼 (54줄) | 항상 | - | `aria-label="Close rename board modal"` |
 | `input[name=title]` (74줄) | 항상 | - | `defaultValue={title}`, `required`, 비제어 컴포넌트(uncontrolled) — 리렌더링돼도 `title` prop이 다시 반영되지 않음 |
-| `BoardMessage` (83줄) | `errorMessage`가 truthy일 때만 실질적으로 보임 | - | error 타입 고정 |
-| Cancel 버튼 (86줄) | 항상 | - | `type="button"`, `onClose` 호출 |
-| Rename 버튼 (93줄) | 항상 | - | `type="submit"` |
+| `BoardMessage` (83줄) | `errorMessage`가 truthy일 때만 실질적으로 보임 | - | error 타입 고정, `onDismiss`로 3500ms 후 자동 초기화 |
+| Cancel 버튼 (90줄) | 항상 | - | `type="button"`, `onClose` 호출 |
+| Rename 버튼 (97줄) | 항상 | - | `type="submit"` |
 
 ## 외부 의존성
 

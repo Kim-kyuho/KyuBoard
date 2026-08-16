@@ -9,7 +9,7 @@
 | `memo` | `MemoCardData` | `useMemoCard`에 전달, `Rnd default/position/size` 초기값 |
 | `zoom` | `number` | `Rnd scale` |
 | `canEdit` | `boolean` | `editMemo` 권한 체크 |
-| `isEditing` | `boolean` | 편집/표시 마크업 분기(136줄), `Rnd disableDragging/enableResizing`, `MemoToolBar`/드래그 핸들 노출 |
+| `isEditing` | `boolean` | 편집/표시 마크업 분기(138줄), `Rnd disableDragging/enableResizing`, `MemoToolBar`/드래그 핸들 노출 |
 | `isFocused` | `boolean` | `useMemoCard`에 전달 — 포커스 클래스(`memo-focused`, 106줄)와 바깥 클릭 시 포커스 해제 판정에 사용 |
 | `onFocus`/`onFocusClear` | `() => void` | 카드 클릭 시 포커스 설정, 빈 보드 클릭 시 해제 |
 | `onEditing`/`onEditingClear` | `() => void` | 편집 진입/종료 |
@@ -24,7 +24,7 @@
 | State | 초기값 | 갱신 지점 | 소비 지점 |
 | --- | --- | --- | --- |
 | `deleteDialogOpen` | `false` | `openDeleteDialog`/`confirmDelete`·`closeDeleteDialog` | `ConfirmDialog` 렌더 조건 |
-| `dragHandlePressed` | `false` | 드래그 핸들 pointer 이벤트 4종(MemoCard.tsx 173~176줄) | 핸들 바 색상 |
+| `dragHandlePressed` | `false` | 드래그 핸들 pointer 이벤트 4종(MemoCard.tsx 175~178줄) | 핸들 바 색상 |
 | `memoState` | `{x,y, width: memo.width??300, height: memo.height??200}` | `handleDragStop`/`handleResizeStop` | `Rnd position/size` |
 | `memoContent` | `memo.content` | `MemoEditor`의 `onChange={setMemoContent}` | 표시 모드의 `dangerouslySetInnerHTML`, 편집 모드의 `MemoEditor content` prop, 저장 payload |
 | `memoColor` | `memo.color` | `MemoToolBar`의 `onChangeColor={setMemoColor}` | 카드 배경색(`backgroundColor: memoColor`), 저장 payload |
@@ -62,18 +62,18 @@
 | `handleDragStop`/`handleResizeStop` | `TableCard` 등과 달리 `Ref` 동기화 없이 `setMemoState`만 호출(함수형 업데이트 사용, 231, 235줄) |
 | `confirmDelete` (247~251줄) | `onDelete(id)` → `onEditingClear()` → `setDeleteDialogOpen(false)` |
 
-## MemoCard 렌더 구조 (102~210줄)
+## MemoCard 렌더 구조 (102~212줄)
 
 | 요소 | 조건 | 비고 |
 | --- | --- | --- |
-| `Rnd` (104줄) | 항상 | `className`에 `isEditing`이면 `card-editing`, 아니면 `isFocused`일 때만 `memo-focused` 추가(106줄) — **편집 중에는 focused 스타일이 적용되지 않는다** |
-| 편집 모드 wrapper (137줄) | `isEditing` | `ref={memoFocusRef}`, `tabIndex={-1}`, `cursor:"text"`, 내부에 `MemoEditor` |
-| 표시 모드 wrapper (153줄) | `!isEditing` | `onDoubleClick={editMemo}`, `onPointerDown={handleDoubleTap}`, 내부에 `dangerouslySetInnerHTML={{__html: memoContent}}`인 `div.memo-editor-content` |
-| 드래그 핸들 (171줄) | `isEditing`일 때만 | 다른 카드들과 동일 패턴 |
-| `MemoToolBar` (185줄) | `isEditing`일 때만 | 서식 콜백들이 전부 `memoEditorRef.current?.xxx()` 형태로 연결 |
-| `ConfirmDialog` (201줄) | `deleteDialogOpen` | 메시지 "Delete this memo?" |
+| `Rnd` (104줄) | 항상 | `className`에 `isEditing`이면 `card-editing`, 아니면 `isFocused`일 때만 `memo-focused` 추가(106줄) — **편집 중에는 focused 스타일이 적용되지 않는다**. `minWidth`/`minHeight`는 180(126~127줄) |
+| 편집 모드 wrapper (139줄) | `isEditing` | `ref={memoFocusRef}`, `tabIndex={-1}`, `cursor:"text"`, 내부에 `MemoEditor` |
+| 표시 모드 wrapper (155줄) | `!isEditing` | `onDoubleClick={editMemo}`, `onPointerDown={handleDoubleTap}`, 내부에 `dangerouslySetInnerHTML={{__html: memoContent}}`인 `div.memo-editor-content` |
+| 드래그 핸들 (173줄) | `isEditing`일 때만 | 다른 카드들과 동일 패턴 |
+| `MemoToolBar` (187줄) | `isEditing`일 때만 | 서식 콜백들이 전부 `memoEditorRef.current?.xxx()` 형태로 연결 |
+| `ConfirmDialog` (203줄) | `deleteDialogOpen` | 메시지 "Delete this memo?" |
 
-## `memoEditorRef` 연결 (100, 146, 184~198줄)
+## `memoEditorRef` 연결 (100, 149, 186~200줄)
 
 `MemoCard`가 `useRef<MemoEditorHandle>(null)`을 직접 소유(훅이 아니라 컴포넌트 레벨) → `MemoEditor`에 `ref`로 전달 → `MemoToolBar`의 각 서식 콜백(`onBold`, `onItalic` 등)이 `memoEditorRef.current?.toggleXxx()`를 호출하는 어댑터 역할을 한다. `onChangeColor`만 예외적으로 에디터가 아니라 `setMemoColor`(이 카드의 로컬 state)에 직접 연결된다.
 

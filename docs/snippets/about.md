@@ -10,7 +10,7 @@
 - [포인터 이벤트와 타이머](./pointer-and-timer-events.md)
 - [보드 줌과 패닝](./board-zoom-and-pan.md)
 - [Rnd 카드 조작](./rnd-card-controls.md)
-- [컨텍스트 메뉴](./context-menu.md)
+- [카드 도구 메뉴](./context-menu.md)
 - [DB 저장 흐름](./db-save-flow.md)
 - [API Route 예외처리](./api-route-patterns.md)
 - [인증과 권한](./auth-and-permission.md)

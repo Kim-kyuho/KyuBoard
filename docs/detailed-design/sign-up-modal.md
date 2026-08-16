@@ -37,7 +37,7 @@
 
 공통 클래스에 `hasError`면 `border-rose-300 bg-rose-50`, 아니면 `border-neutral-300` 추가.
 
-## 렌더 구조 / z-index (59~183줄)
+## 렌더 구조 / z-index (59~182줄)
 
 | 요소 | z-index/조건 | 비고 |
 | --- | --- | --- |

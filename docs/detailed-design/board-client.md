@@ -23,7 +23,9 @@
 | --- | --- | --- |
 | `cardLocationRef` | `null` | `.board-scroll-layer` DOM Ref. 카드 중앙 배치, 패닝, 미리보기 캡처가 공유한다. |
 | `menuOpen` | `false` | `BoardMenu` 표시 상태 |
+| `aboutOpen` | `false` | `AboutModal` 표시 상태, `BoardMenu`의 `onAbout`으로 설정 |
 | `markdownViewOpen` | `false` | `BoardMarkdownView` 표시 상태 |
+| `boardNavigatorOpen` | `false` | `BoardNavigator` 표시 상태, `BoardToolBar`가 토글 |
 | `permissionMessage` | `""` | 인증·권한·카드 API 오류 메시지 |
 
 `showPermissionMessage()`는 로그인 사용자가 있으면 관리자 승인 대기, 없으면 로그인 필요 메시지를 설정한다.
@@ -37,7 +39,7 @@
 | `useBoardAuth` | 사용자와 인증 모달 | 권한 플래그 및 인증 UI |
 | `useBoardImages` | 이미지 컬렉션과 업로드 | 이미지 input, CRUD, 편집 ID |
 | `useBoardMemos` | 메모 컬렉션 | CRUD, 편집 ID |
-| `useBoardMemoFocus` | 포커스 메모와 이전/다음 이동 | MemoCard 포커스, 탐색 버튼 |
+| `useBoardMemoFocus` | 포커스 메모, 이전/다음 이동, 연번 이동 | MemoCard 포커스, `BoardNavigator`의 `focusedMemoOrder`·`memoCount`·`focusMemoByOrder` |
 | `useBoardSearch` | 검색어·결과·인덱스 | 검색 패널과 메모 포커스 |
 | `useBoardMermaids` | Mermaid 컬렉션 | CRUD, 편집 ID |
 | `useBoardTables` | Table 컬렉션 | CRUD, 편집 ID |
@@ -71,8 +73,10 @@ BoardMenu
 BoardToolBar
 DrawingToolBar (drawingMode)
 BoardSearchPanel (searchBarOpen)
+BoardNavigator (boardNavigatorOpen)
 SignInModal / SignUpModal
 BoardMarkdownView (markdownViewOpen)
+AboutModal (aboutOpen)
 BoardMessage(permission / memo)
 main
 └ board-scroll-layer
@@ -119,7 +123,9 @@ key={drawingMode ? "drawing-active" : "drawing-inactive"}
 | 숨김 이미지 input `onChange` | `handleUploadImage` |
 | 보드 pointer down/move/up | `handleBoardPanStart` / `Move` / `End` |
 | BoardMenu Compile | `setMarkdownViewOpen(true)` |
-| main click | permission/memo 메시지 초기화 |
+| BoardMenu About | `setAboutOpen(true)` |
+| BoardToolBar 탐색/검색 토글 | `setBoardNavigatorOpen` / `setSearchBarOpen` — 한쪽을 열면 다른 쪽과 `menuOpen`을 닫는다 |
+| main click | `setPermissionMessage("")`, `setMemoMessage("")` |
 
 ## 변경 시 확인 지점
 

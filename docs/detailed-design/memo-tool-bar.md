@@ -38,13 +38,13 @@
 
 | 메뉴 | 옵션 |
 | --- | --- |
-| `memoColors` (14~19줄) | Yellow `#fffadc`, Pink `#ffe4ec`, Blue `#e0f2fe`, Green `#dcfce7` |
-| `headingLevels` (21~28줄) | h1~h6, `headingIcons`(MemoToolBar.tsx 44~51줄)로 각 레벨을 `Heading1`~`Heading6` 아이콘에 매핑 |
+| `memoColors` (14~23줄) | Yellow `#fffadc`, Pink `#ffe4ec`, Blue `#e0f2fe`, Green `#dcfce7`, Lavender `#ede9fe`, Peach `#ffedd5`, Mint `#ccfbf1`, Gray `#f1f5f9` |
+| `headingLevels` (25~32줄) | h1~h6, `headingIcons`(MemoToolBar.tsx 44~51줄)로 각 레벨을 `Heading1`~`Heading6` 아이콘에 매핑 |
 
 ## 렌더 구조 세부
 
 - `CardToolPortal animate={false}` (83줄) — 다른 툴바들과 달리 포탈 자체의 `toolbar-reveal` 애니메이션을 끄고, 내부 `div`에 `key={toolMode}`를 줘서(84줄) **모드가 바뀔 때마다 그 div를 새로 마운트시켜 `toolbar-reveal` 애니메이션을 수동으로 재생**시킨다(`card-tool-portal.md`의 "MemoToolBar는 animate=false를 쓴다" 설명의 실제 구현).
-- 색상/제목 팝업은 둘 다 `absolute right-full top-0 mr-2`로 버튼 왼쪽에 가로로 펼쳐진다.
+- 색상/제목 팝업은 둘 다 `absolute right-full top-0 mr-2`로 버튼 왼쪽에 펼쳐진다. 색상 팝업은 8색을 `grid w-40 grid-cols-4`로 4열 2행 배치하고(92줄), 제목 팝업은 6단계를 `flex items-center gap-1`로 한 줄에 배치한다(135줄).
 
 ## 알려진 특이사항
 
