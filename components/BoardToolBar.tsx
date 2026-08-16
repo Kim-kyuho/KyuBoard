@@ -146,7 +146,7 @@ export default function BoardToolBar({
                             setMenuOpen(false);
                         }}
                     >
-                        {drawingMode ? <Check className="h-6 w-6" /> : <Pencil className="h-6 w-6" />}
+                        {drawingMode ? <Check className="h-6 w-6 text-neutral-900" /> : <Pencil className="h-6 w-6 text-neutral-900" />}
                     </PressableButton>
                 </div>
             )}
