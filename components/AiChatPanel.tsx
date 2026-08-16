@@ -70,7 +70,7 @@ export default function AiChatPanel({
             <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3">
                 {messages.length === 0 ? (
                     <p className="py-6 text-center text-sm leading-6 text-neutral-400">
-                        무엇을 도와드릴까요?
+                        How can I help?
                     </p>
                 ) : (
                     <ul className="flex flex-col gap-3">
@@ -95,14 +95,14 @@ export default function AiChatPanel({
                 {sending && (
                     <p className="mt-3 flex items-center gap-2 text-xs text-neutral-400">
                         <Loader2 className="h-3 w-3 animate-spin" />
-                        생각하는 중...
+                        Thinking...
                     </p>
                 )}
             </div>
 
             {hasPendingCards && (
                 <div className="flex items-center gap-2 border-t border-neutral-200 px-4 py-2">
-                    <span className="text-xs text-neutral-500">아직 저장되지 않은 카드가 있습니다.</span>
+                    <span className="text-xs text-neutral-500">You have unsaved changes.</span>
                     <div className="ml-auto flex gap-1">
                         <PressableButton
                             className="px-3 py-1 text-xs font-semibold text-neutral-600"
@@ -129,7 +129,7 @@ export default function AiChatPanel({
                     className="h-9 flex-1 rounded-md bg-neutral-50 px-3 text-sm text-neutral-900 outline-none"
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
-                    placeholder="메시지를 입력하세요"
+                    placeholder="Send a message"
                     aria-label="AI assistant message"
                     disabled={sending}
                 />
