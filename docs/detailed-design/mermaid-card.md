@@ -9,7 +9,7 @@
 | `mermaid` | `MermaidCardData` | `useMermaidCard`/`useMermaidRenderer`에 전달, `Rnd` 초기값 |
 | `zoom` | `number` | `Rnd scale` |
 | `canEdit` | `boolean` | `editMermaid` 권한 체크 |
-| `isEditing` | `boolean` | textarea 노출(125줄), 드래그 핸들 노출(149줄), 툴바 노출(165줄), `Rnd disableDragging/enableResizing` |
+| `isEditing` | `boolean` | textarea 노출(127줄), 드래그 핸들 노출(151줄), 툴바 노출(167줄), `Rnd disableDragging/enableResizing` |
 | `onEditing`/`onEditingClear`/`onPermissionDenied` | `() => void` | 편집 흐름 콜백 |
 | `onInsert` | `(tempId, boardId, source, x, y, z, width, height) => void` | `saveMermaidDraft`가 `mermaid.id < 0`일 때 |
 | `onUpdate` | 동일 시그니처 | 기존 카드일 때 |
@@ -20,9 +20,9 @@
 
 | State/Ref | 초기값 | 갱신 지점 | 소비 지점 |
 | --- | --- | --- | --- |
-| `source` | `mermaid.source` | textarea `onChange={(e) => setSource(e.target.value)}` (MermaidCard.tsx 128줄) | `useMermaidRenderer`의 `source` 인자, `sourceRef` 동기화 |
+| `source` | `mermaid.source` | textarea `onChange={(e) => setSource(e.target.value)}` (MermaidCard.tsx 130줄) | `useMermaidRenderer`의 `source` 인자, `sourceRef` 동기화 |
 | `cardState` | `{x,y,width,height} = mermaid.*` | `handleDragStop`, `handleResizeStop` | `Rnd position/size` |
-| `dragHandlePressed` | `false` | 드래그 핸들 pointer 이벤트 4종 (MermaidCard.tsx 152~155줄) | 핸들 바 색상 |
+| `dragHandlePressed` | `false` | 드래그 핸들 pointer 이벤트 4종 (MermaidCard.tsx 154~157줄) | 핸들 바 색상 |
 | `deleteDialogOpen` | `false` | `openDeleteDialog`/`closeDeleteDialog`/`confirmDelete` | `ConfirmDialog` 렌더 조건 |
 | `sourceRef`/`cardStateRef` | 각 state 미러 | `useEffect`로 렌더 후 동기화(72~78줄) | `insertMermaid`/`updateMermaid`가 최신값을 읽기 위함 |
 | `lastMermaidTapRef` | `0` | `handleDoubleTap`마다 | 300ms 더블탭 판정 |
@@ -46,16 +46,16 @@
 | `handleDragStop`/`handleResizeStop` | `TableCard`/`ImageCard`와 동일 패턴으로 `cardState` 갱신 |
 | `confirmDelete` (217~221줄) | `onDelete(id)` → `onEditingClear()` → `setDeleteDialogOpen(false)` (이 순서는 `TableCard`와 동일, `ImageCard`와는 뒤 두 호출 순서가 다름) |
 
-## MermaidCard 렌더 구조 (88~182줄)
+## MermaidCard 렌더 구조 (88~184줄)
 
 | 요소 | 조건 | 비고 |
 | --- | --- | --- |
-| `Rnd` (90줄) | 항상 | `className="mermaid-rnd-{id} ..."`, `dragHandleClassName="mermaid-drag-handle"`, `disableDragging={!isEditing \|\| !canEdit}`, `enableResizing={isEditing}` |
-| Source textarea (126줄) | `isEditing`일 때만 | `h-2/5 min-h-24`, `font-mono`, `spellCheck={false}` — 카드 상단 40% |
-| 렌더 결과 영역 (134줄) | 항상 | 3분기: `renderError` → rose `<pre>` / `svg` → `dangerouslySetInnerHTML` / 둘 다 없음 → "Mermaid source is empty." |
-| 드래그 핸들 (150줄) | `isEditing`일 때만 | 하단 중앙, `TableCard`와 동일 시각 패턴 |
-| `MermaidToolBar` (166줄) | `isEditing`일 때만 | `onDelete={openDeleteDialog}` |
-| `ConfirmDialog` (174줄) | `deleteDialogOpen`일 때만 | 메시지 "Delete this mermaid?" |
+| `Rnd` (90줄) | 항상 | `className="mermaid-rnd-{id} ..."`, `dragHandleClassName="mermaid-drag-handle"`, `disableDragging={!isEditing \|\| !canEdit}`, `enableResizing={isEditing}`, `minWidth`/`minHeight`는 180(112~113줄) |
+| Source textarea (128줄) | `isEditing`일 때만 | `h-2/5 min-h-24`, `font-mono`, `spellCheck={false}` — 카드 상단 40% |
+| 렌더 결과 영역 (136줄) | 항상 | 3분기: `renderError` → rose `<pre>` / `svg` → `dangerouslySetInnerHTML` / 둘 다 없음 → "Mermaid source is empty." |
+| 드래그 핸들 (152줄) | `isEditing`일 때만 | 하단 중앙, `TableCard`와 동일 시각 패턴 |
+| `MermaidToolBar` (168줄) | `isEditing`일 때만 | `onDelete={openDeleteDialog}` |
+| `ConfirmDialog` (176줄) | `deleteDialogOpen`일 때만 | 메시지 "Delete this mermaid?" |
 
 ## `useMermaidRenderer({ source, mermaidId })` (`hooks/useMermaidRenderer.ts`)
 

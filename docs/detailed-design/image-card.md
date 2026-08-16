@@ -47,15 +47,15 @@
 | `handleDragStop`/`handleResizeStop` (187~202줄) | `TableCard`와 동일 패턴으로 `imageState`/`imageStateRef` 갱신 |
 | `confirmDelete` (208~212줄) | `onDelete(imageId, publicId)` → `setDeleteDialogOpen(false)` → `onEditingClear()` (다른 카드들과 호출 순서가 다름 — `TableCard.confirmDelete`는 `onEditingClear`가 먼저) |
 
-## ImageCard 렌더 구조 (88~156줄)
+## ImageCard 렌더 구조 (88~158줄)
 
 | 요소 | 조건 | 비고 |
 | --- | --- | --- |
-| `Rnd` (90줄) | 항상 | `className="image-rnd-{imageId} ..."`, 터치 콜아웃/선택 비활성 인라인 스타일, `bounds="parent"`, `disableDragging={!isEditing}`(권한 체크 없음 — `canEdit`은 `editImage` 진입 시점에만 확인), `default`와 `position`을 모두 지정(초기 언마운트 대비 `default` + 제어값 `position` 병행) |
-| 내부 wrapper (120줄) | 항상 | `onClick`(stopPropagation), `onDoubleClick={editImage}`, `onPointerDown={handleDoubleTap}` |
-| `next/image` (127줄) | 항상 | `fill`, `object-contain`, `draggable={false}`, `sizes={round(width)+"px"}`, `alt={fileName ?? "Uploaded image"}` |
-| `ImageToolBar` (140줄) | `isEditing`일 때만 | `onDelete={openDeleteDialog}` |
-| `ConfirmDialog` (147줄) | `deleteDialogOpen`일 때만 | 메시지 "Delete this image?" |
+| `Rnd` (90줄) | 항상 | `className="image-rnd-{imageId} ..."`, 터치 콜아웃/선택 비활성 인라인 스타일, `bounds="parent"`, `disableDragging={!isEditing}`(권한 체크 없음 — `canEdit`은 `editImage` 진입 시점에만 확인), `default`와 `position`을 모두 지정(초기 언마운트 대비 `default` + 제어값 `position` 병행), `minWidth`/`minHeight`는 48(115~116줄) |
+| 내부 wrapper (122줄) | 항상 | `onClick`(stopPropagation), `onDoubleClick={editImage}`, `onPointerDown={handleDoubleTap}` |
+| `next/image` (129줄) | 항상 | `fill`, `object-contain`, `draggable={false}`, `sizes={round(width)+"px"}`, `alt={fileName ?? "Uploaded image"}` |
+| `ImageToolBar` (142줄) | `isEditing`일 때만 | `onDelete={openDeleteDialog}` |
+| `ConfirmDialog` (149줄) | `deleteDialogOpen`일 때만 | 메시지 "Delete this image?" |
 
 ## 생성 파이프라인 (`useBoardImages.ts`)
 

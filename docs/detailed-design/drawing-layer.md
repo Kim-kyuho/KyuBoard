@@ -6,11 +6,11 @@
 
 | Prop | 타입 | 사용처 |
 | --- | --- | --- |
-| `strokes` | `BoardStroke[]` | `StrokePaths`로 렌더 (84, 109줄) |
-| `drawingMode` | `boolean` | `!drawingMode`면 입력 비활성 SVG(70~87줄), true면 입력 활성 SVG(89~131줄) |
-| `drawingTool` | `DrawingTool` (`"draw" \| "pan" \| "erase"`) | `useDrawingPointer`에 전달, 지우개 커서 렌더 조건(120줄) |
-| `penColor` / `penWidth` | `string` / `number` | 작성 중 획 path의 `stroke`/`strokeWidth` (113~114줄) |
-| `zoom` | `number` | `eraserRadius` 보정(52줄), `useDrawingPointer`에 전달, 지우개 원 `strokeWidth={1/zoom}`(127줄) |
+| `strokes` | `BoardStroke[]` | `StrokePaths`로 렌더 (87, 112줄) |
+| `drawingMode` | `boolean` | `!drawingMode`면 입력 비활성 SVG(73~90줄), true면 입력 활성 SVG(92~134줄) |
+| `drawingTool` | `DrawingTool` (`"draw" \| "pan" \| "erase"`) | `useDrawingPointer`에 전달, 지우개 커서 렌더 조건(124줄) |
+| `penColor` / `penWidth` | `string` / `number` | 작성 중 획 path의 `stroke`/`strokeWidth` (116~117줄) |
+| `zoom` | `number` | `eraserRadius` 보정(55줄), `useDrawingPointer`에 전달, 지우개 원 `strokeWidth={1/zoom}`(131줄) |
 | `onStrokeEnd` | `(points: StrokePoint[]) => void` | `useDrawingPointer`가 획 완료 시 호출 |
 | `onErase` | `(start, end, radius) => void` | `useDrawingPointer`가 지우개 이동마다 호출 |
 
@@ -26,7 +26,7 @@
 | `previousEraserPointRef` | ref | `null` | 직전 지우개 위치 — 연속 구간을 `onErase(prev, current, radius)`로 전달하기 위함 |
 | `currentPoints` | state | `[]` | 화면 렌더용(작성 중 획 path) |
 | `eraserPoint` | state | `null` | 지우개 커서 원 위치 |
-| `capturesInput` | 파생값 | `drawingTool !== "pan"` | SVG의 `pointerEvents`/`touchAction`/`cursor` 결정(96~98줄) |
+| `capturesInput` | 파생값 | `drawingTool !== "pan"` | SVG의 `pointerEvents`/`touchAction`/`cursor` 결정(99~101줄) |
 
 ## 팜 리젝션 / 포인터 소유권 로직
 
@@ -43,7 +43,7 @@
 - erase 모드: 소유 포인터가 눌림 해제되면 소유권 반납, 눌린 채면 `onErase(previousPoint, boardPoint, radius)` 호출 후 `previousEraserPointRef` 갱신
 - draw 모드: 소유 포인터가 아니면 무시, 눌림 해제되면 `finishCurrentStroke()`, 그 외엔 점 추가
 
-### `handlePointerUp` / `handlePointerCancel` (146~163, DrawingLayer.tsx 106줄에서 cancel도 동일 핸들러 연결)
+### `handlePointerUp` / `handlePointerCancel` (146~163, DrawingLayer.tsx 109줄에서 cancel도 동일 핸들러 연결)
 - 펜이면 `penContactRef = false`
 - 소유 포인터가 아니면 무시
 - erase면 소유권만 반납(획 확정 로직 없음), draw면 `finishCurrentStroke()`
@@ -59,14 +59,16 @@ y = (event.clientY - layerRect.top) / zoom
 ```
 `layerRef.current`가 없으면(레이아웃 계산 전 등) `[0, 0]`을 반환 — 이 경우 잘못된 위치에 점이 찍힐 수 있음.
 
-## DrawingLayer 렌더 분기 (42~132줄)
+## DrawingLayer 렌더 분기 (45~136줄)
 
 | 상태 | SVG 속성 | 내용 |
 | --- | --- | --- |
-| `drawingMode === false` (70~87줄) | `pointerEvents: "none"`, `aria-hidden` | `StrokePaths`만 렌더(과거 획 표시 전용) |
-| `drawingMode === true` (89~131줄) | `pointerEvents: "auto"`, `touchAction: capturesInput ? "none" : undefined`, `cursor: capturesInput ? "crosshair" : undefined` | `StrokePaths` + 작성 중 획(`currentPoints.length > 0`일 때) + 지우개 원(`drawingTool === "erase" && eraserPoint`일 때) |
+| `drawingMode === false` (73~90줄) | `pointerEvents: "none"`, `aria-hidden` | `StrokePaths`만 렌더(과거 획 표시 전용) |
+| `drawingMode === true` (92~134줄) | `pointerEvents: "auto"`, `touchAction: capturesInput ? "none" : undefined`, `cursor: capturesInput ? "crosshair" : undefined` | `StrokePaths` + 작성 중 획(`currentPoints.length > 0`일 때) + 지우개 원(`drawingTool === "erase" && eraserPoint`일 때) |
 
 z-index는 두 경우 모두 `ACTIVE_CARD_Z - 1`(카드보다 한 단계 아래).
+
+저장된 획과 작성 중 획은 모두 `strokeOpacity={markerStrokeOpacity}`(24줄, 0.82)로 그린다 — 형광펜처럼 겹친 부분이 비쳐 보이게 하는 값이다. 지우개 커서 원에는 적용하지 않는다.
 
 ## `strokeToPath` 곡선 알고리즘 (`lib/board-stroke.ts` 130~159줄)
 

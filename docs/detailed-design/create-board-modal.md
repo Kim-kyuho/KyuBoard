@@ -7,7 +7,7 @@
 | Prop | 타입 | 사용처 |
 | --- | --- | --- |
 | `ownerId` | `string \| null` | POST body의 `ownerId` (48줄) |
-| `onClose` | `() => void` | 오버레이 클릭(66줄), X 버튼(76줄), Cancel 버튼(122줄) |
+| `onClose` | `() => void` | 오버레이 클릭(66줄), X 버튼(76줄), Cancel 버튼(126줄) |
 | `onCreated` | `(boardId: number) => void` | 생성 성공 시 `data.board.boardId` 전달 (58줄) |
 
 ## 상수: `boardSizeOptions` (15~23줄)
@@ -27,7 +27,7 @@
 
 | State | 초기값 | 갱신 지점 | 소비 지점 |
 | --- | --- | --- | --- |
-| `errorMessage` | `""` | 제목 미입력(31줄), 크기 미선택(35줄), API 실패(54줄) 세 지점에서 각각 다른 메시지로 설정 | `<BoardMessage type="error">` (116줄) |
+| `errorMessage` | `""` | 제목 미입력(31줄), 크기 미선택(35줄), API 실패(54줄) 세 지점에서 각각 다른 메시지로 설정 | `<BoardMessage type="error">` (116줄), 3500ms 후 `onDismiss`가 `""`로 초기화 |
 
 ## 핸들러: `handleCreateBoard(title, sizeValue)` (28~59줄)
 
@@ -53,7 +53,7 @@
 | Title input (95줄) | - | `required`, 초기값 없음(빈 문자열 시작) |
 | Board size `<select>` (104줄) | - | `defaultValue="3840 x 2160"` |
 | 에러 메시지 (116줄) | - | `errorMessage`가 있을 때만 |
-| Cancel / Create 버튼 (119, 126줄) | - | `type="button"` / `type="submit"` |
+| Cancel / Create 버튼 (123, 130줄) | - | `type="button"` / `type="submit"` |
 
 ## 알려진 특이사항
 

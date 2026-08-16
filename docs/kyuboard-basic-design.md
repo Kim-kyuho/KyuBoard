@@ -1,6 +1,6 @@
 # KyuBoard 기본설계서
 
-작성 기준: 2026-08-08 현재 워크스페이스 구현
+작성 기준: 2026-08-16 현재 워크스페이스 구현
 
 이 문서는 기존 `kyuboard-detailed-design.md`의 시스템 설계와 `drawing-basic-design.md`의 드로잉 설계를 합친 KyuBoard 기준 문서다. 컴포넌트 내부 구현은 [상세설계 폴더](./detailed-design/)에서 관리한다.
 
@@ -11,10 +11,11 @@ KyuBoard는 큰 보드 위에 메모, 이미지, Mermaid 다이어그램, 표와
 - 보드 생성, 이름 변경, 삭제
 - 카드 생성, 편집, 이동, 크기 조절, 삭제
 - 카드 레이어 순서 변경
-- 메모 검색과 순차 탐색
+- 메모 검색과 연번 기반 탐색
 - Apple Pencil, 터치, 마우스 기반 자유 드로잉
 - 카드 배치를 Markdown 문서로 컴파일하고 다운로드
 - 로그인, 관리자 승인 기반 편집 권한
+- 프로젝트 정보와 외부 링크 안내
 
 드로잉은 카드가 아니다. 하나의 보드에 속한 획 목록을 보드 전체 SVG 레이어에서 렌더링하며 Markdown 컴파일 대상에 포함하지 않는다.
 
@@ -86,7 +87,10 @@ BoardClient
 │   ├── BoardZoomControl
 │   └── card-tool-portal
 ├── BoardSearchPanel
+├── BoardNavigator
 ├── BoardMarkdownView
+├── AboutModal
+├── BoardMessage
 ├── MemoCard[] / MemoEditor / MemoToolBar
 ├── ImageCard[] / ImageToolBar
 ├── MermaidCard[] / MermaidToolBar
@@ -94,7 +98,11 @@ BoardClient
 └── DrawingLayer / DrawingToolBar
 ```
 
-`BoardClient`는 화면 조정 허브다. 컬렉션, 현재 편집 ID, 인증, 줌, 보드 스크롤, 검색, 레이어 변경과 드로잉 모드를 연결한다. 카드 내부 초안과 포인터 처리는 각 카드 훅이 담당한다.
+`BoardClient`는 화면 조정 허브다. 컬렉션, 현재 편집 ID, 인증, 줌, 보드 스크롤, 검색, 탐색, 레이어 변경과 드로잉 모드를 연결한다. 카드 내부 초안과 포인터 처리는 각 카드 훅이 담당한다.
+
+`AboutModal`은 `BoardMenu`의 About 항목으로 열리며 `document.body`에 포탈로 렌더링한다. 외부 링크는 새 탭으로 연다.
+
+`BoardMessage`는 권한 메시지와 메모 메시지를 화면 상단에 표시하고 3500ms 후 자동으로 닫는다. 메시지가 빈 문자열이면 아무것도 렌더링하지 않는다.
 
 ## 6. 상태 소유권
 
@@ -104,6 +112,7 @@ BoardClient
 | 카드 컬렉션과 편집 카드 ID | `useBoardMemos`, `useBoardImages`, `useBoardMermaids`, `useBoardTables` |
 | 카드 내부 초안 | `useMemoCard`, `useImageCard`, `useMermaidCard`, `useTableCard` |
 | 메모 검색과 포커스 | `useBoardSearch`, `useBoardMemoFocus` |
+| 메뉴, About, Markdown, 검색, 탐색 패널 열림 | `BoardClient` |
 | 보드 줌 | `useBoardZoom` |
 | 보드 패닝과 편집 입력 보호 | `useBoardScroll` |
 | 레이어 변경 | `useCardLayer` |
@@ -154,12 +163,14 @@ stateDiagram-v2
 - 저장 시 POST 후 서버 ID를 받은 카드로 교체한다.
 - 임시 카드 삭제는 API 없이 로컬 컬렉션에서 제거한다.
 
-| 카드 | 기본 크기 |
-| --- | --- |
-| Memo | 300 x 200 |
-| Image | 원본 비율 유지, 최대 400 x 300 |
-| Mermaid | 480 x 360 |
-| Table | 560 x 360, 최소 360 x 128 |
+| 카드 | 기본 크기 | 최소 크기 |
+| --- | --- | --- |
+| Memo | 300 x 200 | 180 x 180 |
+| Image | 원본 비율 유지, 최대 400 x 300 | 48 x 48 |
+| Mermaid | 480 x 360 | 180 x 180 |
+| Table | 560 x 360 | 360 x 128 |
+
+최소 크기는 `react-rnd`의 `minWidth`, `minHeight`로 적용한다. 이미지는 작은 아이콘 배치를 허용하기 위해 다른 카드보다 낮은 하한을 사용한다.
 
 ### 8.2 편집과 외부 저장
 
@@ -176,8 +187,10 @@ stateDiagram-v2
 ### 9.1 Memo
 
 - `content`: TipTap HTML
-- `color`: 배경색
+- `color`: 배경색, 신규 메모 기본값은 Yellow `#fffadc`
+- 색상은 Yellow, Pink, Blue, Green, Lavender, Peach, Mint, Gray 8종을 제공한다.
 - 도구: 색상, H1-H6, 굵게, 기울임, 취소선, 강조, 구분선, 코드 블록, 인용
+- 도구는 main, format, block 세 모드로 나누어 표시하고 모드 전환 시 열린 팝업을 닫는다.
 - 읽기 상태는 HTML을 직접 렌더링한다.
 
 ### 9.2 Image
@@ -218,7 +231,31 @@ Markdown 모달 z         60000 / 60001
 
 Bring to Front는 전체 카드의 최대 `z + 1`을 사용한다. Send to Back은 선택 카드를 1로 만들고 나머지 카드의 z를 증가시킨다. 최대 z가 9000 이상이면 타입, 기존 z, ID 순으로 1부터 정규화한다.
 
-## 11. 보드 패닝과 입력 보호
+## 11. 메모 검색과 탐색
+
+`BoardToolBar`는 메모 탐색과 메모 검색 패널을 제공한다. 두 패널은 상호 배타적이며 하나를 열면 다른 하나와 보드 메뉴를 닫는다. 두 패널 모두 `fixed bottom-20 left-1/2` 위치에 표시한다.
+
+두 기능은 `useBoardMemoFocus`의 포커스 동작을 공유한다. 포커스는 대상 메모를 `scrollIntoView`로 화면 중앙에 맞추며, 보드 진입 후 메모가 존재하면 첫 메모를 한 번 자동 포커스한다.
+
+### 11.1 메모 탐색
+
+`BoardNavigator`는 메모를 ID 오름차순으로 정렬한 순서를 1부터 시작하는 연번으로 표시한다.
+
+- 구성은 이전 버튼, 연번 입력, 전체 메모 수, 다음 버튼 순서다.
+- 연번 입력은 숫자 이외의 문자를 제거하고 값이 있으면 즉시 이동한다.
+- 유효 범위는 `1`부터 전체 메모 수까지이며 벗어나면 포커스를 유지하고 메모 메시지를 표시한다.
+- 실제 포커스가 바뀌면 입력 표시값도 해당 연번으로 갱신한다.
+
+### 11.2 메모 검색
+
+`BoardSearchPanel`은 검색어를 포함하는 메모를 순회한다.
+
+- 검색 대상은 메모의 `content` 문자열이며 대소문자를 구분하지 않는 부분 일치다.
+- 이전과 다음은 결과 목록을 순환한다.
+- 현재 위치와 전체 결과 수를 함께 표시하고 결과가 없으면 0을 표시한다.
+- 결과가 없는 상태에서 이동을 시도하면 메모 메시지를 표시한다.
+
+## 12. 보드 패닝과 입력 보호
 
 - 마우스 왼쪽 버튼만 패닝을 시작한다.
 - 160ms 이상 누르고 5px 이상 이동한 뒤 실제 패닝으로 전환한다.
@@ -226,9 +263,9 @@ Bring to Front는 전체 카드의 최대 `z + 1`을 사용한다. Send to Back�
 - 카드 편집 중 방향키 또는 텍스트 선택 드래그가 부모 보드를 스크롤하면 저장한 좌표로 복원한다.
 - 패닝 중에는 `documentElement.dataset.boardPanning`을 설정하고 종료 후 정리한다.
 
-## 12. 드로잉
+## 13. 드로잉
 
-### 12.1 데이터와 좌표
+### 13.1 데이터와 좌표
 
 보드마다 `drawings` 행 하나를 유지하며 `source` JSONB에 획 배열 전체를 저장한다.
 
@@ -249,7 +286,7 @@ boardY = (clientY - svgRect.top) / zoom
 
 획은 첫 점에서 시작해 각 중간 점과 다음 점의 중점을 잇는 quadratic Bézier path로 변환하고, 끝 점까지 선분으로 연결한다. path는 둥근 cap/join으로 표시한다.
 
-### 12.2 도구
+### 13.2 도구
 
 | 도구 | 입력 | 동작 |
 | --- | --- | --- |
@@ -257,9 +294,13 @@ boardY = (clientY - svgRect.top) / zoom
 | erase | SVG 캡처 | 포인터 경로와 획 선분 거리로 부분 삭제 |
 | pan | 통과 | 드로잉 캡처 해제 |
 
+펜 색상은 Ink, Red, Yellow, Green, Sky, Blue, Purple 7종이며 기본값은 Ink `#1f2937`이다. 굵기는 Thin 2, Medium 4, Bold 8이며 기본값은 Medium이다. 색상과 굵기 팝업은 상호 배타적이다.
+
+erase와 pan은 토글이며 같은 도구를 다시 누르면 draw로 되돌아간다. 색상과 굵기는 이후 그리는 획에만 적용하고 기존 획은 변경하지 않는다.
+
 드로잉 모드가 꺼져도 저장된 획은 남지만 `pointer-events: none`이다. 모드 전환 시 `DrawingLayer`의 key를 바꿔 포인터 상태를 초기화한다.
 
-### 12.3 펜과 팜 리젝션
+### 13.3 펜과 팜 리젝션
 
 - 펜 입력 시작 시 펜 접촉 상태를 기록하고 비펜 입력을 무시한다.
 - 터치가 먼저 시작된 상태에서 펜이 오면 기존 입력을 폐기하고 펜에 소유권을 넘긴다.
@@ -269,7 +310,7 @@ boardY = (clientY - svgRect.top) / zoom
 
 브라우저가 손바닥과 펜을 보고하는 순서는 장치와 Safari에 의존하므로 네이티브 수준의 완전한 팜 리젝션은 보장하지 않는다.
 
-### 12.4 지우개와 저장
+### 13.4 지우개와 저장
 
 - 지우개 화면 반지름은 줌으로 나눠 보드 좌표 반지름으로 바꾼다.
 - 커서는 흰 내부색과 회색 테두리 원이다.
@@ -277,7 +318,7 @@ boardY = (clientY - svgRect.top) / zoom
 - 획 추가, 삭제, undo는 미저장 상태를 설정한다.
 - 완료 버튼으로 모드를 끝낼 때 변경이 있으면 전체 획 배열을 PATCH한다.
 
-## 13. 보드 미리보기
+## 14. 보드 미리보기
 
 보드 목록은 보드 페이지를 다시 실행하는 `iframe` 대신 Cloudinary에 저장된 정적 WebP 이미지를 사용한다.
 
@@ -292,7 +333,7 @@ boardY = (clientY - svgRect.top) / zoom
 
 현재 삭제와 레이어 순서 변경은 미리보기 갱신 예약을 호출하지 않는다. 미리보기는 영속 데이터 자체가 아니라 목록 표시용 스냅샷이다.
 
-## 14. Markdown 컴파일
+## 15. Markdown 컴파일
 
 `GET /api/boards/[boardId]/markdown`은 메모를 ID순으로 정렬하고 각 메모 꼭짓점을 포함하는 이미지, Mermaid, 표 중 z가 가장 높은 카드를 선택한다.
 
@@ -312,7 +353,7 @@ boardY = (clientY - svgRect.top) / zoom
 
 프리뷰는 Mermaid 블록을 분리해 공통 렌더러로 표시하고, 일반 섹션은 React Markdown + GFM + sanitize로 렌더링한다. 원문은 `.md` Blob으로 다운로드한다.
 
-## 15. 인증과 권한
+## 16. 인증과 권한
 
 1. 로그인 성공 시 사용자 ID와 HMAC-SHA256 서명을 결합한 HttpOnly 쿠키를 발급한다.
 2. API는 서명을 검증하고 DB에서 현재 사용자를 조회한다.
@@ -320,7 +361,7 @@ boardY = (clientY - svgRect.top) / zoom
 4. 보드 생성, 이름 변경, 삭제는 `role === "admin"`을 요구한다.
 5. 비밀번호는 랜덤 salt와 scrypt 결과를 `salt:hash`로 저장한다.
 
-## 16. 데이터베이스
+## 17. 데이터베이스
 
 | 테이블 | 핵심 데이터 | 관계 |
 | --- | --- | --- |
@@ -334,7 +375,7 @@ boardY = (clientY - svgRect.top) / zoom
 
 현재 스키마는 카드·드로잉의 `board_id`에 외래키를 두지 않는다. 보드 삭제 API가 DB에 저장된 이미지의 Cloudinary 원본을 먼저 삭제하고 `images`, `memos`, `mermaids`, `drawings`, `tables`, `boards` 순서로 관련 행을 명시적으로 삭제한다.
 
-## 17. API 목록
+## 18. API 목록
 
 | Method | Path | 역할 |
 | --- | --- | --- |
@@ -349,7 +390,7 @@ boardY = (clientY - svgRect.top) / zoom
 | GET | `/api/boards/[boardId]/markdown` | Markdown 컴파일 |
 | PUT | `/api/boards/[boardId]/preview` | 보드 미리보기 WebP 덮어쓰기 |
 
-## 18. 변경 원칙
+## 19. 변경 원칙
 
 - 새 카드 종류는 DB, 서버 조회, BoardClient 컬렉션, CRUD API, 레이어 API, Markdown 컴파일을 함께 검토한다.
 - 보드 좌표는 DB와 카드 로컬 상태 모두 확대 전 기준을 유지한다.

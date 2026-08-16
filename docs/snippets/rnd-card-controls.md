@@ -10,12 +10,16 @@
   size={{ width: state.width, height: state.height }}
   bounds="parent"
   scale={zoom}
+  minWidth={180}
+  minHeight={180}
   disableDragging={!canMove}
   enableResizing={canResize}
   onDragStop={handleDragStop}
   onResizeStop={handleResizeStop}
 />
 ```
+
+`minWidth`/`minHeight`는 확대 전 보드 좌표 기준이라 줌과 무관하게 일정하다. 규보드는 Memo·Mermaid 180, Table 360x128, Image 48을 쓴다 — 이미지는 작은 아이콘 배치를 허용하려고 하한을 따로 낮췄다.
 
 ## 이동
 

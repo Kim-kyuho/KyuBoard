@@ -23,6 +23,7 @@ https://res.cloudinary.com/{cloudName}/image/upload/kyuboard/boards/{boardId}/Pr
 | State | 초기값 | 역할 |
 | --- | --- | --- |
 | `menuOpen` | `false` | `BoardMenu` 열림 상태 |
+| `aboutOpen` | `false` | `AboutModal` 열림 상태, `BoardMenu`의 `onAbout`으로 설정 |
 | `failedPreviewIds` | 빈 `Set` | 이미지 로드에 실패한 보드의 미리보기 재출력 방지 |
 
 로그인·가입 모달과 현재 사용자는 `useBoardAuth`가 관리한다.
@@ -34,7 +35,7 @@ https://res.cloudinary.com/{cloudName}/image/upload/kyuboard/boards/{boardId}/Pr
 | `boardList` | 이름 변경과 삭제가 반영되는 화면 목록 |
 | `createBoardOpen` | 생성 모달 표시 여부 |
 | `renameBoardOpen` | 이름 변경 모달 표시 여부 |
-| `boardListMessage` | 관리자 권한 및 API 오류 메시지 |
+| `boardListMessage` | 관리자 권한 및 API 오류 메시지, `BoardMessage`의 `onDismiss`가 3500ms 후 빈 문자열로 되돌린다 |
 | `actionMenuOpen` | 개별 `BoardActionMenu` 표시 여부 |
 | `selectedBoardId` | 액션·삭제 대상 보드 ID |
 | `selectedBoardTitle` | 이름 변경 모달의 초기 제목 |
@@ -67,6 +68,7 @@ https://res.cloudinary.com/{cloudName}/image/upload/kyuboard/boards/{boardId}/Pr
 
 ```text
 BoardMenu
+├ AboutModal
 ├ SignInModal / SignUpModal
 ├ CreateBoardModal / RenameBoardModal
 ├ BoardMessage

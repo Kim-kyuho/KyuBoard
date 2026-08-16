@@ -2,7 +2,7 @@
 
 소스: `components/BoardMarkdownView.tsx`, `hooks/useBoardMarkdown.ts`
 
-이 파일은 두 컴포넌트로 구성된다: 내부 전용 `MarkdownMermaid`(19~43줄)와 기본 export `BoardMarkdownView`(45~123줄).
+이 파일은 두 컴포넌트로 구성된다: 내부 전용 `MarkdownMermaid`(19~43줄)와 기본 export `BoardMarkdownView`(45~122줄).
 
 ## BoardMarkdownView Props
 

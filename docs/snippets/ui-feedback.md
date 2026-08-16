@@ -66,12 +66,16 @@ const [dragHandlePressed, setDragHandlePressed] = useState(false);
 
 ## 메시지 표시
 
+`BoardMessage`가 빈 문자열을 스스로 걸러내므로 호출부에서 조건부 렌더를 하지 않는다. `onDismiss`를 넘기면 3500ms 후 메시지가 자동으로 사라진다.
+
 ```tsx
 const [permissionMessage, setPermissionMessage] = useState("");
 
-{permissionMessage && (
-  <BoardMessage type="permission" message={permissionMessage} />
-)}
+<BoardMessage
+  type="permission"
+  message={permissionMessage}
+  onDismiss={() => setPermissionMessage("")}
+/>
 ```
 
 규보드 적용 위치:
