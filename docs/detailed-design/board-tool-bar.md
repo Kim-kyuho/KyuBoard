@@ -8,10 +8,12 @@
 | --- | --- | --- |
 | `cardEditing` | `boolean` | 일반 도구 목록 전체의 렌더 조건 (`!cardEditing`, 42줄) |
 | `drawingMode` | `boolean` | 왼쪽 아래 버튼의 시작/완료 상태와 아이콘 결정 |
+| `searchBarOpen` | `boolean` | 검색 버튼의 활성색과 `aria-pressed` 결정 |
+| `boardNavigatorOpen` | `boolean` | Compass 버튼의 활성색과 `aria-pressed` 결정 |
 | `boardZoom` / `setBoardZoom` | `number` / setter | `BoardZoomControl`에 그대로 전달 (144~147줄) |
 | `setMenuOpen` | setter | 모든 일반 명령 버튼이 클릭 시 함께 `false` 호출 |
 | `setSearchBarOpen` | setter | 검색 버튼에서 `prev => !prev`로 토글 (72줄) |
-| `onFocusPrevMemo` / `onFocusNextMemo` | `() => void` | 위/아래 화살표 버튼 (48, 58줄) |
+| `setBoardNavigatorOpen` | setter | Compass 버튼에서 메모 네비게이터 표시를 토글 |
 | `onMemoCreateClick` | `() => void` | 메모 생성 버튼 (82줄) |
 | `onImageUploadClick` | `() => void` | 이미지 버튼 (94줄) |
 | `onMermaidCreateClick` | `() => void` | Mermaid 버튼 (118줄) |
@@ -26,14 +28,13 @@
 
 | 순서 | 아이콘 | 콜백 | 클릭 시 함께 실행 |
 | --- | --- | --- | --- |
-| 1 | `ChevronLeft` | `onFocusPrevMemo` | `setMenuOpen(false)` |
-| 2 | `ChevronRight` | `onFocusNextMemo` | `setMenuOpen(false)` |
-| 3 | `Search` | `setSearchBarOpen(prev => !prev)` | `setMenuOpen(false)` (먼저 실행) |
-| 4 | `SquarePen` | `onMemoCreateClick` | `setMenuOpen(false)` |
-| 5 | `Camera` | `onImageUploadClick` | `setMenuOpen(false)` |
-| 6 | `Table2` | `onTableCreateClick` | `setMenuOpen(false)` |
-| 7 | `Workflow` | `onMermaidCreateClick` | `setMenuOpen(false)` |
-| 별도 | `Pencil` / `Check` | `onDrawingToggleClick` | 드로잉 모드에 따라 시작/완료 아이콘 전환, `setMenuOpen(false)` |
+| 1 | `Compass` | `setBoardNavigatorOpen(prev => !prev)` | 검색 패널과 보드 메뉴 닫기 |
+| 2 | `Search` | `setSearchBarOpen(prev => !prev)` | 메모 네비게이터와 보드 메뉴 닫기 |
+| 3 | `SquarePen` | `onMemoCreateClick` | `setMenuOpen(false)` |
+| 4 | `Camera` | `onImageUploadClick` | `setMenuOpen(false)` |
+| 5 | `Table2` | `onTableCreateClick` | `setMenuOpen(false)` |
+| 6 | `Workflow` | `onMermaidCreateClick` | `setMenuOpen(false)` |
+| 별도 | `Pencil` / `Check` | `onDrawingToggleClick` | 검색 패널·메모 네비게이터·보드 메뉴를 닫고 드로잉 모드 전환 |
 
 모든 버튼이 예외 없이 `setMenuOpen(false)`를 호출한다 — `BoardMenu` 드롭다운이 열려있는 상태에서 어떤 보드 도구를 눌러도 그 메뉴가 자동으로 닫힌다.
 

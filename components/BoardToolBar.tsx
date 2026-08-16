@@ -2,18 +2,19 @@
 
 import PressableButton from "./PressableButton";
 import { Dispatch, SetStateAction } from "react";
-import { Camera, Check, ChevronLeft, ChevronRight, Pencil, Search, SquarePen, Table2, Workflow } from "lucide-react";
+import { Camera, Check, Compass, Pencil, Search, SquarePen, Table2, Workflow } from "lucide-react";
 import BoardZoomControl from "./BoardZoomControl";
 
 type BoardToolBarProps = {
     cardEditing: boolean;
     drawingMode: boolean;
+    searchBarOpen: boolean;
+    boardNavigatorOpen: boolean;
     boardZoom: number;
     setBoardZoom: Dispatch<SetStateAction<number>>;
     setMenuOpen: Dispatch<SetStateAction<boolean>>;
     setSearchBarOpen: Dispatch<SetStateAction<boolean>>;
-    onFocusPrevMemo: () => void;
-    onFocusNextMemo: () => void;
+    setBoardNavigatorOpen: Dispatch<SetStateAction<boolean>>;
     onMemoCreateClick: () => void;
     onImageUploadClick: () => void;
     onMermaidCreateClick: () => void;
@@ -24,12 +25,13 @@ type BoardToolBarProps = {
 export default function BoardToolBar({ 
     cardEditing,
     drawingMode,
+    searchBarOpen,
+    boardNavigatorOpen,
     boardZoom,
     setBoardZoom,
     setMenuOpen,
     setSearchBarOpen,
-    onFocusPrevMemo,
-    onFocusNextMemo,
+    setBoardNavigatorOpen,
     onMemoCreateClick,
     onImageUploadClick,
     onMermaidCreateClick,
@@ -44,26 +46,22 @@ export default function BoardToolBar({
             {!cardEditing && (
                 <>
                     <div className="board-toolbar toolbar-reveal fixed bottom-16 right-5 z-50000 flex flex-col items-end gap-1">
-                        <div className="flex flex-col items-center gap-0">
+                        <div>
                             <PressableButton
                                 variant="menu"
                                 className={toolbarButtonClassName}
                                 onClick={() => {
-                                    onFocusPrevMemo();
+                                    setSearchBarOpen(false);
+                                    setBoardNavigatorOpen((prev) => !prev);
                                     setMenuOpen(false);
                                 }}
+                                aria-label="Open memo navigator"
+                                aria-pressed={boardNavigatorOpen}
                             >
-                                <ChevronLeft className={toolbarIconClassName} />
-                            </PressableButton>
-                            <PressableButton
-                                variant="menu"
-                                className={toolbarButtonClassName}
-                                onClick={() => {
-                                    onFocusNextMemo();
-                                    setMenuOpen(false);
-                                }}
-                            >
-                                <ChevronRight className={toolbarIconClassName} />
+                                <Compass
+                                    className={toolbarIconClassName}
+                                    style={boardNavigatorOpen ? { color: "#ec4899" } : undefined}
+                                />
                             </PressableButton>
                         </div>
                         <div>
@@ -72,10 +70,16 @@ export default function BoardToolBar({
                                 className={toolbarButtonClassName}
                                 onClick={() => {
                                     setMenuOpen(false);
+                                    setBoardNavigatorOpen(false);
                                     setSearchBarOpen(prev => !prev);
                                 }}
+                                aria-label="Search memos"
+                                aria-pressed={searchBarOpen}
                             >
-                                <Search className={toolbarIconClassName} />
+                                <Search
+                                    className={toolbarIconClassName}
+                                    style={searchBarOpen ? { color: "#ec4899" } : undefined}
+                                />
                             </PressableButton>
                         </div>
                         <div>
@@ -136,6 +140,8 @@ export default function BoardToolBar({
                         aria-label={drawingMode ? "Finish drawing" : "Start drawing"}
                         title={drawingMode ? "Finish drawing" : "Start drawing"}
                         onClick={() => {
+                            setSearchBarOpen(false);
+                            setBoardNavigatorOpen(false);
                             onDrawingToggleClick();
                             setMenuOpen(false);
                         }}

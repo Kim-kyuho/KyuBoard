@@ -91,12 +91,33 @@ export function useBoardMemoFocus(memos: FocusMemo[]) {
         focusMemoById(nextMemoId);
     };
 
+    const focusMemoByOrder = useCallback((memoNumber: number) => {
+        if (
+            !Number.isInteger(memoNumber)
+            || memoNumber < 1
+            || memoNumber > sortedMemoIds.length
+        ) {
+            setMemoMessage("Memo does not exist.");
+            return;
+        }
+
+        focusMemoById(sortedMemoIds[memoNumber - 1]);
+    }, [focusMemoById, sortedMemoIds]);
+
+    const focusedMemoIndex = focusedMemoId === null
+        ? -1
+        : sortedMemoIds.indexOf(focusedMemoId);
+    const focusedMemoOrder = focusedMemoIndex >= 0 ? focusedMemoIndex + 1 : 0;
+
     return {
         memoMessage,
         setMemoMessage,
         focusedMemoId,
         setFocusedMemoId,
         focusMemoById,
+        focusMemoByOrder,
+        focusedMemoOrder,
+        memoCount: sortedMemoIds.length,
         handleFocusPrevMemo,
         handleFocusNextMemo,
     };

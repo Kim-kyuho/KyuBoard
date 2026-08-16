@@ -6,6 +6,8 @@ import PressableButton from "@/components/PressableButton";
 import RenameBoardModal from "@/components/RenameBoardModal";
 import AboutModal from "@/components/AboutModal";
 import BoardMenu from "@/components/BoardMenu";
+import BoardNavigator from "@/components/BoardNavigator";
+import BoardToolBar from "@/components/BoardToolBar";
 
 describe("PressableButton", () => {
     it("applies and clears touch feedback while forwarding callbacks", () => {
@@ -69,6 +71,83 @@ describe("BoardMenu and AboutModal", () => {
 
         fireEvent.keyDown(document, { key: "Escape" });
         expect(onClose).toHaveBeenCalledOnce();
+    });
+});
+
+describe("BoardNavigator", () => {
+    it("moves with arrows and focuses the entered memo number immediately", () => {
+        const onPrev = vi.fn();
+        const onNext = vi.fn();
+        const onMemoNumberChange = vi.fn();
+
+        render(
+            <BoardNavigator
+                currentMemoNumber={2}
+                memoCount={5}
+                onPrev={onPrev}
+                onNext={onNext}
+                onMemoNumberChange={onMemoNumberChange}
+            />
+        );
+
+        expect(screen.getByText("/ 5")).toBeVisible();
+        fireEvent.click(screen.getByRole("button", { name: "Previous memo" }));
+        fireEvent.click(screen.getByRole("button", { name: "Next memo" }));
+        fireEvent.change(screen.getByRole("textbox", { name: "Memo number" }), {
+            target: { value: "4" },
+        });
+
+        expect(onPrev).toHaveBeenCalledOnce();
+        expect(onNext).toHaveBeenCalledOnce();
+        expect(onMemoNumberChange).toHaveBeenCalledWith(4);
+    });
+});
+
+describe("BoardToolBar panel feedback", () => {
+    it("marks the open search or navigator button with the drawing tool active color", () => {
+        const { rerender } = render(
+            <BoardToolBar
+                cardEditing={false}
+                drawingMode={false}
+                searchBarOpen
+                boardNavigatorOpen={false}
+                boardZoom={1}
+                setBoardZoom={vi.fn()}
+                setMenuOpen={vi.fn()}
+                setSearchBarOpen={vi.fn()}
+                setBoardNavigatorOpen={vi.fn()}
+                onMemoCreateClick={vi.fn()}
+                onImageUploadClick={vi.fn()}
+                onMermaidCreateClick={vi.fn()}
+                onTableCreateClick={vi.fn()}
+                onDrawingToggleClick={vi.fn()}
+            />
+        );
+
+        expect(screen.getByRole("button", { name: "Search memos" })).toHaveAttribute("aria-pressed", "true");
+        expect(screen.getByRole("button", { name: "Search memos" }).querySelector("svg")).toHaveStyle({ color: "#ec4899" });
+
+        rerender(
+            <BoardToolBar
+                cardEditing={false}
+                drawingMode={false}
+                searchBarOpen={false}
+                boardNavigatorOpen
+                boardZoom={1}
+                setBoardZoom={vi.fn()}
+                setMenuOpen={vi.fn()}
+                setSearchBarOpen={vi.fn()}
+                setBoardNavigatorOpen={vi.fn()}
+                onMemoCreateClick={vi.fn()}
+                onImageUploadClick={vi.fn()}
+                onMermaidCreateClick={vi.fn()}
+                onTableCreateClick={vi.fn()}
+                onDrawingToggleClick={vi.fn()}
+            />
+        );
+
+        expect(screen.getByRole("button", { name: "Open memo navigator" })).toHaveAttribute("aria-pressed", "true");
+        expect(screen.getByRole("button", { name: "Open memo navigator" }).querySelector("svg")).toHaveStyle({ color: "#ec4899" });
     });
 });
 
