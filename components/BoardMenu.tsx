@@ -54,7 +54,7 @@ export default function BoardMenu(
                 <EllipsisIcon className="w-5 h-5 text-neutral-900 " />
             </PressableButton>
             {menuOpen && (
-                <div className="fixed w-50 right-5 top-17 z-50000 rounded-xl bg-white/75 px-2 py-3 shadow-md">
+                <div className="fixed w-50 right-5 top-17 z-50001 rounded-xl bg-white/75 px-2 py-3 shadow-md">
                     {currentBoard?.title && (
                         <>
                             <PressableButton
