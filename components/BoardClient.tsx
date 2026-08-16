@@ -9,6 +9,7 @@ import BoardMenu from "./BoardMenu";
 import BoardToolBar from "./BoardToolBar";
 import BoardMessage from "./BoardMessage";
 import BoardSearchPanel from "./BoardSearchPanel";
+import BoardNavigator from "./BoardNavigator";
 import BoardMarkdownView from "./BoardMarkdownView";
 import AboutModal from "./AboutModal";
 import MermaidCard from "./MermaidCard";
@@ -98,6 +99,7 @@ export default function BoardClient(
     const [menuOpen, setMenuOpen] = useState(false);
     const [aboutOpen, setAboutOpen] = useState(false);
     const [markdownViewOpen, setMarkdownViewOpen] = useState(false);
+    const [boardNavigatorOpen, setBoardNavigatorOpen] = useState(false);
     const [permissionMessage, setPermissionMessage] = useState("");
     const showPermissionMessage = () => {
         setPermissionMessage(
@@ -174,6 +176,9 @@ export default function BoardClient(
         focusedMemoId,
         setFocusedMemoId,
         focusMemoById,
+        focusMemoByOrder,
+        focusedMemoOrder,
+        memoCount,
         handleFocusPrevMemo,
         handleFocusNextMemo,
     } = useBoardMemoFocus(memos);
@@ -304,12 +309,13 @@ export default function BoardClient(
         <BoardToolBar
             cardEditing={isEditing || drawingMode}
             drawingMode={drawingMode}
+            searchBarOpen={searchBarOpen}
+            boardNavigatorOpen={boardNavigatorOpen}
             boardZoom={boardZoom}
             setBoardZoom={setBoardZoom}
             setMenuOpen={setMenuOpen}
             setSearchBarOpen={setSearchBarOpen}
-            onFocusPrevMemo={handleFocusPrevMemo}
-            onFocusNextMemo={handleFocusNextMemo}
+            setBoardNavigatorOpen={setBoardNavigatorOpen}
             onMemoCreateClick={handleCreateTempMemo}
             onImageUploadClick={handleImageUploadClick}
             onMermaidCreateClick={handleCreateTempMermaid}
@@ -336,6 +342,15 @@ export default function BoardClient(
                 onTextChange={handleSearchTextChange}
                 onPrev={handleSearchPrev}
                 onNext={handleSearchNext}
+            />
+        )}
+        {boardNavigatorOpen && (
+            <BoardNavigator
+                currentMemoNumber={focusedMemoOrder}
+                memoCount={memoCount}
+                onPrev={handleFocusPrevMemo}
+                onNext={handleFocusNextMemo}
+                onMemoNumberChange={focusMemoByOrder}
             />
         )}
         {signInOpen && (

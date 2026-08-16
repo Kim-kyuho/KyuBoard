@@ -52,4 +52,18 @@ describe("useBoardMemoFocus", () => {
         act(() => result.current.handleFocusNextMemo());
         expect(result.current.memoMessage).toBe("No memo exist.");
     });
+
+    it("focuses a memo by its sorted number and reports an invalid number", () => {
+        const { result } = renderHook(() => useBoardMemoFocus([{ id: 8 }, { id: 2 }, { id: 5 }]));
+        act(() => vi.runAllTimers());
+
+        act(() => result.current.focusMemoByOrder(2));
+        expect(result.current.focusedMemoId).toBe(5);
+        expect(result.current.focusedMemoOrder).toBe(2);
+        expect(result.current.memoCount).toBe(3);
+
+        act(() => result.current.focusMemoByOrder(4));
+        expect(result.current.memoMessage).toBe("Memo does not exist.");
+        expect(result.current.focusedMemoId).toBe(5);
+    });
 });
