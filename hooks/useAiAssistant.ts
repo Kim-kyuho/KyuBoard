@@ -458,7 +458,7 @@ export function useAiAssistant({
         return {
             memos: memos
                 .filter((memo) => memo.id > 0)
-                .map((memo) => ({ id: memo.id, summary: stripHtml(memo.content).slice(0, 120) || "(빈 메모)" })),
+                .map((memo) => ({ id: memo.id, summary: stripHtml(memo.content).slice(0, 120) || "(empty memo)" })),
             mermaids: mermaids
                 .filter((card) => card.id > 0)
                 .map((card) => ({ id: card.id, summary: card.source.split("\n")[0].slice(0, 120) })),
@@ -472,7 +472,7 @@ export function useAiAssistant({
                 .filter((image) => image.imageId > 0)
                 .map((image) => ({
                     id: image.imageId,
-                    summary: (image.fileName ?? "이미지").slice(0, 120),
+                    summary: (image.fileName ?? "image").slice(0, 120),
                 })),
             capacity: getPlanCapacity(boardBounds),
         };
@@ -620,11 +620,11 @@ export function useAiAssistant({
                 const madeImages = (data.images ?? []).length;
 
                 if (requestedImages > madeImages) {
-                    notes.push(`그림 ${requestedImages - madeImages}장은 만들지 못해 건너뛰었습니다.`);
+                    notes.push(`Skipped ${requestedImages - madeImages} image(s) that could not be generated.`);
                 }
                 if (result.droppedSections > 0) {
                     notes.push(
-                        `보드에 자리가 없어 ${result.droppedSections}개 섹션은 배치하지 못했습니다. 보드를 정리하거나 더 큰 보드를 쓰세요.`
+                        `Could not place ${result.droppedSections} section(s) because the board is full. Clear some space or use a larger board.`
                     );
                 }
             }
@@ -633,7 +633,7 @@ export function useAiAssistant({
                 const changed = applyEdit(data.edit);
 
                 if (changed === 0) {
-                    notes.push("고칠 카드를 보드에서 찾지 못했습니다.");
+                    notes.push("Could not find those cards on this board.");
                 }
             }
 
@@ -641,17 +641,17 @@ export function useAiAssistant({
                 const removed = applyDeletion(data.deletion);
 
                 if (removed === 0) {
-                    notes.push("지울 카드를 보드에서 찾지 못했습니다.");
+                    notes.push("Could not find those cards on this board.");
                 }
             }
 
             if (data.arrangement) {
                 const result = applyArrangement(data.arrangement);
                 if (result.moved === 0) {
-                    notes.push("옮길 카드가 없었습니다.");
+                    notes.push("There was nothing to move.");
                 }
                 if (result.droppedSections > 0) {
-                    notes.push(`보드에 자리가 없어 카드 ${result.droppedSections}장은 그대로 두었습니다.`);
+                    notes.push(`Left ${result.droppedSections} card(s) in place because the board is full.`);
                 }
             }
 

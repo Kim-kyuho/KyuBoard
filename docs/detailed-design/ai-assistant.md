@@ -175,7 +175,7 @@ lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼�
 ## 모델 호출 (`lib/ai/assistant.ts`)
 
 - 공급자는 Google Gemini(`@google/genai`)다.
-- 모델은 `assistantModels` 순서대로 시도해 첫 성공을 쓴다. 기본 순서는 `gemini-3.7-flash` → `gemini-3.6-flash` → `gemini-3.5-flash`다.
+- 모델은 `assistantModels` 순서대로 시도해 첫 성공을 쓴다. 기본 순서는 `gemini-3.6-flash` → `gemini-3.5-flash` → `gemini-3.7-flash` → `gemini-flash-latest`다. 최신 모델일수록 무료 티어 할당량이 작아 429가 먼저 나므로, 최신순이 아니라 할당량이 여유로운 순으로 둔다.
 - `GEMINI_MODEL`을 지정하면 그 모델을 맨 앞에 두고, 나머지는 폴백으로 남긴다.
 - 429·500·503·NOT_FOUND는 다음 모델로 넘어간다. 그 외 오류(잘못된 요청 등)는 재시도해도 같으므로 즉시 던진다.
 - 모든 모델이 실패하면 `AssistantUnavailableError`를 던지고 라우트가 503과 안내 문구로 응답한다.

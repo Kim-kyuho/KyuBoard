@@ -17,9 +17,16 @@ import { kyuboardGuide } from "@/lib/ai/kyuboard-guide";
 // Gemini 호출과 도구 정의를 모아둔 라이브러리.
 // 카드 생성은 자유 텍스트 파싱이 아니라 function calling으로만 받는다.
 
-// 혼잡(503)은 모델마다 다르고 시간에 따라 변한다. 선호 순서대로 시도해 첫 성공을 쓴다.
-// 2026-08-17 실측: 3.7 성공 2.3초, 3.6 성공 29.7초, 3.5는 503. 빠른 순으로 둔다.
-const fallbackModels = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash"];
+// 선호 순서대로 시도해 첫 성공을 쓴다.
+// 최신 모델일수록 무료 티어 할당량이 빡빡해 429가 먼저 난다. 그래서 최신이 아니라
+// 할당량이 여유로운 쪽을 앞에 둔다. 3.7은 빠르지만 금방 막히므로 뒤로 미룬다.
+// gemini-2.5-flash는 models.list에는 보이지만 generateContent가 404라 넣지 않는다.
+const fallbackModels = [
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3.7-flash",
+    "gemini-flash-latest",
+];
 
 export const assistantModels = process.env.GEMINI_MODEL
     ? [process.env.GEMINI_MODEL, ...fallbackModels.filter((model) => model !== process.env.GEMINI_MODEL)]
@@ -33,14 +40,24 @@ export class AssistantUnavailableError extends Error {
     }
 }
 
+const toErrorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
 // 다른 모델로 넘어갈 가치가 있는 실패인지 판단한다. 잘못된 요청(400)은 재시도해도 같다.
 const isRetryableModelError = (error: unknown) => {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = toErrorMessage(error);
 
     return (
         /"code":\s*(429|500|503)/.test(message) ||
         /UNAVAILABLE|RESOURCE_EXHAUSTED|INTERNAL|NOT_FOUND/.test(message)
     );
+};
+
+// 쿼터 소진(429)과 일시적 혼잡(503)은 사용자가 할 수 있는 일이 다르다.
+// 혼잡은 잠시 뒤 재시도로 풀리지만, 쿼터는 초기화를 기다리거나 결제를 붙여야 한다.
+const isQuotaError = (error: unknown) => {
+    const message = toErrorMessage(error);
+
+    return /"code":\s*429/.test(message) || /RESOURCE_EXHAUSTED/.test(message);
 };
 
 // 이미지 생성 전용 모델. 대화 모델과 별개로 시도한다.
@@ -467,7 +484,9 @@ export async function runBoardAssistant(
     if (!response) {
         console.error("All Gemini models failed:", lastError);
         throw new AssistantUnavailableError(
-            "AI 모델이 지금 혼잡합니다. 잠시 후 다시 시도해 주세요."
+            isQuotaError(lastError)
+                ? "The daily AI quota for this server has run out. Try again later or raise the quota on the Google account."
+                : "All AI models are busy right now. Please try again in a moment."
         );
     }
 
@@ -487,12 +506,12 @@ export async function runBoardAssistant(
             : 0;
 
         if (!parsed.success || total === 0) {
-            return { ...emptyResult, reply: "어떤 카드를 지울지 알아내지 못했습니다. 카드를 지목해 주세요." };
+            return { ...emptyResult, reply: "I could not tell which cards to delete. Please name them." };
         }
 
         return {
             ...emptyResult,
-            reply: replyText || `카드 ${total}장을 지웠습니다. 저장하기 전에는 되돌릴 수 있습니다.`,
+            reply: replyText || `Removed ${total} card(s). You can undo this before saving.`,
             deletion: parsed.data,
         };
     }
@@ -508,12 +527,12 @@ export async function runBoardAssistant(
             : 0;
 
         if (!parsed.success || total === 0) {
-            return { ...emptyResult, reply: "수정 내용을 이해하지 못했습니다. 다시 요청해 주세요." };
+            return { ...emptyResult, reply: "I could not understand the edit. Please try again." };
         }
 
         return {
             ...emptyResult,
-            reply: replyText || `카드 ${total}장을 고쳤습니다. 확인 후 저장하세요.`,
+            reply: replyText || `Updated ${total} card(s). Review them and save.`,
             edit: parsed.data,
         };
     }
@@ -525,12 +544,12 @@ export async function runBoardAssistant(
         const parsed = boardArrangementSchema.safeParse(rearrangeCall.args);
 
         if (!parsed.success) {
-            return { ...emptyResult, reply: "재배치 계획을 이해하지 못했습니다. 다시 요청해 주세요." };
+            return { ...emptyResult, reply: "I could not understand the layout change. Please try again." };
         }
 
         return {
             ...emptyResult,
-            reply: replyText || "카드를 다시 배치했습니다. 확인 후 저장하세요.",
+            reply: replyText || "Rearranged the cards. Review them and save.",
             arrangement: parsed.data,
         };
     }
@@ -538,13 +557,13 @@ export async function runBoardAssistant(
     const createCall = calls.find((call) => call.name === createBoardCardsToolName);
 
     if (!createCall?.args) {
-        return { ...emptyResult, reply: replyText || "요청을 이해하지 못했습니다. 다시 설명해 주세요." };
+        return { ...emptyResult, reply: replyText || "I could not understand that request. Please rephrase it." };
     }
 
     const parsedArguments = boardPlanSchema.safeParse(createCall.args);
 
     if (!parsedArguments.success) {
-        return { ...emptyResult, reply: "카드 구조를 만드는 데 실패했습니다. 요청을 더 구체적으로 적어 주세요." };
+        return { ...emptyResult, reply: "I could not build the cards. Please describe what you need in more detail." };
     }
 
     const sectionCount = parsedArguments.data.sections.length;
@@ -552,7 +571,7 @@ export async function runBoardAssistant(
 
     return {
         ...emptyResult,
-        reply: replyText || `${sectionCount}개의 카드를 만들었습니다. 확인 후 저장하세요.`,
+        reply: replyText || `Created ${sectionCount} card(s). Review them and save.`,
         plan: parsedArguments.data,
         images,
     };
