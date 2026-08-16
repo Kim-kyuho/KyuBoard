@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
             memos: toSnapshotCards(body.snapshot?.memos),
             mermaids: toSnapshotCards(body.snapshot?.mermaids),
             tables: toSnapshotCards(body.snapshot?.tables),
+            images: toSnapshotCards(body.snapshot?.images),
             capacity: Number.isInteger(body.snapshot?.capacity)
                 ? Math.max(0, Math.min(64, body.snapshot.capacity))
                 : 0,
@@ -105,6 +106,9 @@ export async function POST(request: NextRequest) {
             reply: result.reply,
             plan: result.plan,
             arrangement: result.arrangement,
+            edit: result.edit,
+            deletion: result.deletion,
+            images: result.images,
         });
     } catch (error) {
         if (error instanceof AssistantUnavailableError) {

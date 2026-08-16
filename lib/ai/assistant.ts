@@ -1,18 +1,25 @@
-import { GoogleGenAI, type Content, type FunctionDeclaration } from "@google/genai";
+import { GoogleGenAI, Modality, type Content, type FunctionDeclaration } from "@google/genai";
 import {
     boardArrangementSchema,
+    boardDeletionSchema,
+    boardEditSchema,
     boardPlanSchema,
     layoutModes,
     planMemoColors,
     type BoardArrangement,
+    type BoardDeletion,
+    type BoardEdit,
     type BoardPlan,
+    type GeneratedImage,
 } from "@/lib/ai/board-plan";
+import { kyuboardGuide } from "@/lib/ai/kyuboard-guide";
 
 // Gemini 호출과 도구 정의를 모아둔 라이브러리.
 // 카드 생성은 자유 텍스트 파싱이 아니라 function calling으로만 받는다.
 
-// 최신 모델일수록 과부하(503)로 거절되는 일이 잦다. 순서대로 시도해 첫 성공을 쓴다.
-const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash"];
+// 혼잡(503)은 모델마다 다르고 시간에 따라 변한다. 선호 순서대로 시도해 첫 성공을 쓴다.
+// 2026-08-17 실측: 3.7 성공 2.3초, 3.6 성공 29.7초, 3.5는 503. 빠른 순으로 둔다.
+const fallbackModels = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash"];
 
 export const assistantModels = process.env.GEMINI_MODEL
     ? [process.env.GEMINI_MODEL, ...fallbackModels.filter((model) => model !== process.env.GEMINI_MODEL)]
@@ -36,8 +43,20 @@ const isRetryableModelError = (error: unknown) => {
     );
 };
 
+// 이미지 생성 전용 모델. 대화 모델과 별개로 시도한다.
+const fallbackImageModels = ["gemini-3.1-flash-image", "gemini-2.5-flash-image"];
+
+export const assistantImageModels = process.env.GEMINI_IMAGE_MODEL
+    ? [process.env.GEMINI_IMAGE_MODEL, ...fallbackImageModels.filter((m) => m !== process.env.GEMINI_IMAGE_MODEL)]
+    : fallbackImageModels;
+
+/** 한 번의 요청에서 만들 이미지 수 상한. 비용과 응답 시간을 묶어 둔다. */
+export const maxGeneratedImages = 3;
+
 export const createBoardCardsToolName = "create_board_cards";
 export const rearrangeBoardCardsToolName = "rearrange_board_cards";
+export const editBoardCardsToolName = "edit_board_cards";
+export const deleteBoardCardsToolName = "delete_board_cards";
 
 const memoBlockSchema = {
     type: "object",
@@ -97,7 +116,7 @@ export const createBoardCardsFunction: FunctionDeclaration = {
                         attachment: {
                             type: "object",
                             properties: {
-                                type: { type: "string", enum: ["mermaid", "table"] },
+                                type: { type: "string", enum: ["mermaid", "table", "image"] },
                                 source: { type: "string", description: "mermaid일 때 Mermaid 문법" },
                                 columns: {
                                     type: "array",
@@ -109,6 +128,12 @@ export const createBoardCardsFunction: FunctionDeclaration = {
                                     items: { type: "array", items: { type: "string" } },
                                     description: "table일 때 행 데이터. 각 행의 길이는 columns와 맞춘다",
                                 },
+                                prompt: {
+                                    type: "string",
+                                    description:
+                                        "image일 때 그림 생성 지시문. 사용자가 그림을 명시적으로 요청했을 때만 쓴다",
+                                },
+                                alt: { type: "string", description: "image일 때 대체 텍스트" },
                             },
                             required: ["type"],
                         },
@@ -163,6 +188,80 @@ export const rearrangeBoardCardsFunction: FunctionDeclaration = {
     },
 };
 
+export const editBoardCardsFunction: FunctionDeclaration = {
+    name: editBoardCardsToolName,
+    description:
+        "보드에 이미 있는 카드의 내용을 고친다. 위치와 크기는 바꾸지 않는다. 반드시 대화에 주어진 현재 보드 카드 목록의 ID만 사용한다. 메모 본문을 고칠 때는 바뀐 부분만이 아니라 그 메모의 전체 본문을 blocks로 다시 보낸다.",
+    parametersJsonSchema: {
+        type: "object",
+        properties: {
+            memos: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        id: { type: "integer", description: "현재 보드에 있는 메모 카드 ID" },
+                        blocks: {
+                            type: "array",
+                            minItems: 1,
+                            items: memoBlockSchema,
+                            description: "메모의 새 본문 전체. 내용을 바꾸지 않으면 생략",
+                        },
+                        color: {
+                            type: "string",
+                            enum: [...planMemoColors],
+                            description: "새 배경색. 바꾸지 않으면 생략",
+                        },
+                    },
+                    required: ["id"],
+                },
+            },
+            mermaids: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        id: { type: "integer", description: "현재 보드에 있는 Mermaid 카드 ID" },
+                        source: { type: "string", description: "새 Mermaid 문법 전체" },
+                    },
+                    required: ["id", "source"],
+                },
+            },
+            tables: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        id: { type: "integer", description: "현재 보드에 있는 표 카드 ID" },
+                        columns: { type: "array", items: { type: "string" }, description: "새 열 이름 전체" },
+                        rows: {
+                            type: "array",
+                            items: { type: "array", items: { type: "string" } },
+                            description: "새 행 데이터 전체. 각 행의 길이는 columns와 맞춘다",
+                        },
+                    },
+                    required: ["id", "columns", "rows"],
+                },
+            },
+        },
+    },
+};
+
+export const deleteBoardCardsFunction: FunctionDeclaration = {
+    name: deleteBoardCardsToolName,
+    description:
+        "보드에 이미 있는 카드를 지운다. 반드시 대화에 주어진 현재 보드 카드 목록의 ID만 사용한다. 사용자가 무엇을 지울지 분명히 밝혔을 때만 호출하고, 애매하면 먼저 되묻는다.",
+    parametersJsonSchema: {
+        type: "object",
+        properties: {
+            memoIds: { type: "array", items: { type: "integer" }, description: "지울 메모 카드 ID 목록" },
+            mermaidIds: { type: "array", items: { type: "integer" }, description: "지울 Mermaid 카드 ID 목록" },
+            tableIds: { type: "array", items: { type: "integer" }, description: "지울 표 카드 ID 목록" },
+            imageIds: { type: "array", items: { type: "integer" }, description: "지울 이미지 카드 ID 목록" },
+        },
+    },
+};
+
 export const assistantSystemPrompt = [
     "너는 KyuBoard의 AI 어시스턴트다. KyuBoard는 보드 위에 카드를 배치하면 그 배치가 그대로 하나의 Markdown 문서로 컴파일되는 도구다.",
     "",
@@ -187,6 +286,28 @@ export const assistantSystemPrompt = [
     `- 이미 있는 카드를 정리·재배치하거나 표·다이어그램을 다른 메모에 붙이라는 요청에는 ${rearrangeBoardCardsToolName}를 호출한다. 이때 대화에 주어진 현재 보드 카드 목록의 ID만 쓴다.`,
     "- 좌표(x, y)는 절대 지정하지 않는다. 위치는 KyuBoard가 계산한다. 너는 순서와 붙임 관계만 정한다.",
     "- 최종 문서 순서는 메모의 생성 순서로 이미 정해져 있다. 재배치로는 문서 순서를 바꿀 수 없다.",
+    "",
+    "카드 고치기와 지우기:",
+    `- 이미 있는 카드의 내용을 바꾸라는 요청에는 ${editBoardCardsToolName}를 호출한다.`,
+    "- 메모 본문을 고칠 때는 바뀐 문장만 보내지 않는다. 그 메모의 전체 본문을 blocks로 다시 만들어 보낸다. 보낸 내용이 기존 본문을 통째로 대체한다.",
+    "- 표나 Mermaid도 마찬가지로 전체를 다시 보낸다.",
+    `- 카드를 지우라는 요청에는 ${deleteBoardCardsToolName}를 호출한다.`,
+    "- 무엇을 지울지 분명하지 않으면 지우지 말고 먼저 되묻는다. '정리해줘', '깔끔하게 해줘' 같은 말은 삭제 지시가 아니다.",
+    "- 고치기와 지우기 모두 현재 보드 카드 목록에 있는 ID만 쓴다. 목록에 없는 ID는 절대 지어내지 않는다.",
+    "",
+    "그림(이미지):",
+    "- 사용자가 그림·일러스트·이미지를 명시적으로 요청했을 때만 image attachment를 붙인다.",
+    "- 그냥 문서나 설계를 만들어 달라는 요청에는 절대 붙이지 않는다. 다이어그램이 필요하면 mermaid를 쓴다.",
+    `- 한 번에 만들 수 있는 그림은 최대 ${maxGeneratedImages}장이다.`,
+    "- image attachment의 prompt에는 무엇을 그릴지 구체적으로 영어나 한국어로 적고, alt에는 짧은 설명을 넣는다.",
+    "",
+    "사용법 안내:",
+    "- KyuBoard를 어떻게 쓰는지 묻는 질문에는 함수를 호출하지 말고 아래 사용법을 근거로 말로 설명한다.",
+    "- 예: 메모를 어떻게 쓰는지, Mermaid 문법을 어떻게 적는지, 카드가 왜 문서에 안 나오는지, 드로잉을 어떻게 저장하는지.",
+    "- 아래 사용법에 없는 기능은 없다고 답한다. 있을 법한 기능을 지어내지 않는다.",
+    "- 설명은 짧게 하고, 필요하면 단계로 나눠 적는다.",
+    "",
+    kyuboardGuide,
 ].join("\n");
 
 export type AssistantMessage = {
@@ -198,6 +319,7 @@ export type BoardSnapshot = {
     memos: { id: number; summary: string }[];
     mermaids: { id: number; summary: string }[];
     tables: { id: number; summary: string }[];
+    images: { id: number; summary: string }[];
     /** 보드에 더 배치할 수 있는 섹션 수. 모델이 분량을 맞추는 데 쓴다. */
     capacity: number;
 };
@@ -206,7 +328,77 @@ export type AssistantResult = {
     reply: string;
     plan: BoardPlan | null;
     arrangement: BoardArrangement | null;
+    edit: BoardEdit | null;
+    deletion: BoardDeletion | null;
+    /** 계획의 image 첨부에 대응하는 생성 결과. 실패한 섹션은 빠진다. */
+    images: GeneratedImage[];
 };
+
+const emptyResult = {
+    plan: null,
+    arrangement: null,
+    edit: null,
+    deletion: null,
+    images: [] as GeneratedImage[],
+};
+
+/**
+ * 계획에 들어 있는 image 첨부를 실제 그림으로 만든다.
+ * 한 장이 실패해도 나머지는 살리고, 실패한 섹션은 첨부 없이 메모만 남는다.
+ */
+async function generateSectionImages(ai: GoogleGenAI, plan: BoardPlan): Promise<GeneratedImage[]> {
+    const targets = plan.sections
+        .map((section, sectionIndex) => ({ section, sectionIndex }))
+        .filter(({ section }) => section.attachment?.type === "image")
+        .slice(0, maxGeneratedImages);
+
+    if (targets.length === 0) {
+        return [];
+    }
+
+    const results = await Promise.all(
+        targets.map(async ({ section, sectionIndex }) => {
+            const attachment = section.attachment;
+
+            if (attachment?.type !== "image") {
+                return null;
+            }
+
+            for (const model of assistantImageModels) {
+                try {
+                    const response = await ai.models.generateContent({
+                        model,
+                        contents: [{ role: "user", parts: [{ text: attachment.prompt }] }],
+                        config: { responseModalities: [Modality.IMAGE] },
+                    });
+
+                    const inline = response.candidates?.[0]?.content?.parts?.find(
+                        (part) => part.inlineData?.data
+                    )?.inlineData;
+
+                    if (inline?.data) {
+                        return {
+                            sectionIndex,
+                            data: inline.data,
+                            mimeType: inline.mimeType ?? "image/png",
+                            alt: attachment.alt?.trim() || attachment.prompt.slice(0, 80),
+                        };
+                    }
+                } catch (error) {
+                    if (!isRetryableModelError(error)) {
+                        console.error(`Image generation failed on ${model}:`, error);
+                        return null;
+                    }
+                    console.warn(`Image model ${model} unavailable, trying the next one.`);
+                }
+            }
+
+            return null;
+        })
+    );
+
+    return results.filter((image): image is GeneratedImage => image !== null);
+}
 
 // Gemini는 어시스턴트 역할을 "model"로 부른다.
 const toGeminiContents = (messages: AssistantMessage[]): Content[] =>
@@ -227,6 +419,7 @@ const describeSnapshot = (snapshot: BoardSnapshot) => {
         describe("메모 카드", snapshot.memos),
         describe("Mermaid 카드", snapshot.mermaids),
         describe("표 카드", snapshot.tables),
+        describe("이미지 카드", snapshot.images),
         `이 보드에 새로 배치할 수 있는 섹션은 최대 ${snapshot.capacity}개다. 이보다 많이 만들지 않는다.`,
     ].join("\n");
 };
@@ -241,7 +434,16 @@ export async function runBoardAssistant(
         contents: toGeminiContents(messages),
         config: {
             systemInstruction: [assistantSystemPrompt, "", describeSnapshot(snapshot)].join("\n"),
-            tools: [{ functionDeclarations: [createBoardCardsFunction, rearrangeBoardCardsFunction] }],
+            tools: [
+                {
+                    functionDeclarations: [
+                        createBoardCardsFunction,
+                        rearrangeBoardCardsFunction,
+                        editBoardCardsFunction,
+                        deleteBoardCardsFunction,
+                    ],
+                },
+            ],
         },
     };
 
@@ -272,6 +474,50 @@ export async function runBoardAssistant(
     const replyText = response.text?.trim();
     const calls = response.functionCalls ?? [];
 
+    // 파괴적인 순서로 먼저 본다. 삭제 > 고치기 > 재배치 > 생성.
+    const deleteCall = calls.find((call) => call.name === deleteBoardCardsToolName);
+
+    if (deleteCall?.args) {
+        const parsed = boardDeletionSchema.safeParse(deleteCall.args);
+        const total = parsed.success
+            ? (parsed.data.memoIds?.length ?? 0) +
+              (parsed.data.mermaidIds?.length ?? 0) +
+              (parsed.data.tableIds?.length ?? 0) +
+              (parsed.data.imageIds?.length ?? 0)
+            : 0;
+
+        if (!parsed.success || total === 0) {
+            return { ...emptyResult, reply: "어떤 카드를 지울지 알아내지 못했습니다. 카드를 지목해 주세요." };
+        }
+
+        return {
+            ...emptyResult,
+            reply: replyText || `카드 ${total}장을 지웠습니다. 저장하기 전에는 되돌릴 수 있습니다.`,
+            deletion: parsed.data,
+        };
+    }
+
+    const editCall = calls.find((call) => call.name === editBoardCardsToolName);
+
+    if (editCall?.args) {
+        const parsed = boardEditSchema.safeParse(editCall.args);
+        const total = parsed.success
+            ? (parsed.data.memos?.length ?? 0) +
+              (parsed.data.mermaids?.length ?? 0) +
+              (parsed.data.tables?.length ?? 0)
+            : 0;
+
+        if (!parsed.success || total === 0) {
+            return { ...emptyResult, reply: "수정 내용을 이해하지 못했습니다. 다시 요청해 주세요." };
+        }
+
+        return {
+            ...emptyResult,
+            reply: replyText || `카드 ${total}장을 고쳤습니다. 확인 후 저장하세요.`,
+            edit: parsed.data,
+        };
+    }
+
     const rearrangeCall = calls.find((call) => call.name === rearrangeBoardCardsToolName);
 
     if (rearrangeCall?.args) {
@@ -279,16 +525,12 @@ export async function runBoardAssistant(
         const parsed = boardArrangementSchema.safeParse(rearrangeCall.args);
 
         if (!parsed.success) {
-            return {
-                reply: "재배치 계획을 이해하지 못했습니다. 다시 요청해 주세요.",
-                plan: null,
-                arrangement: null,
-            };
+            return { ...emptyResult, reply: "재배치 계획을 이해하지 못했습니다. 다시 요청해 주세요." };
         }
 
         return {
+            ...emptyResult,
             reply: replyText || "카드를 다시 배치했습니다. 확인 후 저장하세요.",
-            plan: null,
             arrangement: parsed.data,
         };
     }
@@ -296,28 +538,22 @@ export async function runBoardAssistant(
     const createCall = calls.find((call) => call.name === createBoardCardsToolName);
 
     if (!createCall?.args) {
-        return {
-            reply: replyText || "요청을 이해하지 못했습니다. 다시 설명해 주세요.",
-            plan: null,
-            arrangement: null,
-        };
+        return { ...emptyResult, reply: replyText || "요청을 이해하지 못했습니다. 다시 설명해 주세요." };
     }
 
     const parsedArguments = boardPlanSchema.safeParse(createCall.args);
 
     if (!parsedArguments.success) {
-        return {
-            reply: "카드 구조를 만드는 데 실패했습니다. 요청을 더 구체적으로 적어 주세요.",
-            plan: null,
-            arrangement: null,
-        };
+        return { ...emptyResult, reply: "카드 구조를 만드는 데 실패했습니다. 요청을 더 구체적으로 적어 주세요." };
     }
 
     const sectionCount = parsedArguments.data.sections.length;
+    const images = await generateSectionImages(ai, parsedArguments.data);
 
     return {
+        ...emptyResult,
         reply: replyText || `${sectionCount}개의 카드를 만들었습니다. 확인 후 저장하세요.`,
         plan: parsedArguments.data,
-        arrangement: null,
+        images,
     };
 }
