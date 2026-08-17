@@ -10,7 +10,6 @@ import {
     layoutArrangement,
     layoutBoardPlan,
     maxMemoHeight,
-    maxScatterJitter,
     memoBlocksToHtml,
     memoWidth,
     minMemoHeight,
@@ -840,15 +839,46 @@ describe("scatter layout", () => {
         }
     });
 
-    it("keeps the jitter bounded so cards stay near their slot", () => {
-        const ordered = layoutBoardPlan({ ...scatterPlan(12), layout: "grid" }, { x: 0, y: 0 }, largeBoard);
-        const scattered = layoutBoardPlan(scatterPlan(12), { x: 0, y: 0 }, largeBoard, [], mulberry32(3));
+    // 격자에 지터만 주면 행·열이 남아 "삐뚤어진 그리드"가 된다. 좌표가 실제로 흩어져야 한다.
+    it("does not line cards up in rows or columns", () => {
+        const gridded = layoutBoardPlan({ ...scatterPlan(12), layout: "grid" }, { x: 0, y: 0 }, largeBoard);
+        const scattered = layoutBoardPlan(scatterPlan(12), { x: 0, y: 0 }, largeBoard, [], mulberry32(5));
 
-        scattered.memos.forEach((memo, index) => {
-            const slot = ordered.memos[index];
-            expect(Math.abs(memo.x - slot.x)).toBeLessThanOrEqual(maxScatterJitter);
-            expect(Math.abs(memo.y - slot.y)).toBeLessThanOrEqual(maxScatterJitter);
-        });
+        const distinct = (values: number[]) => new Set(values).size;
+
+        // grid는 같은 x·y 값이 반복된다. scatter는 거의 모두 달라야 한다.
+        expect(distinct(gridded.memos.map((m) => m.y))).toBeLessThan(gridded.memos.length);
+        expect(distinct(scattered.memos.map((m) => m.x))).toBe(scattered.memos.length);
+        expect(distinct(scattered.memos.map((m) => m.y))).toBe(scattered.memos.length);
+    });
+
+    // 카드 순서와 화면 위치의 상관이 끊겨야 진짜 랜덤이다.
+    it("breaks the left-to-right relationship between order and position", () => {
+        let monotonicRuns = 0;
+        const seeds = 40;
+
+        for (let seed = 0; seed < seeds; seed += 1) {
+            const planned = layoutBoardPlan(scatterPlan(10), { x: 0, y: 0 }, largeBoard, [], mulberry32(seed));
+            const xs = planned.memos.map((memo) => memo.x);
+            const ascending = xs.every((x, index) => index === 0 || x >= xs[index - 1]);
+
+            if (ascending) {
+                monotonicRuns += 1;
+            }
+        }
+
+        // 좌→우 순서대로 놓이는 배치가 대다수면 랜덤이 아니다.
+        expect(monotonicRuns).toBeLessThan(seeds / 4);
+    });
+
+    it("spreads cards across the whole board, not just one band", () => {
+        const planned = layoutBoardPlan(scatterPlan(16), { x: 0, y: 0 }, largeBoard, [], mulberry32(11));
+        const xs = planned.memos.map((memo) => memo.x);
+        const ys = planned.memos.map((memo) => memo.y);
+
+        // 한 열/한 행에만 몰려 있지 않은지 본다.
+        expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(largeBoard.width / 4);
+        expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(largeBoard.height / 4);
     });
 
     it("still holds the invariants on a board that is nearly full", () => {
