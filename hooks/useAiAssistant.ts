@@ -66,6 +66,20 @@ type PendingDeletions = {
 
 const emptyPendingDeletions: PendingDeletions = { memos: [], mermaids: [], tables: [], images: [] };
 
+/**
+ * 보드 카드 네 컬렉션을 한 덩어리로 다룬다.
+ *
+ * 적용 단계마다 이 값을 명시적으로 넘긴다. 클로저의 memos/mermaids/tables/images를 읽으면
+ * 같은 tick에 이미 setState를 걸어둔 변경이 보이지 않는다. 실제로 그 때문에 같은 카드를
+ * 연달아 고칠 때 Discard가 AI 이전 상태가 아니라 중간 버전으로 돌아가는 버그가 있었다.
+ */
+type BoardCards = {
+    memos: BoardMemo[];
+    mermaids: BoardMermaid[];
+    tables: BoardTable[];
+    images: BoardImage[];
+};
+
 // AI가 만든 이미지는 저장 시점에 업로드하므로 그때까지 File을 카드에 들고 있는다.
 // 미리보기는 수동 업로드와 같은 Object URL 방식을 쓴다.
 const base64ToFile = (data: string, mimeType: string, name: string) => {
@@ -203,76 +217,86 @@ export function useAiAssistant({
         return status;
     }, []);
 
-    // 아직 저장하지 않은 AI 카드를 보드에서 걷어내고, 재배치는 원래 좌표로 되돌린다.
-    const discardPendingCards = useCallback(() => {
-        const restore = <T extends { id: number; x: number; y: number }>(cards: T[], moves: MovedCard[]) => {
+    const currentCards = (): BoardCards => ({ memos, mermaids, tables, images });
+
+    const commitCards = (cards: BoardCards) => {
+        setMemos(cards.memos);
+        setMermaids(cards.mermaids);
+        setTables(cards.tables);
+        setImages(cards.images);
+    };
+
+    const clearPending = () => {
+        setPendingCards(emptyPendingCards);
+        setPendingMoves(emptyPendingMoves);
+        setPendingEdits(emptyPendingEdits);
+        setPendingDeletions(emptyPendingDeletions);
+        setPendingImageIds([]);
+    };
+
+    /**
+     * 아직 저장하지 않은 AI 변경을 모두 되돌린 카드 목록을 만든다. 상태를 건드리지 않는 순수 함수라
+     * 되돌린 결과를 그대로 다음 단계로 넘길 수 있다.
+     */
+    const revertPendingCards = (cards: BoardCards): BoardCards => {
+        const restore = <T extends { id: number; x: number; y: number }>(list: T[], moves: MovedCard[]) => {
             if (moves.length === 0) {
-                return cards;
+                return list;
             }
             const moveById = new Map(moves.map((move) => [move.id, move]));
 
-            return cards.map((card) => {
+            return list.map((card) => {
                 const move = moveById.get(card.id);
                 return move ? { ...card, x: move.previousX, y: move.previousY } : card;
             });
         };
 
         // 고쳐 놓은 카드는 이전 내용으로, 지운 카드는 원래대로 되살린다.
-        const revert = <T extends { id: number }>(cards: T[], previous: T[], removed: T[]) => {
+        const revert = <T extends { id: number }>(list: T[], previous: T[], removed: T[]) => {
             const previousById = new Map(previous.map((card) => [card.id, card]));
-            const reverted = cards.map((card) => previousById.get(card.id) ?? card);
+            const reverted = list.map((card) => previousById.get(card.id) ?? card);
 
             return removed.length > 0 ? [...reverted, ...removed] : reverted;
         };
 
-        setMemos((prev) =>
-            revert(
-                restore(prev.filter((memo) => !pendingCards.memoIds.includes(memo.id)), pendingMoves.memos),
+        // 저장하지 않은 AI 이미지는 Object URL을 해제해야 메모리에 남지 않는다.
+        cards.images
+            .filter((image) => pendingImageIds.includes(image.imageId))
+            .forEach((image) => URL.revokeObjectURL(image.secureUrl));
+
+        const keptImages = cards.images.filter((image) => !pendingImageIds.includes(image.imageId));
+
+        return {
+            memos: revert(
+                restore(cards.memos.filter((memo) => !pendingCards.memoIds.includes(memo.id)), pendingMoves.memos),
                 pendingEdits.memos,
                 pendingDeletions.memos
-            )
-        );
-        setMermaids((prev) =>
-            revert(
-                restore(prev.filter((card) => !pendingCards.mermaidIds.includes(card.id)), pendingMoves.mermaids),
+            ),
+            mermaids: revert(
+                restore(
+                    cards.mermaids.filter((card) => !pendingCards.mermaidIds.includes(card.id)),
+                    pendingMoves.mermaids
+                ),
                 pendingEdits.mermaids,
                 pendingDeletions.mermaids
-            )
-        );
-        setTables((prev) =>
-            revert(
-                restore(prev.filter((card) => !pendingCards.tableIds.includes(card.id)), pendingMoves.tables),
+            ),
+            tables: revert(
+                restore(
+                    cards.tables.filter((card) => !pendingCards.tableIds.includes(card.id)),
+                    pendingMoves.tables
+                ),
                 pendingEdits.tables,
                 pendingDeletions.tables
-            )
-        );
-        setImages((prev) => {
-            // 저장하지 않은 AI 이미지는 Object URL을 해제해야 메모리에 남지 않는다.
-            prev
-                .filter((image) => pendingImageIds.includes(image.imageId))
-                .forEach((image) => URL.revokeObjectURL(image.secureUrl));
+            ),
+            images:
+                pendingDeletions.images.length > 0 ? [...keptImages, ...pendingDeletions.images] : keptImages,
+        };
+    };
 
-            const kept = prev.filter((image) => !pendingImageIds.includes(image.imageId));
-
-            return pendingDeletions.images.length > 0 ? [...kept, ...pendingDeletions.images] : kept;
-        });
-
-        setPendingCards(emptyPendingCards);
-        setPendingMoves(emptyPendingMoves);
-        setPendingEdits(emptyPendingEdits);
-        setPendingDeletions(emptyPendingDeletions);
-        setPendingImageIds([]);
-    }, [
-        pendingCards,
-        pendingMoves,
-        pendingEdits,
-        pendingDeletions,
-        pendingImageIds,
-        setMemos,
-        setMermaids,
-        setTables,
-        setImages,
-    ]);
+    const discardPendingCards = () => {
+        commitCards(revertPendingCards(currentCards()));
+        clearPending();
+    };
 
     const handleToggleAiPanel = async () => {
         if (aiPanelOpen) {
@@ -296,11 +320,11 @@ export function useAiAssistant({
     };
 
     // 기존 카드 오른쪽 바깥에 새 열을 잡고, 현재 보이는 화면 높이에 맞춰 시작점을 정한다.
-    const getPlanOrigin = () => {
+    const getPlanOrigin = (base: BoardCards) => {
         const rightEdges = [
-            ...memos.map((memo) => memo.x + memo.width),
-            ...mermaids.map((mermaid) => mermaid.x + mermaid.width),
-            ...tables.map((table) => table.x + table.width),
+            ...base.memos.map((memo) => memo.x + memo.width),
+            ...base.mermaids.map((mermaid) => mermaid.x + mermaid.width),
+            ...base.tables.map((table) => table.x + table.width),
         ];
         const locationElement = cardLocationRef.current;
         const viewportTop = locationElement ? locationElement.scrollTop / boardZoom : 0;
@@ -311,8 +335,8 @@ export function useAiAssistant({
         };
     };
 
-    const applyPlan = (plan: BoardPlan, generatedImages: GeneratedImage[] = []) => {
-        const planned = layoutBoardPlan(plan, getPlanOrigin(), boardBounds, generatedImages);
+    const applyPlan = (plan: BoardPlan, base: BoardCards, generatedImages: GeneratedImage[] = []) => {
+        const planned = layoutBoardPlan(plan, getPlanOrigin(base), boardBounds, generatedImages);
         // 임시 ID는 증가하도록 만들어, 저장 전에도 메모 탐색 순서가 문서 순서와 같게 유지한다.
         const idBase = -Date.now();
         let idOffset = 0;
@@ -369,10 +393,12 @@ export function useAiAssistant({
             };
         });
 
-        setMemos((prev) => [...prev, ...newMemos]);
-        setMermaids((prev) => [...prev, ...newMermaids]);
-        setTables((prev) => [...prev, ...newTables]);
-        setImages((prev) => [...prev, ...newImages]);
+        commitCards({
+            memos: [...base.memos, ...newMemos],
+            mermaids: [...base.mermaids, ...newMermaids],
+            tables: [...base.tables, ...newTables],
+            images: [...base.images, ...newImages],
+        });
         setPendingCards({
             memoIds: newMemos.map((memo) => memo.id),
             mermaidIds: newMermaids.map((mermaid) => mermaid.id),
@@ -394,10 +420,10 @@ export function useAiAssistant({
     };
 
     // 이미 저장된 카드를 옮긴다. 좌표만 로컬에 반영하고, 이전 좌표는 되돌리기용으로 남긴다.
-    const applyArrangement = (arrangement: BoardArrangement) => {
+    const applyArrangement = (arrangement: BoardArrangement, base: BoardCards) => {
         const arranged = layoutArrangement(
             arrangement,
-            { memos, mermaids, tables },
+            { memos: base.memos, mermaids: base.mermaids, tables: base.tables },
             { x: boardMarginOrigin, y: boardMarginOrigin },
             boardBounds
         );
@@ -417,9 +443,9 @@ export function useAiAssistant({
             });
         };
 
-        const memoMoves = toMoves(memos, arranged.memos);
-        const mermaidMoves = toMoves(mermaids, arranged.mermaids);
-        const tableMoves = toMoves(tables, arranged.tables);
+        const memoMoves = toMoves(base.memos, arranged.memos);
+        const mermaidMoves = toMoves(base.mermaids, arranged.mermaids);
+        const tableMoves = toMoves(base.tables, arranged.tables);
 
         const applyMoves = <T extends { id: number; x: number; y: number }>(cards: T[], moves: MovedCard[]) => {
             if (moves.length === 0) {
@@ -433,9 +459,12 @@ export function useAiAssistant({
             });
         };
 
-        setMemos((prev) => applyMoves(prev, memoMoves));
-        setMermaids((prev) => applyMoves(prev, mermaidMoves));
-        setTables((prev) => applyMoves(prev, tableMoves));
+        commitCards({
+            memos: applyMoves(base.memos, memoMoves),
+            mermaids: applyMoves(base.mermaids, mermaidMoves),
+            tables: applyMoves(base.tables, tableMoves),
+            images: base.images,
+        });
         setPendingMoves({ memos: memoMoves, mermaids: mermaidMoves, tables: tableMoves });
 
         const locationElement = cardLocationRef.current;
@@ -479,22 +508,22 @@ export function useAiAssistant({
     };
 
     // 고치기: 바꾸기 전 카드를 pendingEdits에 남겨 두고 화면을 먼저 갱신한다.
-    const applyEdit = (edit: BoardEdit) => {
+    const applyEdit = (edit: BoardEdit, base: BoardCards) => {
         const memoEdits = new Map((edit.memos ?? []).map((item) => [item.id, item]));
         const mermaidEdits = new Map((edit.mermaids ?? []).map((item) => [item.id, item]));
         const tableEdits = new Map((edit.tables ?? []).map((item) => [item.id, item]));
 
-        const changedMemos = memos.filter((memo) => memoEdits.has(memo.id));
-        const changedMermaids = mermaids.filter((card) => mermaidEdits.has(card.id));
-        const changedTables = tables.filter((card) => tableEdits.has(card.id));
+        const changedMemos = base.memos.filter((memo) => memoEdits.has(memo.id));
+        const changedMermaids = base.mermaids.filter((card) => mermaidEdits.has(card.id));
+        const changedTables = base.tables.filter((card) => tableEdits.has(card.id));
         const changedCount = changedMemos.length + changedMermaids.length + changedTables.length;
 
         if (changedCount === 0) {
             return 0;
         }
 
-        setMemos((prev) =>
-            prev.map((memo) => {
+        commitCards({
+            memos: base.memos.map((memo) => {
                 const change = memoEdits.get(memo.id);
 
                 if (!change) {
@@ -506,22 +535,19 @@ export function useAiAssistant({
                     content: change.blocks ? memoBlocksToHtml(change.blocks) : memo.content,
                     color: change.color ?? memo.color,
                 };
-            })
-        );
-        setMermaids((prev) =>
-            prev.map((card) => {
+            }),
+            mermaids: base.mermaids.map((card) => {
                 const change = mermaidEdits.get(card.id);
                 return change ? { ...card, source: change.source } : card;
-            })
-        );
-        setTables((prev) =>
-            prev.map((card) => {
+            }),
+            tables: base.tables.map((card) => {
                 const change = tableEdits.get(card.id);
                 return change
                     ? { ...card, source: planTableToSource(change.columns, change.rows) }
                     : card;
-            })
-        );
+            }),
+            images: base.images,
+        });
 
         // 같은 카드를 연달아 고쳐도 맨 처음 값으로 되돌아가도록 이미 기록된 카드는 덮지 않는다.
         setPendingEdits((prev) => {
@@ -541,17 +567,17 @@ export function useAiAssistant({
     };
 
     // 지우기: 저장 전까지는 화면에서만 사라진다. 원본을 들고 있다가 취소하면 되살린다.
-    const applyDeletion = (deletion: BoardDeletion) => {
+    const applyDeletion = (deletion: BoardDeletion, base: BoardCards) => {
         const memoIds = new Set(deletion.memoIds ?? []);
         const mermaidIds = new Set(deletion.mermaidIds ?? []);
         const tableIds = new Set(deletion.tableIds ?? []);
         const imageIds = new Set(deletion.imageIds ?? []);
 
-        const removedMemos = memos.filter((memo) => memoIds.has(memo.id));
-        const removedMermaids = mermaids.filter((card) => mermaidIds.has(card.id));
-        const removedTables = tables.filter((card) => tableIds.has(card.id));
+        const removedMemos = base.memos.filter((memo) => memoIds.has(memo.id));
+        const removedMermaids = base.mermaids.filter((card) => mermaidIds.has(card.id));
+        const removedTables = base.tables.filter((card) => tableIds.has(card.id));
         // 아직 저장되지 않은 이미지는 삭제 대상이 아니다.
-        const removedImages = images.filter((image) => imageIds.has(image.imageId) && image.imageId > 0);
+        const removedImages = base.images.filter((image) => imageIds.has(image.imageId) && image.imageId > 0);
         const removedCount =
             removedMemos.length + removedMermaids.length + removedTables.length + removedImages.length;
 
@@ -559,10 +585,12 @@ export function useAiAssistant({
             return 0;
         }
 
-        setMemos((prev) => prev.filter((memo) => !memoIds.has(memo.id)));
-        setMermaids((prev) => prev.filter((card) => !mermaidIds.has(card.id)));
-        setTables((prev) => prev.filter((card) => !tableIds.has(card.id)));
-        setImages((prev) => prev.filter((image) => !imageIds.has(image.imageId) || image.imageId < 0));
+        commitCards({
+            memos: base.memos.filter((memo) => !memoIds.has(memo.id)),
+            mermaids: base.mermaids.filter((card) => !mermaidIds.has(card.id)),
+            tables: base.tables.filter((card) => !tableIds.has(card.id)),
+            images: base.images.filter((image) => !imageIds.has(image.imageId) || image.imageId < 0),
+        });
 
         setPendingDeletions((prev) => ({
             memos: [...prev.memos, ...removedMemos],
@@ -605,15 +633,20 @@ export function useAiAssistant({
 
             const notes: string[] = [];
 
+            // 이전 제안이 남아 있으면 먼저 되돌린 값을 만들고, 그 값을 이후 단계의 기준으로 쓴다.
+            // 클로저의 memos/mermaids/tables를 읽으면 방금 되돌린 결과가 보이지 않는다.
+            let base = currentCards();
+
             if (data.plan || data.arrangement || data.edit || data.deletion) {
-                // 이전 제안이 남아 있으면 걷어내고 새 제안만 보여준다.
                 if (hasPendingCards) {
-                    discardPendingCards();
+                    base = revertPendingCards(base);
+                    commitCards(base);
+                    clearPending();
                 }
             }
 
             if (data.plan) {
-                const result = applyPlan(data.plan, data.images ?? []);
+                const result = applyPlan(data.plan, base, data.images ?? []);
                 const requestedImages = data.plan.sections.filter(
                     (section: { attachment?: { type?: string } }) => section.attachment?.type === "image"
                 ).length;
@@ -630,7 +663,7 @@ export function useAiAssistant({
             }
 
             if (data.edit) {
-                const changed = applyEdit(data.edit);
+                const changed = applyEdit(data.edit, base);
 
                 if (changed === 0) {
                     notes.push("Could not find those cards on this board.");
@@ -638,7 +671,7 @@ export function useAiAssistant({
             }
 
             if (data.deletion) {
-                const removed = applyDeletion(data.deletion);
+                const removed = applyDeletion(data.deletion, base);
 
                 if (removed === 0) {
                     notes.push("Could not find those cards on this board.");
@@ -646,7 +679,7 @@ export function useAiAssistant({
             }
 
             if (data.arrangement) {
-                const result = applyArrangement(data.arrangement);
+                const result = applyArrangement(data.arrangement, base);
                 if (result.moved === 0) {
                     notes.push("There was nothing to move.");
                 }
