@@ -44,7 +44,7 @@ export const planMemoColors = [
     "#f1f5f9",
 ] as const;
 
-export const layoutModes = ["column", "grid", "tree"] as const;
+export const layoutModes = ["column", "grid", "tree", "scatter"] as const;
 export const layoutModeSchema = z.enum(layoutModes);
 
 export const planSectionSchema = z.object({
@@ -142,6 +142,10 @@ export const attachmentOverlap = 24;
 export const sectionGap = 80;
 export const columnGap = 60;
 export const boardMargin = 40;
+// scatter 배치용. 셀 안에서 흔들 수 있는 최대 거리와, 카드 사이에 항상 남겨둘 최소 간격이다.
+// 지터를 (셀 여유 - scatterMinGap)로 제한하므로 이웃 칸 카드와 최소 이 간격이 유지된다.
+export const maxScatterJitter = 120;
+export const scatterMinGap = 24;
 export const mermaidSize = { width: 480, height: 360 };
 export const tableSize = { width: 560, height: 360 };
 export const imageSize = { width: 400, height: 300 };
@@ -351,6 +355,48 @@ const getFrame = (bounds: BoardBounds, widestItem: number): Frame => ({
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 /**
+ * scatter: grid와 같은 칸을 쓰되 각 섹션을 칸 안에서 무작위로 흔든다.
+ *
+ * 칸 밖으로는 절대 나가지 않으므로 칸이 겹치지 않는 한 카드도 겹치지 않는다. 지터를
+ * (칸 여유 - scatterMinGap)까지만 허용해 이웃 칸 카드와 최소 간격도 함께 보장한다.
+ * 좌표를 완전히 무작위로 뽑는 방식(거부 샘플링)과 달리 재시도가 없고 결과가 항상 유효하다.
+ */
+const placeScatter = (
+    items: LayoutItem[],
+    frame: Frame,
+    pitchX: number,
+    random: () => number
+) => {
+    const placements: (Placement | null)[] = [];
+    const rowExtent = items.reduce((tallest, item) => Math.max(tallest, getItemExtent(item)), 0);
+    const rowPitch = rowExtent + sectionGap;
+    const columnCount = Math.max(1, Math.floor((frame.maxX - frame.minX) / pitchX) + 1);
+    let droppedCount = 0;
+
+    // 칸 여유에서 최소 간격을 뺀 만큼만 흔든다. 여유가 없으면 흔들지 않는다.
+    const jitter = (slack: number) =>
+        Math.round(random() * Math.max(0, Math.min(slack - scatterMinGap, maxScatterJitter)));
+
+    items.forEach((item, index) => {
+        const cellX = frame.minX + (index % columnCount) * pitchX;
+        const cellY = frame.minY + Math.floor(index / columnCount) * rowPitch;
+
+        if (cellX > frame.maxX || cellY + rowExtent > frame.maxY) {
+            placements.push(null);
+            droppedCount += 1;
+            return;
+        }
+
+        const x = cellX + jitter(pitchX - getItemWidth(item));
+        const y = cellY + jitter(rowPitch - getItemExtent(item));
+
+        placements.push(toPlacement(item, x, y));
+    });
+
+    return { placements, droppedCount };
+};
+
+/**
  * column: 세로로 쌓다가 아래가 막히면 다음 열로 넘어간다. 섹션마다 높이가 달라도 된다.
  */
 const placeColumn = (items: LayoutItem[], frame: Frame, pitchX: number, origin: { x: number; y: number }) => {
@@ -512,7 +558,8 @@ const placeItems = (
     items: LayoutItem[],
     bounds: BoardBounds,
     origin: { x: number; y: number },
-    mode: LayoutMode
+    mode: LayoutMode,
+    random: () => number = Math.random
 ): PlacementResult => {
     // 모든 칸에 같은 간격을 쓰면 칸 사이 침범 검사를 한 번만 하면 된다.
     const widestItem = items.reduce((widest, item) => Math.max(widest, getItemWidth(item)), memoWidth);
@@ -529,6 +576,9 @@ const placeItems = (
     }
     if (mode === "tree") {
         return placeTree(items, frame, pitchX);
+    }
+    if (mode === "scatter") {
+        return placeScatter(items, frame, pitchX, random);
     }
 
     return placeColumn(items, frame, pitchX, origin);
@@ -553,7 +603,9 @@ export const layoutBoardPlan = (
     plan: BoardPlan,
     origin: { x: number; y: number },
     bounds: BoardBounds,
-    generatedImages: GeneratedImage[] = []
+    generatedImages: GeneratedImage[] = [],
+    // scatter 배치에서만 쓴다. 테스트가 결과를 재현할 수 있도록 밖에서 넣을 수 있게 둔다.
+    random: () => number = Math.random
 ): PlannedBoard => {
     const memoHeights = plan.sections.map((section) => estimateMemoHeight(section.blocks));
     const items: LayoutItem[] = plan.sections.map((section, index) => ({
@@ -562,7 +614,7 @@ export const layoutBoardPlan = (
         parentIndex: section.parentIndex,
     }));
 
-    const { placements, droppedCount } = placeItems(items, bounds, origin, plan.layout ?? "column");
+    const { placements, droppedCount } = placeItems(items, bounds, origin, plan.layout ?? "column", random);
     const imageBySection = new Map(generatedImages.map((image) => [image.sectionIndex, image]));
     const planned: PlannedBoard = { memos: [], mermaids: [], tables: [], images: [], droppedSections: droppedCount };
 
@@ -648,7 +700,9 @@ export const layoutArrangement = (
     arrangement: BoardArrangement,
     existing: ExistingCards,
     origin: { x: number; y: number },
-    bounds: BoardBounds
+    bounds: BoardBounds,
+    // scatter 배치에서만 쓴다. 재배치도 같은 배치기를 쓰므로 함께 열어 둔다.
+    random: () => number = Math.random
 ): ArrangedBoard => {
     const memoById = new Map(existing.memos.map((memo) => [memo.id, memo]));
     const mermaidById = new Map(existing.mermaids.map((card) => [card.id, card]));
@@ -706,7 +760,7 @@ export const layoutArrangement = (
         parentIndex: section.parentIndex,
     }));
 
-    const { placements, droppedCount } = placeItems(items, bounds, origin, arrangement.layout ?? "column");
+    const { placements, droppedCount } = placeItems(items, bounds, origin, arrangement.layout ?? "column", random);
     const arranged: ArrangedBoard = { memos: [], mermaids: [], tables: [], droppedSections: droppedCount };
 
     placements.forEach((placement, index) => {

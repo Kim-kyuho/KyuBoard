@@ -10,6 +10,7 @@ import {
     layoutArrangement,
     layoutBoardPlan,
     maxMemoHeight,
+    maxScatterJitter,
     memoBlocksToHtml,
     memoWidth,
     minMemoHeight,
@@ -747,5 +748,121 @@ describe("image attachments", () => {
 
         expect(planned.images).toHaveLength(0);
         expect(planned.memos).toHaveLength(2);
+    });
+});
+
+describe("scatter layout", () => {
+    // 시드 고정 PRNG. 무작위 배치라도 테스트는 재현 가능해야 한다.
+    const mulberry32 = (seed: number) => () => {
+        seed = (seed + 0x6d2b79f5) | 0;
+        let t = seed;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+
+    const overlaps = (a: Rect, b: Rect) =>
+        a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+    const scatterPlan = (count: number): BoardPlan => ({
+        layout: "scatter",
+        sections: Array.from({ length: count }, (_, index) => ({
+            blocks: [{ type: "paragraph" as const, text: `아이디어 ${index} 내용을 조금 더 길게 적어본다` }],
+            attachment:
+                index % 3 === 0
+                    ? { type: "mermaid" as const, source: "flowchart LR\nA-->B" }
+                    : index % 3 === 1
+                      ? { type: "table" as const, columns: ["a", "b"], rows: [["1", "2"]] }
+                      : undefined,
+        })),
+    });
+
+    it("is accepted as a layout mode", () => {
+        expect(boardPlanSchema.safeParse(scatterPlan(3)).success).toBe(true);
+    });
+
+    it("produces different coordinates for different seeds", () => {
+        const a = layoutBoardPlan(scatterPlan(6), { x: 0, y: 0 }, largeBoard, [], mulberry32(1));
+        const b = layoutBoardPlan(scatterPlan(6), { x: 0, y: 0 }, largeBoard, [], mulberry32(999));
+
+        expect(a.memos.map((m) => [m.x, m.y])).not.toEqual(b.memos.map((m) => [m.x, m.y]));
+    });
+
+    it("is deterministic for the same seed", () => {
+        const a = layoutBoardPlan(scatterPlan(6), { x: 0, y: 0 }, largeBoard, [], mulberry32(7));
+        const b = layoutBoardPlan(scatterPlan(6), { x: 0, y: 0 }, largeBoard, [], mulberry32(7));
+
+        expect(a.memos).toEqual(b.memos);
+    });
+
+    // 핵심 불변식 3개를 여러 시드에서 전수 확인한다.
+    it("never overlaps memos, never crosses corners, never leaves the board", () => {
+        for (let seed = 0; seed < 60; seed += 1) {
+            const planned = layoutBoardPlan(scatterPlan(12), { x: 0, y: 0 }, largeBoard, [], mulberry32(seed));
+            const cards = getAttachmentCards(planned);
+
+            // 1) 메모끼리 겹치지 않는다.
+            planned.memos.forEach((memo, index) => {
+                planned.memos.slice(index + 1).forEach((other) => {
+                    expect(overlaps(memo, other)).toBe(false);
+                });
+            });
+
+            // 2) 첨부 카드는 정확히 메모 하나에만 걸린다.
+            cards.forEach((card) => {
+                const owners = planned.memos.filter((memo) =>
+                    getMemoCorners(memo).some((corner) => containsCorner(card, corner))
+                );
+
+                expect(owners).toHaveLength(1);
+            });
+
+            // 3) 모든 카드가 보드 안에 있다.
+            [...planned.memos, ...cards].forEach((card) => {
+                expect(card.x).toBeGreaterThanOrEqual(0);
+                expect(card.y).toBeGreaterThanOrEqual(0);
+                expect(card.x + card.width).toBeLessThanOrEqual(largeBoard.width);
+                expect(card.y + card.height).toBeLessThanOrEqual(largeBoard.height);
+            });
+        }
+    });
+
+    it("also keeps attachment cards from overlapping each other", () => {
+        for (let seed = 0; seed < 30; seed += 1) {
+            const planned = layoutBoardPlan(scatterPlan(12), { x: 0, y: 0 }, largeBoard, [], mulberry32(seed));
+            const cards = getAttachmentCards(planned);
+
+            cards.forEach((card, index) => {
+                cards.slice(index + 1).forEach((other) => {
+                    expect(overlaps(card, other)).toBe(false);
+                });
+            });
+        }
+    });
+
+    it("keeps the jitter bounded so cards stay near their slot", () => {
+        const ordered = layoutBoardPlan({ ...scatterPlan(12), layout: "grid" }, { x: 0, y: 0 }, largeBoard);
+        const scattered = layoutBoardPlan(scatterPlan(12), { x: 0, y: 0 }, largeBoard, [], mulberry32(3));
+
+        scattered.memos.forEach((memo, index) => {
+            const slot = ordered.memos[index];
+            expect(Math.abs(memo.x - slot.x)).toBeLessThanOrEqual(maxScatterJitter);
+            expect(Math.abs(memo.y - slot.y)).toBeLessThanOrEqual(maxScatterJitter);
+        });
+    });
+
+    it("still holds the invariants on a board that is nearly full", () => {
+        const smallBoard = { width: 1920, height: 1080 };
+        const planned = layoutBoardPlan(scatterPlan(24), { x: 0, y: 0 }, smallBoard, [], mulberry32(42));
+
+        planned.memos.forEach((memo, index) => {
+            planned.memos.slice(index + 1).forEach((other) => {
+                expect(overlaps(memo, other)).toBe(false);
+            });
+        });
+        [...planned.memos, ...getAttachmentCards(planned)].forEach((card) => {
+            expect(card.x + card.width).toBeLessThanOrEqual(smallBoard.width);
+            expect(card.y + card.height).toBeLessThanOrEqual(smallBoard.height);
+        });
     });
 });
