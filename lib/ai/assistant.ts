@@ -105,7 +105,7 @@ export const createBoardCardsFunction: FunctionDeclaration = {
                 type: "string",
                 enum: [...layoutModes],
                 description:
-                    "배치 방식. column=한 줄기로 이어지는 문서, grid=서로 대등한 항목 나열, tree=상위-하위 구조가 있는 설계. 생략하면 column",
+                    "배치 방식. column=한 줄기로 이어지는 문서, grid=서로 대등한 항목 나열, tree=상위-하위 구조가 있는 설계, scatter=브레인스토밍처럼 흩어 놓기. 생략하면 column",
             },
             sections: {
                 type: "array",
@@ -174,7 +174,7 @@ export const rearrangeBoardCardsFunction: FunctionDeclaration = {
                 type: "string",
                 enum: [...layoutModes],
                 description:
-                    "배치 방식. column=한 줄기로 이어지는 문서, grid=서로 대등한 항목 나열, tree=상위-하위 구조가 있는 설계. 생략하면 column",
+                    "배치 방식. column=한 줄기로 이어지는 문서, grid=서로 대등한 항목 나열, tree=상위-하위 구조가 있는 설계, scatter=브레인스토밍처럼 흩어 놓기. 생략하면 column",
             },
             sections: {
                 type: "array",
@@ -297,6 +297,8 @@ export const assistantSystemPrompt = [
     "- column: 처음부터 끝까지 한 줄기로 읽는 문서. 회고, 설명서, 순서가 중요한 글.",
     "- grid: 서로 대등한 항목을 나열하는 문서. 비교표 모음, 체크리스트, 카드 목록.",
     "- tree: 상위 개념 아래에 하위 항목이 붙는 구조. 아키텍처 설계, 조직도, 기능 분해.",
+    "- scatter: 순서나 계층이 중요하지 않고 아이디어를 흩어 놓는 경우. 브레인스토밍, 자유 메모, 착상 모으기.",
+    "- 사용자가 자유롭게·흩어서·랜덤하게 배치해 달라고 하면 scatter를 고른다.",
     "- tree를 고르면 각 섹션에 parentIndex로 상위 섹션을 지정한다. 최상위 섹션은 parentIndex를 생략한다.",
     "- parentIndex는 반드시 자기 인덱스보다 작아야 한다. 개요를 먼저 쓰고 세부를 뒤에 쓰면 자연히 지켜진다.",
     "",
