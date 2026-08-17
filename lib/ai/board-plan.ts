@@ -142,9 +142,8 @@ export const attachmentOverlap = 24;
 export const sectionGap = 80;
 export const columnGap = 60;
 export const boardMargin = 40;
-// scatter 배치용. 셀 안에서 흔들 수 있는 최대 거리와, 카드 사이에 항상 남겨둘 최소 간격이다.
-// 지터를 (셀 여유 - scatterMinGap)로 제한하므로 이웃 칸 카드와 최소 이 간격이 유지된다.
-export const maxScatterJitter = 120;
+// scatter 배치에서 카드 사이에 항상 남겨둘 최소 간격.
+// 겹침 판정을 이 값만큼 부풀려서 하므로, 첨부 카드가 남의 메모 꼭짓점에 닿는 일도 함께 막힌다.
 export const scatterMinGap = 24;
 export const mermaidSize = { width: 480, height: 360 };
 export const tableSize = { width: 560, height: 360 };
@@ -344,6 +343,8 @@ const toPlacement = (item: LayoutItem, x: number, y: number): Placement => ({
 
 type Frame = { minX: number; maxX: number; minY: number; maxY: number };
 
+type Rect = { x: number; y: number; width: number; height: number };
+
 const getFrame = (bounds: BoardBounds, widestItem: number): Frame => ({
     minX: boardMargin,
     maxX: bounds.width - boardMargin - widestItem,
@@ -354,44 +355,101 @@ const getFrame = (bounds: BoardBounds, widestItem: number): Frame => ({
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
+/** 섹션 하나가 실제로 차지하는 사각형. 첨부 카드는 메모보다 위·오른쪽으로 튀어나온다. */
+const getItemBox = (item: LayoutItem, x: number, y: number) => ({
+    x,
+    y: item.attachment ? y - attachmentOverlap : y,
+    width: getItemWidth(item),
+    height: item.attachment ? getItemExtent(item) + attachmentOverlap : getItemExtent(item),
+});
+
+// scatterMinGap 만큼 부풀려서 겹침을 본다. 간격을 두면 첨부 카드가 남의 메모 꼭짓점에
+// 닿는 일도 같이 막힌다. 꼭짓점은 메모 경계 위의 점이기 때문이다.
+const boxesCollide = (a: Rect, b: Rect) =>
+    a.x - scatterMinGap < b.x + b.width &&
+    b.x - scatterMinGap < a.x + a.width &&
+    a.y - scatterMinGap < b.y + b.height &&
+    b.y - scatterMinGap < a.y + a.height;
+
 /**
- * scatter: grid와 같은 칸을 쓰되 각 섹션을 칸 안에서 무작위로 흔든다.
+ * scatter: 보드 안에서 좌표를 실제로 무작위로 뽑는다.
  *
- * 칸 밖으로는 절대 나가지 않으므로 칸이 겹치지 않는 한 카드도 겹치지 않는다. 지터를
- * (칸 여유 - scatterMinGap)까지만 허용해 이웃 칸 카드와 최소 간격도 함께 보장한다.
- * 좌표를 완전히 무작위로 뽑는 방식(거부 샘플링)과 달리 재시도가 없고 결과가 항상 유효하다.
+ * 뽑은 자리가 이미 놓인 섹션과 겹치면 다시 뽑는다(거부 샘플링). 정해진 횟수 안에 자리를
+ * 못 찾으면 격자를 훑어 빈 곳에 넣고, 그것도 실패하면 그 섹션을 버린다.
+ *
+ * 격자에 지터만 주는 방식은 칸 순서가 그대로 남아 "삐뚤어진 그리드"로 보인다. 무작위로
+ * 뽑아야 행·열이 사라지고 카드 순서와 화면 위치의 상관도 끊긴다.
  */
 const placeScatter = (
     items: LayoutItem[],
     frame: Frame,
-    pitchX: number,
+    bounds: BoardBounds,
     random: () => number
 ) => {
     const placements: (Placement | null)[] = [];
-    const rowExtent = items.reduce((tallest, item) => Math.max(tallest, getItemExtent(item)), 0);
-    const rowPitch = rowExtent + sectionGap;
-    const columnCount = Math.max(1, Math.floor((frame.maxX - frame.minX) / pitchX) + 1);
+    const placedBoxes: Rect[] = [];
     let droppedCount = 0;
 
-    // 칸 여유에서 최소 간격을 뺀 만큼만 흔든다. 여유가 없으면 흔들지 않는다.
-    const jitter = (slack: number) =>
-        Math.round(random() * Math.max(0, Math.min(slack - scatterMinGap, maxScatterJitter)));
+    const randomAttempts = 80;
+    const scanStep = 40;
 
-    items.forEach((item, index) => {
-        const cellX = frame.minX + (index % columnCount) * pitchX;
-        const cellY = frame.minY + Math.floor(index / columnCount) * rowPitch;
+    // 프레임의 maxX는 가장 넓은 섹션 기준이라 좁은 섹션에는 지나치게 빡빡하다.
+    // 섹션별로 실제 폭을 써서 보드 오른쪽 끝까지 활용한다.
+    const limitsFor = (item: LayoutItem) => {
+        const box = getItemBox(item, 0, 0);
 
-        if (cellX > frame.maxX || cellY + rowExtent > frame.maxY) {
+        return {
+            minX: frame.minX,
+            maxX: bounds.width - boardMargin - box.width,
+            minY: frame.minY,
+            maxY: bounds.height - boardMargin - getItemExtent(item),
+        };
+    };
+
+    for (const item of items) {
+        const limits = limitsFor(item);
+
+        if (limits.maxX < limits.minX || limits.maxY < limits.minY) {
             placements.push(null);
             droppedCount += 1;
-            return;
+            continue;
         }
 
-        const x = cellX + jitter(pitchX - getItemWidth(item));
-        const y = cellY + jitter(rowPitch - getItemExtent(item));
+        const fits = (x: number, y: number) => {
+            const box = getItemBox(item, x, y);
 
-        placements.push(toPlacement(item, x, y));
-    });
+            return !placedBoxes.some((placed) => boxesCollide(box, placed));
+        };
+
+        let chosen: { x: number; y: number } | null = null;
+
+        for (let attempt = 0; attempt < randomAttempts && !chosen; attempt += 1) {
+            const x = Math.round(limits.minX + random() * (limits.maxX - limits.minX));
+            const y = Math.round(limits.minY + random() * (limits.maxY - limits.minY));
+
+            if (fits(x, y)) {
+                chosen = { x, y };
+            }
+        }
+
+        // 무작위로 못 찾으면 격자를 훑는다. 보드가 빽빽할 때도 자리를 놓치지 않는다.
+        for (let y = limits.minY; y <= limits.maxY && !chosen; y += scanStep) {
+            for (let x = limits.minX; x <= limits.maxX && !chosen; x += scanStep) {
+                if (fits(x, y)) {
+                    chosen = { x, y };
+                }
+            }
+        }
+
+        if (!chosen) {
+            placements.push(null);
+            droppedCount += 1;
+            continue;
+        }
+
+        placedBoxes.push(getItemBox(item, chosen.x, chosen.y));
+        placements.push(toPlacement(item, chosen.x, chosen.y));
+    }
 
     return { placements, droppedCount };
 };
@@ -578,7 +636,7 @@ const placeItems = (
         return placeTree(items, frame, pitchX);
     }
     if (mode === "scatter") {
-        return placeScatter(items, frame, pitchX, random);
+        return placeScatter(items, frame, bounds, random);
     }
 
     return placeColumn(items, frame, pitchX, origin);
