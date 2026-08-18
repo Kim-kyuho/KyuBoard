@@ -14,13 +14,8 @@ import {
 } from "@/lib/ai/board-plan";
 import { kyuboardGuide } from "@/lib/ai/kyuboard-guide";
 
-// Gemini 호출과 도구 정의를 모아둔 라이브러리.
-// 카드 생성은 자유 텍스트 파싱이 아니라 function calling으로만 받는다.
-
-// 선호 순서대로 시도해 첫 성공을 쓴다.
-// 최신 모델일수록 무료 티어 할당량이 빡빡해 429가 먼저 난다. 그래서 최신이 아니라
-// 할당량이 여유로운 쪽을 앞에 둔다. 3.7은 빠르지만 금방 막히므로 뒤로 미룬다.
-// gemini-2.5-flash는 models.list에는 보이지만 generateContent가 404라 넣지 않는다.
+// 최신일수록 무료 티어 할당량이 빡빡해 429가 먼저 남 - 할당량 여유 순으로 둔다.
+// gemini-2.5-flash는 models.list에 보이지만 generateContent가 404라 제외.
 const fallbackModels = [
     "gemini-3.6-flash",
     "gemini-3.5-flash",
@@ -32,7 +27,6 @@ export const assistantModels = process.env.GEMINI_MODEL
     ? [process.env.GEMINI_MODEL, ...fallbackModels.filter((model) => model !== process.env.GEMINI_MODEL)]
     : fallbackModels;
 
-/** 모델 혼잡이나 일시적 장애로 실패했을 때 던진다. 호출자가 503으로 응답한다. */
 export class AssistantUnavailableError extends Error {
     constructor(message: string) {
         super(message);
@@ -42,7 +36,7 @@ export class AssistantUnavailableError extends Error {
 
 const toErrorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
-// 다른 모델로 넘어갈 가치가 있는 실패인지 판단한다. 잘못된 요청(400)은 재시도해도 같다.
+// 400은 재시도해도 같으므로 폴백하지 않는다
 const isRetryableModelError = (error: unknown) => {
     const message = toErrorMessage(error);
 
@@ -52,22 +46,19 @@ const isRetryableModelError = (error: unknown) => {
     );
 };
 
-// 쿼터 소진(429)과 일시적 혼잡(503)은 사용자가 할 수 있는 일이 다르다.
-// 혼잡은 잠시 뒤 재시도로 풀리지만, 쿼터는 초기화를 기다리거나 결제를 붙여야 한다.
+// 429와 503은 사용자가 할 수 있는 일이 달라 문구를 나눈다
 const isQuotaError = (error: unknown) => {
     const message = toErrorMessage(error);
 
     return /"code":\s*429/.test(message) || /RESOURCE_EXHAUSTED/.test(message);
 };
 
-// 이미지 생성 전용 모델. 대화 모델과 별개로 시도한다.
 const fallbackImageModels = ["gemini-3.1-flash-image", "gemini-2.5-flash-image"];
 
 export const assistantImageModels = process.env.GEMINI_IMAGE_MODEL
     ? [process.env.GEMINI_IMAGE_MODEL, ...fallbackImageModels.filter((m) => m !== process.env.GEMINI_IMAGE_MODEL)]
     : fallbackImageModels;
 
-/** 한 번의 요청에서 만들 이미지 수 상한. 비용과 응답 시간을 묶어 둔다. */
 export const maxGeneratedImages = 3;
 
 export const createBoardCardsToolName = "create_board_cards";
@@ -349,7 +340,6 @@ export type AssistantResult = {
     arrangement: BoardArrangement | null;
     edit: BoardEdit | null;
     deletion: BoardDeletion | null;
-    /** 계획의 image 첨부에 대응하는 생성 결과. 실패한 섹션은 빠진다. */
     images: GeneratedImage[];
 };
 
@@ -361,10 +351,7 @@ const emptyResult = {
     images: [] as GeneratedImage[],
 };
 
-/**
- * 계획에 들어 있는 image 첨부를 실제 그림으로 만든다.
- * 한 장이 실패해도 나머지는 살리고, 실패한 섹션은 첨부 없이 메모만 남는다.
- */
+// 한 장이 실패해도 나머지는 살린다 - 실패한 섹션은 첨부 없이 메모만 남는다
 async function generateSectionImages(ai: GoogleGenAI, plan: BoardPlan): Promise<GeneratedImage[]> {
     const targets = plan.sections
         .map((section, sectionIndex) => ({ section, sectionIndex }))
@@ -426,7 +413,6 @@ const toGeminiContents = (messages: AssistantMessage[]): Content[] =>
         parts: [{ text: message.content }],
     }));
 
-// 재배치를 하려면 모델이 현재 보드에 무엇이 있는지 알아야 한다.
 const describeSnapshot = (snapshot: BoardSnapshot) => {
     const describe = (label: string, cards: { id: number; summary: string }[]) =>
         cards.length === 0
@@ -495,7 +481,7 @@ export async function runBoardAssistant(
     const replyText = response.text?.trim();
     const calls = response.functionCalls ?? [];
 
-    // 파괴적인 순서로 먼저 본다. 삭제 > 고치기 > 재배치 > 생성.
+    // 파괴적인 순서로 본다: 삭제 > 고치기 > 재배치 > 생성
     const deleteCall = calls.find((call) => call.name === deleteBoardCardsToolName);
 
     if (deleteCall?.args) {
@@ -542,7 +528,7 @@ export async function runBoardAssistant(
     const rearrangeCall = calls.find((call) => call.name === rearrangeBoardCardsToolName);
 
     if (rearrangeCall?.args) {
-        // 모델이 스키마를 벗어난 인자를 보낼 수 있으므로 반드시 다시 검증한다.
+        // 모델 출력은 JSON Schema를 통과해도 신뢰하지 않는다
         const parsed = boardArrangementSchema.safeParse(rearrangeCall.args);
 
         if (!parsed.success) {

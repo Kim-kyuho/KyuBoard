@@ -27,7 +27,6 @@ export type AiStatus = {
     message: string | null;
 };
 
-// AI가 만든 카드는 임시 카드로만 올라간다. 사용자가 저장을 눌러야 DB에 들어간다.
 type PendingCards = {
     memoIds: number[];
     mermaidIds: number[];
@@ -36,7 +35,6 @@ type PendingCards = {
 
 const emptyPendingCards: PendingCards = { memoIds: [], mermaidIds: [], tableIds: [] };
 
-// 재배치는 이미 저장된 카드를 움직이므로, 취소하면 되돌릴 수 있게 이전 좌표를 들고 있는다.
 type MovedCard = { id: number; x: number; y: number; previousX: number; previousY: number };
 
 type PendingMoves = {
@@ -47,7 +45,6 @@ type PendingMoves = {
 
 const emptyPendingMoves: PendingMoves = { memos: [], mermaids: [], tables: [] };
 
-// 고치기는 이미 저장된 카드의 내용을 바꾸므로, 취소하면 되돌릴 수 있게 이전 값을 들고 있는다.
 type PendingEdits = {
     memos: BoardMemo[];
     mermaids: BoardMermaid[];
@@ -56,7 +53,6 @@ type PendingEdits = {
 
 const emptyPendingEdits: PendingEdits = { memos: [], mermaids: [], tables: [] };
 
-// 삭제는 저장 전까지 화면에서만 지운다. 취소하면 원래 카드를 그대로 되살린다.
 type PendingDeletions = {
     memos: BoardMemo[];
     mermaids: BoardMermaid[];
@@ -66,13 +62,8 @@ type PendingDeletions = {
 
 const emptyPendingDeletions: PendingDeletions = { memos: [], mermaids: [], tables: [], images: [] };
 
-/**
- * 보드 카드 네 컬렉션을 한 덩어리로 다룬다.
- *
- * 적용 단계마다 이 값을 명시적으로 넘긴다. 클로저의 memos/mermaids/tables/images를 읽으면
- * 같은 tick에 이미 setState를 걸어둔 변경이 보이지 않는다. 실제로 그 때문에 같은 카드를
- * 연달아 고칠 때 Discard가 AI 이전 상태가 아니라 중간 버전으로 돌아가는 버그가 있었다.
- */
+// 적용 단계마다 명시적으로 넘긴다 - 클로저를 읽으면 같은 tick에 건 setState가 안 보여서
+// 연속 편집 시 Discard가 중간 버전으로 돌아갔음
 type BoardCards = {
     memos: BoardMemo[];
     mermaids: BoardMermaid[];
@@ -80,8 +71,6 @@ type BoardCards = {
     images: BoardImage[];
 };
 
-// AI가 만든 이미지는 저장 시점에 업로드하므로 그때까지 File을 카드에 들고 있는다.
-// 미리보기는 수동 업로드와 같은 Object URL 방식을 쓴다.
 const base64ToFile = (data: string, mimeType: string, name: string) => {
     const binary = atob(data);
     const bytes = new Uint8Array(binary.length);
@@ -93,10 +82,8 @@ const base64ToFile = (data: string, mimeType: string, name: string) => {
     return new File([bytes], name, { type: mimeType });
 };
 
-// 새 카드 열은 기존 카드들의 오른쪽 끝 바깥에서 시작해 겹치지 않게 한다.
 const newColumnGap = 120;
 
-// 재배치는 보드 전체를 다시 정리하는 것이므로 항상 보드 왼쪽 위에서 시작한다.
 const boardMarginOrigin = 40;
 
 type UseAiAssistantOptions = {
@@ -202,7 +189,6 @@ export function useAiAssistant({
 
     const boardBounds: BoardBounds = { width: boardWidth, height: boardHeight };
 
-    // 서버에 AI_API_KEY가 설정돼 있고 이 사용자가 쓸 권한이 있는지 확인한다.
     const refreshAiStatus = useCallback(async () => {
         const response = await fetch("/api/ai/status");
         const data = await response.json();
@@ -234,10 +220,7 @@ export function useAiAssistant({
         setPendingImageIds([]);
     };
 
-    /**
-     * 아직 저장하지 않은 AI 변경을 모두 되돌린 카드 목록을 만든다. 상태를 건드리지 않는 순수 함수라
-     * 되돌린 결과를 그대로 다음 단계로 넘길 수 있다.
-     */
+    // 순수 함수 - 되돌린 결과를 그대로 다음 단계 base로 넘기기 위함
     const revertPendingCards = (cards: BoardCards): BoardCards => {
         const restore = <T extends { id: number; x: number; y: number }>(list: T[], moves: MovedCard[]) => {
             if (moves.length === 0) {
@@ -251,7 +234,6 @@ export function useAiAssistant({
             });
         };
 
-        // 고쳐 놓은 카드는 이전 내용으로, 지운 카드는 원래대로 되살린다.
         const revert = <T extends { id: number }>(list: T[], previous: T[], removed: T[]) => {
             const previousById = new Map(previous.map((card) => [card.id, card]));
             const reverted = list.map((card) => previousById.get(card.id) ?? card);
@@ -259,7 +241,6 @@ export function useAiAssistant({
             return removed.length > 0 ? [...reverted, ...removed] : reverted;
         };
 
-        // 저장하지 않은 AI 이미지는 Object URL을 해제해야 메모리에 남지 않는다.
         cards.images
             .filter((image) => pendingImageIds.includes(image.imageId))
             .forEach((image) => URL.revokeObjectURL(image.secureUrl));
@@ -319,7 +300,6 @@ export function useAiAssistant({
         setAiPanelOpen(true);
     };
 
-    // 기존 카드 오른쪽 바깥에 새 열을 잡고, 현재 보이는 화면 높이에 맞춰 시작점을 정한다.
     const getPlanOrigin = (base: BoardCards) => {
         const rightEdges = [
             ...base.memos.map((memo) => memo.x + memo.width),
@@ -337,7 +317,7 @@ export function useAiAssistant({
 
     const applyPlan = (plan: BoardPlan, base: BoardCards, generatedImages: GeneratedImage[] = []) => {
         const planned = layoutBoardPlan(plan, getPlanOrigin(base), boardBounds, generatedImages);
-        // 임시 ID는 증가하도록 만들어, 저장 전에도 메모 탐색 순서가 문서 순서와 같게 유지한다.
+        // 증가 방향이어야 저장 전에도 메모 탐색 순서가 문서 순서와 같음
         const idBase = -Date.now();
         let idOffset = 0;
         const nextTempId = () => idBase + idOffset++;
@@ -374,7 +354,6 @@ export function useAiAssistant({
             height: table.height,
         }));
 
-        // 이미지는 저장할 때 업로드하므로 File을 카드에 들고 있고, 미리보기는 Object URL을 쓴다.
         const newImages: BoardImage[] = planned.images.map((image, index) => {
             const file = base64ToFile(image.data, image.mimeType, `ai-image-${index + 1}.png`);
 
@@ -406,7 +385,6 @@ export function useAiAssistant({
         });
         setPendingImageIds(newImages.map((image) => image.imageId));
 
-        // 새 열이 화면 밖이면 사용자가 결과를 볼 수 없으므로 그쪽으로 이동한다.
         const locationElement = cardLocationRef.current;
         if (locationElement && newMemos[0]) {
             locationElement.scrollTo({
@@ -419,7 +397,6 @@ export function useAiAssistant({
         return { droppedSections: planned.droppedSections, placed: newMemos.length };
     };
 
-    // 이미 저장된 카드를 옮긴다. 좌표만 로컬에 반영하고, 이전 좌표는 되돌리기용으로 남긴다.
     const applyArrangement = (arrangement: BoardArrangement, base: BoardCards) => {
         const arranged = layoutArrangement(
             arrangement,
@@ -479,7 +456,6 @@ export function useAiAssistant({
         return { droppedSections: arranged.droppedSections, moved: memoMoves.length };
     };
 
-    // 모델이 재배치 대상을 고를 수 있도록 현재 보드 카드 목록을 요약해 보낸다.
     const getBoardSnapshot = () => {
         const stripHtml = (html: string) =>
             html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -507,7 +483,6 @@ export function useAiAssistant({
         };
     };
 
-    // 고치기: 바꾸기 전 카드를 pendingEdits에 남겨 두고 화면을 먼저 갱신한다.
     const applyEdit = (edit: BoardEdit, base: BoardCards) => {
         const memoEdits = new Map((edit.memos ?? []).map((item) => [item.id, item]));
         const mermaidEdits = new Map((edit.mermaids ?? []).map((item) => [item.id, item]));
@@ -549,7 +524,7 @@ export function useAiAssistant({
             images: base.images,
         });
 
-        // 같은 카드를 연달아 고쳐도 맨 처음 값으로 되돌아가도록 이미 기록된 카드는 덮지 않는다.
+        // 이미 기록된 카드는 덮지 않음 - 연속 편집에서도 맨 처음 값으로 되돌리기 위함
         setPendingEdits((prev) => {
             const keep = <T extends { id: number }>(previous: T[], candidates: T[]) => {
                 const known = new Set(previous.map((card) => card.id));
@@ -566,7 +541,6 @@ export function useAiAssistant({
         return changedCount;
     };
 
-    // 지우기: 저장 전까지는 화면에서만 사라진다. 원본을 들고 있다가 취소하면 되살린다.
     const applyDeletion = (deletion: BoardDeletion, base: BoardCards) => {
         const memoIds = new Set(deletion.memoIds ?? []);
         const mermaidIds = new Set(deletion.mermaidIds ?? []);
@@ -576,7 +550,7 @@ export function useAiAssistant({
         const removedMemos = base.memos.filter((memo) => memoIds.has(memo.id));
         const removedMermaids = base.mermaids.filter((card) => mermaidIds.has(card.id));
         const removedTables = base.tables.filter((card) => tableIds.has(card.id));
-        // 아직 저장되지 않은 이미지는 삭제 대상이 아니다.
+        // 미저장 이미지는 삭제 대상이 아님
         const removedImages = base.images.filter((image) => imageIds.has(image.imageId) && image.imageId > 0);
         const removedCount =
             removedMemos.length + removedMermaids.length + removedTables.length + removedImages.length;
@@ -633,8 +607,6 @@ export function useAiAssistant({
 
             const notes: string[] = [];
 
-            // 이전 제안이 남아 있으면 먼저 되돌린 값을 만들고, 그 값을 이후 단계의 기준으로 쓴다.
-            // 클로저의 memos/mermaids/tables를 읽으면 방금 되돌린 결과가 보이지 않는다.
             let base = currentCards();
 
             if (data.plan || data.arrangement || data.edit || data.deletion) {
@@ -700,7 +672,7 @@ export function useAiAssistant({
         }
     };
 
-    // 메모를 순서대로 저장해야 serial ID 순서가 곧 문서 순서가 된다.
+    // 메모는 순서대로 저장 - serial ID 순서가 곧 문서 순서
     const handleSavePendingCards = async () => {
         if (!hasPendingCards || saving) {
             return;
@@ -739,7 +711,6 @@ export function useAiAssistant({
                 await onInsertTable(table);
             }
 
-            // AI가 만든 그림은 이 시점에 Cloudinary로 올라간다. 저장하지 않으면 업로드도 없다.
             for (const imageId of pendingImageIds) {
                 const image = images.find((item) => item.imageId === imageId);
                 if (!image?.file) {
@@ -751,7 +722,6 @@ export function useAiAssistant({
                 );
             }
 
-            // 고친 카드는 현재 화면 값 그대로 PATCH한다.
             for (const previous of pendingEdits.memos) {
                 const memo = memos.find((item) => item.id === previous.id);
                 if (!memo) {
@@ -782,7 +752,7 @@ export function useAiAssistant({
                 await onUpdateTable(table);
             }
 
-            // 지우기는 마지막에 확정한다. 앞 단계가 실패해도 원본이 남아 있게 한다.
+            // 지우기는 마지막 - 앞 단계가 실패해도 원본이 남게
             for (const memo of pendingDeletions.memos) {
                 await onDeleteMemo(memo.id);
             }
@@ -796,7 +766,6 @@ export function useAiAssistant({
                 await onDeleteImage(image.imageId, image.publicId);
             }
 
-            // 재배치로 옮긴 기존 카드는 좌표만 PATCH한다.
             for (const move of pendingMoves.memos) {
                 const memo = memos.find((item) => item.id === move.id);
                 if (!memo) {
