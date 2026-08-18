@@ -17,7 +17,6 @@ type AiChatPanelProps = {
     onClose: () => void;
 };
 
-// 화면 아래쪽에 붙는 Gemini 채팅 창.
 export default function AiChatPanel({
     messages,
     sending,
@@ -31,7 +30,6 @@ export default function AiChatPanel({
     const [draft, setDraft] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    // 새 메시지가 붙으면 항상 마지막 대화가 보이도록 한다.
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
     }, [messages, sending]);

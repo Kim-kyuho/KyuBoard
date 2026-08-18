@@ -1,11 +1,8 @@
 import { z } from "zod";
 import { createTableItemId, type TableSource } from "@/lib/table-card";
 
-// AI 어시스턴트가 만들어내는 보드 계획과, 그 계획을 실제 카드 좌표로 배치하는 라이브러리.
-//
-// AI에게 좌표를 직접 계산시키지 않는다. AI는 "어떤 메모에 어떤 카드가 붙는가"라는 논리 구조만
-// 내놓고, 좌표는 이 파일의 배치 함수가 결정한다. Markdown 컴파일이 메모 꼭짓점 포함 여부로
-// 카드를 고르기 때문에, 배치가 어긋나면 컴파일 결과가 통째로 달라진다.
+// 좌표는 AI가 아니라 이 파일이 정한다. Markdown 컴파일이 메모 꼭짓점 포함 여부로 카드를
+// 고르므로, 배치가 어긋나면 컴파일 결과가 통째로 달라진다.
 
 export const memoBlockSchema = z.discriminatedUnion("type", [
     z.object({ type: z.literal("heading"), level: z.number().int().min(1).max(6), text: z.string() }),
@@ -24,7 +21,7 @@ export const planTableSchema = z.object({
 export const planAttachmentSchema = z.discriminatedUnion("type", [
     z.object({ type: z.literal("mermaid"), source: z.string().min(1) }),
     z.object({ type: z.literal("table"), ...planTableSchema.shape }),
-    // 이미지는 사용자가 명시적으로 요청했을 때만 붙인다. 생성 비용과 저장 용량이 따로 든다.
+    // 명시적으로 요청했을 때만 - 생성 비용과 저장 용량이 따로 든다
     z.object({
         type: z.literal("image"),
         prompt: z.string().min(1).max(600),
@@ -32,7 +29,6 @@ export const planAttachmentSchema = z.discriminatedUnion("type", [
     }),
 ]);
 
-// MemoToolBar가 제공하는 색상과 같은 목록으로 제한한다.
 export const planMemoColors = [
     "#fffadc",
     "#ffe4ec",
@@ -60,7 +56,6 @@ export const boardPlanSchema = z.object({
     sections: z.array(planSectionSchema).min(1).max(24),
 });
 
-// 이미 보드에 있는 카드를 다시 배치할 때 쓰는 계획.
 export const arrangementSectionSchema = z.object({
     memoId: z.number().int(),
     attachment: z
@@ -78,7 +73,6 @@ export const boardArrangementSchema = z.object({
     sections: z.array(arrangementSectionSchema).min(1).max(64),
 });
 
-// 이미 보드에 있는 카드의 내용을 고칠 때 쓰는 계획. 좌표와 크기는 건드리지 않는다.
 export const boardEditSchema = z.object({
     memos: z
         .array(
@@ -100,7 +94,6 @@ export const boardEditSchema = z.object({
         .optional(),
 });
 
-// 카드를 지우는 계획. 저장 전까지는 화면에서만 사라진다.
 export const boardDeletionSchema = z.object({
     memoIds: z.array(z.number().int().positive()).max(64).optional(),
     mermaidIds: z.array(z.number().int().positive()).max(64).optional(),
@@ -118,10 +111,7 @@ export type BoardArrangement = z.infer<typeof boardArrangementSchema>;
 export type BoardEdit = z.infer<typeof boardEditSchema>;
 export type BoardDeletion = z.infer<typeof boardDeletionSchema>;
 
-/**
- * 서버가 이미지 모델로 만들어 낸 결과. 모델은 프롬프트만 내놓고 바이트는 만들 수 없으므로,
- * 계획과 분리해 섹션 인덱스로 이어 붙인다.
- */
+// 모델은 프롬프트만 내고 바이트는 못 만들므로, 계획과 분리해 섹션 인덱스로 이어 붙인다
 export type GeneratedImage = {
     sectionIndex: number;
     /** data URI가 아니라 순수 base64 문자열. */
@@ -130,11 +120,10 @@ export type GeneratedImage = {
     alt: string;
 };
 
-// 배치 상수. 값 사이의 관계가 컴파일 정확성을 좌우하므로 개별로 바꾸지 않는다.
-// - attachmentOverlap < 카드 최소 변: 카드가 꼭짓점을 "엄격히" 포함해야 한다.
-// - sectionGap > attachmentOverlap: 첨부 카드가 이전 메모의 아래쪽 꼭짓점을 덮으면 안 된다.
-// - columnGap > 0: 열이 넘어갈 때 옆 열 메모의 꼭짓점을 덮으면 안 된다.
-// 메모는 가로를 400으로 고정하고 내용에 맞춰 세로로 늘린다. 글이 카드 밖으로 넘치면 안 된다.
+// 값 사이의 관계가 컴파일 정확성을 좌우하므로 개별로 바꾸지 않는다.
+// - attachmentOverlap < 카드 최소 변: 꼭짓점을 "엄격히" 포함해야 함
+// - sectionGap > attachmentOverlap: 첨부가 이전 메모 아래 꼭짓점을 덮으면 안 됨
+// - columnGap > 0: 열이 넘어갈 때 옆 열 메모 꼭짓점을 덮으면 안 됨
 export const memoWidth = 400;
 export const minMemoHeight = 200;
 export const maxMemoHeight = 1200;
@@ -142,8 +131,7 @@ export const attachmentOverlap = 24;
 export const sectionGap = 80;
 export const columnGap = 60;
 export const boardMargin = 40;
-// scatter 배치에서 카드 사이에 항상 남겨둘 최소 간격.
-// 겹침 판정을 이 값만큼 부풀려서 하므로, 첨부 카드가 남의 메모 꼭짓점에 닿는 일도 함께 막힌다.
+// 겹침 판정을 이 값만큼 부풀려서 하므로 첨부 카드가 남의 메모 꼭짓점에 닿는 것도 막힌다
 export const scatterMinGap = 24;
 export const mermaidSize = { width: 480, height: 360 };
 export const tableSize = { width: 560, height: 360 };
@@ -176,7 +164,6 @@ export type PlannedTable = {
     height: number;
 };
 
-/** 이미지는 생성 결과를 저장 시점에 업로드하므로, 배치 단계에서는 바이트를 그대로 들고 있는다. */
 export type PlannedImage = {
     /** data URI가 아니라 순수 base64 문자열. */
     data: string;
@@ -204,11 +191,10 @@ const escapeHtml = (value: string) =>
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;");
 
-// 줄바꿈은 TipTap HardBreak과 같은 형태로 바꾼다.
 const escapeInline = (value: string) => escapeHtml(value).replace(/\r?\n/g, "<br>");
 
-// AI가 만든 문자열은 절대 HTML로 신뢰하지 않는다. 블록 구조만 받아서 여기서 태그를 만든다
-// — 메모 표시 모드가 dangerouslySetInnerHTML을 쓰기 때문에 이 경계가 XSS 방어선이다.
+// 메모 표시가 dangerouslySetInnerHTML을 쓰므로 여기가 XSS 방어선이다.
+// 모델 문자열은 HTML로 신뢰하지 않고 블록 구조만 받아 태그를 직접 만든다.
 export const memoBlocksToHtml = (blocks: MemoBlock[]) =>
     blocks
         .map((block) => {
@@ -233,32 +219,27 @@ export const memoBlocksToHtml = (blocks: MemoBlock[]) =>
         })
         .join("");
 
-// 메모 본문 높이 추정용 상수. 실제 렌더 폭(memoWidth - 좌우 패딩)에서 나온 값이다.
-// 넘치는 것보다 남는 쪽이 안전하므로 전부 넉넉하게 잡는다.
 const memoVerticalPadding = 40;
 const memoLineHeight = 28;
 const memoBlockGap = 12;
 /** 폭 400 카드 한 줄에 들어가는 반각 기준 글자 수. */
 const unitsPerLine = 46;
 
-// 한글·한자·가나는 반각 글자의 두 배 폭을 차지한다. 글자 수만 세면 한국어 메모에서 글이 넘친다.
+// 한글·한자·가나는 반각의 두 배 폭 - 글자 수만 세면 한국어 메모에서 넘친다
 const wideCharacter = /[\u1100-\u11FF\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFF60]/;
 
 const getVisualUnits = (text: string) =>
     [...text].reduce((total, character) => total + (wideCharacter.test(character) ? 2 : 1), 0);
 
-// 줄바꿈은 그대로 한 줄을 더 쓰고, 긴 줄은 폭에 맞춰 접힌다.
 const countWrappedLines = (text: string, capacity: number) =>
     text
         .split(/\r?\n/)
         .reduce((total, line) => total + Math.max(1, Math.ceil(getVisualUnits(line) / capacity)), 0);
 
-// 제목은 글자가 커서 줄 높이도 높고 한 줄에 들어가는 글자도 적다.
 const headingScale: Record<number, number> = { 1: 2, 2: 1.7, 3: 1.4, 4: 1.2, 5: 1.1, 6: 1 };
 
 const countBlockLines = (block: MemoBlock) => {
     if (block.type === "bulletList" || block.type === "orderedList") {
-        // 불릿 기호와 들여쓰기만큼 한 줄에 들어가는 글자가 줄어든다.
         return block.items.reduce(
             (total, item) => total + countWrappedLines(item, unitsPerLine - 6),
             0
@@ -325,12 +306,9 @@ type Placement = {
 /** 자리가 없어 배치하지 못한 항목은 null로 남긴다. */
 type PlacementResult = { placements: (Placement | null)[]; droppedCount: number };
 
-// 첨부 카드는 메모 오른쪽 위 꼭짓점에서 attachmentOverlap 만큼 겹치므로,
-// 한 섹션이 차지하는 가로 폭은 메모 폭보다 넓다.
 const getItemWidth = (item: LayoutItem) =>
     item.attachment ? item.memo.width - attachmentOverlap + item.attachment.width : item.memo.width;
 
-// 메모 y를 기준으로 아래로 뻗는 높이. 첨부는 overlap 만큼 위로 올라가 있다.
 const getItemExtent = (item: LayoutItem) =>
     Math.max(item.memo.height, item.attachment ? item.attachment.height - attachmentOverlap : 0);
 
@@ -355,7 +333,6 @@ const getFrame = (bounds: BoardBounds, widestItem: number): Frame => ({
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-/** 섹션 하나가 실제로 차지하는 사각형. 첨부 카드는 메모보다 위·오른쪽으로 튀어나온다. */
 const getItemBox = (item: LayoutItem, x: number, y: number) => ({
     x,
     y: item.attachment ? y - attachmentOverlap : y,
@@ -363,23 +340,15 @@ const getItemBox = (item: LayoutItem, x: number, y: number) => ({
     height: item.attachment ? getItemExtent(item) + attachmentOverlap : getItemExtent(item),
 });
 
-// scatterMinGap 만큼 부풀려서 겹침을 본다. 간격을 두면 첨부 카드가 남의 메모 꼭짓점에
-// 닿는 일도 같이 막힌다. 꼭짓점은 메모 경계 위의 점이기 때문이다.
+// 꼭짓점은 메모 경계 위의 점이라, 간격을 두고 판정하면 접촉도 함께 막힌다
 const boxesCollide = (a: Rect, b: Rect) =>
     a.x - scatterMinGap < b.x + b.width &&
     b.x - scatterMinGap < a.x + a.width &&
     a.y - scatterMinGap < b.y + b.height &&
     b.y - scatterMinGap < a.y + a.height;
 
-/**
- * scatter: 보드 안에서 좌표를 실제로 무작위로 뽑는다.
- *
- * 뽑은 자리가 이미 놓인 섹션과 겹치면 다시 뽑는다(거부 샘플링). 정해진 횟수 안에 자리를
- * 못 찾으면 격자를 훑어 빈 곳에 넣고, 그것도 실패하면 그 섹션을 버린다.
- *
- * 격자에 지터만 주는 방식은 칸 순서가 그대로 남아 "삐뚤어진 그리드"로 보인다. 무작위로
- * 뽑아야 행·열이 사라지고 카드 순서와 화면 위치의 상관도 끊긴다.
- */
+// 거부 샘플링. 격자에 지터만 주면 칸 순서가 남아 "삐뚤어진 그리드"로 보이므로
+// 좌표를 실제로 뽑고, 겹치면 다시 뽑는다. 못 찾으면 격자를 훑고, 그래도 없으면 버린다.
 const placeScatter = (
     items: LayoutItem[],
     frame: Frame,
@@ -393,8 +362,6 @@ const placeScatter = (
     const randomAttempts = 80;
     const scanStep = 40;
 
-    // 프레임의 maxX는 가장 넓은 섹션 기준이라 좁은 섹션에는 지나치게 빡빡하다.
-    // 섹션별로 실제 폭을 써서 보드 오른쪽 끝까지 활용한다.
     const limitsFor = (item: LayoutItem) => {
         const box = getItemBox(item, 0, 0);
 
@@ -432,8 +399,7 @@ const placeScatter = (
             }
         }
 
-        // 무작위로 못 찾으면 격자를 훑는다. 보드가 빽빽할 때도 자리를 놓치지 않는다.
-        for (let y = limits.minY; y <= limits.maxY && !chosen; y += scanStep) {
+            for (let y = limits.minY; y <= limits.maxY && !chosen; y += scanStep) {
             for (let x = limits.minX; x <= limits.maxX && !chosen; x += scanStep) {
                 if (fits(x, y)) {
                     chosen = { x, y };

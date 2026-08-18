@@ -7,7 +7,7 @@ import {
 } from "@/lib/ai/assistant";
 import { NextRequest, NextResponse } from "next/server";
 
-// 카드 여러 장을 한 번에 만들면 모델 응답이 20초를 넘기도 한다. 기본 타임아웃으로는 잘린다.
+// 카드 여러 장이면 응답이 20초를 넘어 기본 타임아웃으로는 잘림
 export const maxDuration = 60;
 
 const maxMessageLength = 4000;
@@ -15,7 +15,7 @@ const maxHistoryLength = 20;
 const maxSnapshotCards = 200;
 const maxSummaryLength = 120;
 
-// 클라이언트가 보낸 보드 목록을 신뢰하지 않고 형태와 크기만 통과시킨다.
+// 클라이언트가 보낸 목록은 신뢰하지 않음 - 형태와 크기만 통과
 const toSnapshotCards = (value: unknown) => {
     if (!Array.isArray(value)) {
         return [];
@@ -53,7 +53,6 @@ export async function POST(request: NextRequest) {
         const currentUser = await getCurrentUserFromRequest(request);
         const permissionMessage = getCardPermissionMessage(currentUser);
 
-        // API 비용이 서버 소유자에게 청구되므로, 카드 편집과 같은 승인 게이트를 그대로 요구한다.
         if (permissionMessage || !currentUser) {
             return NextResponse.json(
                 {
