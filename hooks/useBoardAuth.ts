@@ -27,9 +27,14 @@ export function useBoardAuth({ onSignOutComplete }: UseBoardAuthOptions = {}) {
     }, []);
     
     const handleSignOut = useCallback(async() => {
-        await fetch("/api/signout", {
+        const response = await fetch("/api/signout", {
             method: "POST",
         });
+
+        if (!response.ok) {
+            return;
+        }
+
         setCurrentUser(null);
         onSignOutComplete?.();
     }, [onSignOutComplete]);

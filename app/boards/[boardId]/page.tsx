@@ -3,22 +3,31 @@
 import BoardClient from "@/components/BoardClient";
 import { getDb } from "@/lib/db";
 import { db_boards, db_drawings, db_images, db_memos, db_mermaids, db_tables } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { notFound } from "next/navigation";
 
 export default async function BoardPage({
     params,
 }: {
     params: Promise<{ boardId: string }>;
 }) {
-    const db = getDb();
     const { boardId } = await params;
     const boardIdNumber = Number(boardId);
 
+    if (!Number.isInteger(boardIdNumber) || boardIdNumber <= 0) {
+        notFound();
+    }
+
+    const db = getDb();
     const currentBoard = await db
         .select()
         .from(db_boards)
         .where(eq(db_boards.boardId, boardIdNumber))
-        .orderBy(desc(db_boards.boardId))
+        .limit(1);
+
+    if (!currentBoard[0]) {
+        notFound();
+    }
         
     const allMemos = await db
         .select()
