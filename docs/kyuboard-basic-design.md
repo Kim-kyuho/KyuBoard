@@ -1,6 +1,6 @@
 # KyuBoard 기본설계서
 
-작성 기준: 2026-08-16 현재 워크스페이스 구현
+작성 기준: 2026-08-21 현재 워크스페이스 구현
 
 이 문서는 기존 `kyuboard-detailed-design.md`의 시스템 설계와 `drawing-basic-design.md`의 드로잉 설계를 합친 KyuBoard 기준 문서다. 컴포넌트 내부 구현은 [상세설계 폴더](./detailed-design/)에서 관리한다.
 
@@ -27,7 +27,7 @@ KyuBoard는 큰 보드 위에 메모, 이미지, Mermaid 다이어그램, 표와
 | 애플리케이션 | Next.js 16 App Router, React 19, TypeScript |
 | 스타일 | Tailwind CSS 4, 전역 CSS |
 | 데이터베이스 | Neon PostgreSQL, Drizzle ORM |
-| 인증 | HMAC 서명 쿠키, scrypt 비밀번호 해시 |
+| 인증 | 난수 세션 토큰의 SHA-256 해시와 만료 시각, HttpOnly 쿠키, scrypt 비밀번호 해시 |
 | 카드 이동 | `react-rnd` |
 | 메모 편집 | TipTap StarterKit, Highlight, HardBreak |
 | 이미지 | Cloudinary, Next Image |
@@ -45,13 +45,14 @@ KyuBoard는 큰 보드 위에 메모, 이미지, Mermaid 다이어그램, 표와
 flowchart TD
     Browser[Browser]
     ListPage[Server: app/page.tsx]
-    BoardPage[Server: boards/boardId/page.tsx]
+    BoardPage["Server: app/boards/[boardId]/page.tsx"]
     BoardList[Client: BoardList]
     BoardClient[Client: BoardClient]
     Hooks[Domain hooks]
     API[Next Route Handlers]
     DB[(Neon PostgreSQL)]
     Cloud[(Cloudinary)]
+    Gemini[Google Gemini]
 
     Browser --> ListPage --> BoardList
     Browser --> BoardPage --> BoardClient
@@ -59,6 +60,7 @@ flowchart TD
     BoardClient --> Hooks
     Hooks --> API --> DB
     API --> Cloud
+    API --> Gemini
 ```
 
 서버 컴포넌트는 초기 데이터를 조회한다. 클라이언트 컴포넌트는 전달받은 데이터를 편집 가능한 로컬 상태로 보유하며 Route Handler를 통해 영속화한다.
@@ -79,6 +81,7 @@ flowchart TD
 2. DB 필드명을 화면 모델의 `id` 형태로 매핑한다.
 3. `BoardClient`가 초기 컬렉션을 전용 훅에 전달한다.
 4. 카드와 드로잉은 같은 보드 좌표계에서 렌더링된다.
+5. `boardId`가 양의 정수가 아니거나 조회된 보드가 없으면 `notFound()`를 호출해 Next.js 404 화면으로 전환한다. 카드 조회는 보드 존재 확인 뒤에만 실행한다.
 
 ## 5. 프론트엔드 계층
 
@@ -92,6 +95,7 @@ BoardClient
 ├── BoardNavigator
 ├── BoardMarkdownView
 ├── AboutModal
+├── SignInModal / SignUpModal
 ├── AiAssistantButton
 ├── AiChatPanel
 ├── BoardMessage
@@ -116,14 +120,15 @@ BoardClient
 | 카드 컬렉션과 편집 카드 ID | `useBoardMemos`, `useBoardImages`, `useBoardMermaids`, `useBoardTables` |
 | 카드 내부 초안 | `useMemoCard`, `useImageCard`, `useMermaidCard`, `useTableCard` |
 | 메모 검색과 포커스 | `useBoardSearch`, `useBoardMemoFocus` |
-| 메뉴, About, Markdown, 검색, 탐색 패널 열림 | `BoardClient` |
+| 보드 메뉴, About, Markdown, 탐색 패널 열림 | `BoardClient` |
+| 검색 패널, 검색어, 결과와 현재 인덱스 | `useBoardSearch` |
 | 보드 줌 | `useBoardZoom` |
 | 보드 패닝과 편집 입력 보호 | `useBoardScroll` |
 | 레이어 변경 | `useCardLayer` |
 | 드로잉 컬렉션과 도구 | `useBoardDrawing` |
 | 현재 획과 포인터 소유권 | `useDrawingPointer` |
 | 보드 미리보기 캡처와 업로드 예약 | `useBoardPreview` |
-| AI 채팅, 사용 가능 여부, 미저장 AI 카드 | `useAiAssistant` |
+| AI 채팅, 사용 가능 여부, 미저장 생성·수정·삭제·이동 | `useAiAssistant` |
 
 `editingMemoId`, `editingImageId`, `editingMermaidId`, `editingTableId` 중 하나가 존재하거나 드로잉 모드이면 일반 보드 툴바를 숨긴다.
 
@@ -163,7 +168,7 @@ stateDiagram-v2
 
 ### 8.1 임시 카드
 
-- 임시 ID는 `-Date.now()`를 사용한다.
+- 툴바에서 한 장씩 만드는 임시 카드는 `-Date.now()`를 ID로 사용한다. AI가 여러 장을 한 번에 만들 때는 `-Date.now()`를 시작값으로 두고 1씩 증가시켜 중복을 피한다.
 - 현재 화면 중앙에 생성하고 즉시 편집 상태로 만든다.
 - 저장 시 POST 후 서버 ID를 받은 카드로 교체한다.
 - 임시 카드 삭제는 API 없이 로컬 컬렉션에서 제거한다.
@@ -184,7 +189,7 @@ stateDiagram-v2
 - 편집 중에만 이동과 크기 조절을 허용한다.
 - 메모, Mermaid, 표는 보드 빈 영역에서 시작하고 끝난 포인터 입력만 저장으로 인정한다.
 - 카드 내부 드래그가 바깥에서 끝나는 경우는 시작 지점 Ref로 저장을 막는다.
-- 이미지는 현재 `pointerup` 대상만 판정하고 다음 태스크에서 저장한다.
+- 이미지는 현재 `pointerup` 대상만 판정하고 `setTimeout(..., 0)`으로 다음 이벤트 루프에서 저장한다.
 - `.board-toolbar`와 `.confirm-dialog`는 외부 저장 대상에서 제외한다.
 
 ## 9. 카드별 데이터
@@ -200,8 +205,8 @@ stateDiagram-v2
 
 ### 9.2 Image
 
-- 브라우저에서 PNG로 재인코딩한다.
-- 최대 2000px, 4MiB 이하가 될 때까지 85%씩 축소한다.
+- 사용자가 직접 선택한 이미지는 브라우저에서 PNG로 재인코딩한다.
+- 긴 변을 최대 2000px로 줄이고, 4MiB 이하가 될 때까지 가로·세로를 85%씩 축소한다. 변환 실패 시에는 원본 파일로 폴백한다.
 - 임시 미리보기는 Object URL을 사용하고 교체 또는 삭제 시 해제한다.
 - 서버는 Cloudinary의 `publicId`와 `secureUrl`을 저장한다.
 
@@ -231,7 +236,8 @@ stateDiagram-v2
 편집 카드 z             ACTIVE_CARD_Z = 49999
 드로잉 SVG z            ACTIVE_CARD_Z - 1
 보드 메뉴/툴바 z        50000
-AI 어시스턴트 버튼 z    50001
+AI 어시스턴트 버튼/패널 z 50000
+BoardMenu 드롭다운 z    50001
 Markdown 모달 z         60000 / 60001
 ```
 
@@ -363,6 +369,8 @@ erase와 pan은 토글이며 같은 도구를 다시 누르면 draw로 되돌아
 
 자연어 요청을 받아 카드를 만들고, 고치고, 지우고, 다시 배치한다. KyuBoard 조작법 질문에도 답한다. 보드를 바꾸는 동작은 모두 사용자가 저장을 눌러야 반영된다.
 
+지원 범위는 동작마다 다르다. 생성은 메모와 메모에 붙는 Mermaid·표·이미지를 지원하고, 내용 수정은 메모·Mermaid·표, 삭제는 네 카드 타입 전체, 재배치는 메모와 메모에 붙는 Mermaid·표를 지원한다. 기존 이미지의 내용 수정과 재배치는 지원하지 않는다.
+
 이미지 카드는 사용자가 그림을 명시적으로 요청했을 때만 만든다. 재배치는 좌표만 바꾸며, 문서 순서는 메모 생성 순서로 고정되어 있어 재배치로 바꿀 수 없다.
 
 ### 16.1 사용 조건
@@ -378,7 +386,7 @@ erase와 pan은 토글이며 같은 도구를 다시 누르면 draw로 되돌아
 3. 요청을 `POST /api/ai/chat`으로 보낸다.
 4. 서버는 `create_board_cards`, `rearrange_board_cards`, `edit_board_cards`, `delete_board_cards` 네 함수를 선언하고, 모델이 넘긴 인자를 zod로 다시 검증한다. 여러 개가 동시에 호출되면 지우기 > 고치기 > 재배치 > 생성 순으로 하나만 고른다.
 5. 검증된 계획을 클라이언트가 임시 카드로 보드에 올린다. 이 시점까지 DB 쓰기는 없다.
-6. 사용자가 저장을 누르면 메모, Mermaid, 표 순서로 INSERT한다. 취소하면 로컬에서 제거한다.
+6. 사용자가 저장을 누르면 메모, Mermaid, 표, 이미지 순서로 INSERT한다. 이어서 내용 수정, 삭제, 재배치 PATCH를 처리한다. 취소하면 생성 카드는 제거하고 수정·삭제·이동 카드는 원래 상태로 복원한다.
 
 ### 16.3 좌표를 모델에게 맡기지 않는다
 
@@ -405,7 +413,7 @@ Markdown 컴파일이 메모 꼭짓점 포함 여부로 카드를 고르므로 �
 - 대상은 이미 저장된 카드뿐이다. 스키마가 ID를 양수로 제한해 임시 카드는 지목할 수 없다.
 - 고치기는 부분 수정이 아니라 전체 교체다. 좌표와 크기는 건드리지 않는다.
 - 지우기는 저장 전까지 화면에서만 사라지고, 취소하면 원본이 그대로 돌아온다.
-- 저장할 때 지우기를 가장 마지막에 실행해 앞 단계가 실패해도 원본이 남게 한다.
+- 현재 저장 구현은 생성 → 내용 수정 → 삭제 → 재배치 순서다. 한 AI 응답에서는 네 함수 중 하나만 선택하므로 보통 한 종류의 pending 작업만 존재한다.
 
 ### 16.6 이미지 생성
 
@@ -421,17 +429,20 @@ Markdown 컴파일이 메모 꼭짓점 포함 여부로 카드를 고르므로 �
 
 ## 17. 인증과 권한
 
-1. 로그인 성공 시 사용자 ID와 HMAC-SHA256 서명을 결합한 HttpOnly 쿠키를 발급한다.
-2. API는 서명을 검증하고 DB에서 현재 사용자를 조회한다.
-3. `isApproved` 사용자만 카드와 드로잉을 편집할 수 있다.
-4. 보드 생성, 이름 변경, 삭제는 `role === "admin"`을 요구한다.
-5. 비밀번호는 랜덤 salt와 scrypt 결과를 `salt:hash`로 저장한다.
+1. 로그인 성공 시 32바이트 난수를 base64url로 인코딩한 세션 토큰을 만든다.
+2. 원문 토큰은 HttpOnly 쿠키에만 저장하고, DB에는 SHA-256 해시와 7일 만료 시각을 저장한다. 쿠키는 `SameSite=Lax`, 경로 `/`, 운영 환경에서만 `Secure`로 설정한다.
+3. 같은 사용자가 다시 로그인하면 사용자 행의 세션 해시가 교체되어 이전 기기의 세션은 즉시 무효화된다.
+4. API는 쿠키 형식을 검사하고 해시를 계산한 뒤 `session_token_hash` 일치와 `session_expires_at > now`를 동시에 만족하는 사용자를 조회한다.
+5. 로그아웃은 현재 쿠키와 일치하는 DB 세션 해시·만료 시각을 null로 만들고 쿠키를 삭제한다.
+6. `isApproved` 사용자만 카드와 드로잉을 편집할 수 있다.
+7. 보드 생성, 이름 변경, 삭제는 `role === "admin"`을 요구한다.
+8. 비밀번호는 랜덤 salt와 scrypt 결과를 `salt:hash`로 저장한다.
 
 ## 18. 데이터베이스
 
 | 테이블 | 핵심 데이터 | 관계 |
 | --- | --- | --- |
-| `users` | email, password_hash, permission_flg, role | 독립 |
+| `users` | email, password_hash, session_token_hash, session_expires_at, permission_flg, role | 독립 |
 | `boards` | title, width, height, owner_id | 루트 |
 | `memos` | HTML, color, x/y/z, size | `board_id` 보유 |
 | `images` | Cloudinary ID/URL, x/y/z, size | `board_id` 보유 |
@@ -439,7 +450,7 @@ Markdown 컴파일이 메모 꼭짓점 포함 여부로 카드를 고르므로 �
 | `tables` | source JSONB, x/y/z, size | `board_id` 보유 |
 | `drawings` | 보드별 획 배열 JSONB | `board_id` unique |
 
-현재 스키마는 카드·드로잉의 `board_id`에 외래키를 두지 않는다. 보드 삭제 API가 DB에 저장된 이미지의 Cloudinary 원본을 먼저 삭제하고 `images`, `memos`, `mermaids`, `drawings`, `tables`, `boards` 순서로 관련 행을 명시적으로 삭제한다.
+현재 스키마는 카드·드로잉의 `board_id`에 외래키를 두지 않는다. 보드 삭제 API가 DB 이미지 원본과 고정 미리보기 `PreviewIMG`를 Cloudinary에서 먼저 삭제하고 `images`, `memos`, `mermaids`, `drawings`, `tables`, `boards` 순서로 관련 행을 명시적으로 삭제한다.
 
 ## 19. API 목록
 
@@ -458,7 +469,16 @@ Markdown 컴파일이 메모 꼭짓점 포함 여부로 카드를 고르므로 �
 | GET | `/api/ai/status` | AI 어시스턴트 사용 가능 여부 |
 | POST | `/api/ai/chat` | AI 어시스턴트 대화와 카드 계획 생성 |
 
-## 20. 변경 원칙
+## 20. 테스트와 CI
+
+- Vitest는 훅·유틸리티·API 계약과 서버 페이지 분기를 검증한다.
+- Playwright는 Desktop Chromium, iPhone WebKit, iPad WebKit에서 읽기 중심 사용자 흐름을 검증한다.
+- GitHub Actions는 `main` 대상 Pull Request와 수동 실행에서만 동작한다.
+- 실행 순서는 `npm ci` → ESLint → TypeScript → Vitest → Next.js build → Playwright다.
+- CI에는 `NEON_CONNECTION_STRING` secret이 필요하다. `E2E_BOARD_ID`가 없으면 목록의 첫 보드를 사용하며, CI에서 보드가 하나도 없으면 데이터 의존 테스트를 skip하지 않고 실패시킨다.
+- 실패 여부와 관계없이 Playwright HTML report를 artifact로 보관한다.
+
+## 21. 변경 원칙
 
 - 새 카드 종류는 DB, 서버 조회, BoardClient 컬렉션, CRUD API, 레이어 API, Markdown 컴파일을 함께 검토한다.
 - 보드 좌표는 DB와 카드 로컬 상태 모두 확대 전 기준을 유지한다.

@@ -26,7 +26,7 @@
 | --- | --- | --- |
 | 로고 `Link` "•kyu.board" (38줄) | 항상 | `href="/"`, `fixed left-5 top-5`, `z-50000`, 터치 콜아웃/선택 비활성화 |
 | Ellipsis 토글 버튼 (51줄) | 항상 | `fixed right-5 top-5`, `z-50000`, 클릭 시 `setMenuOpen(prev => !prev)` |
-| 드롭다운 패널 (57줄) | `menuOpen`이 true일 때만 | `fixed right-5 top-17`, `z-50000` |
+| 드롭다운 패널 (57줄) | `menuOpen`이 true일 때만 | `fixed right-5 top-17`, `z-50001` |
 | 보드 제목 항목 (60줄) | `currentBoard?.title`이 있을 때만 | 클릭해도 콜백 없이 메뉴만 닫힘(표시 전용) |
 | "Compile to Markdown" 항목 (67줄) | `currentBoard?.title`이 있을 때만 | 메뉴 닫고 `onCompileMarkdown?.()`, `FileText` 아이콘 사용 |
 | 로그인 정보 블록 (81줄) | `currentUser`가 truthy | `[{role}]`과 이메일 표시, "Sign-out" 버튼 |
