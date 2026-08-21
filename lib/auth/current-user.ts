@@ -1,23 +1,20 @@
-import { getUserIdFromSessionToken, sessionCookieName } from "@/lib/auth/session";
+import { getSessionTokenHash, sessionCookieName } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { db_users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
 // 현재 유저정보 GET 위한 라이브러리
 export async function getCurrentUserFromRequest(request: NextRequest) {
     try {
-        // 세션 토큰으로 부터 Id를 GET
-        const userId = getUserIdFromSessionToken(
+        const sessionTokenHash = getSessionTokenHash(
             request.cookies.get(sessionCookieName)?.value
         );
 
-        //유저 정보가 없을 경우 null를 리턴
-        if (!userId) {
+        if (!sessionTokenHash) {
             return null;
         }
 
-        //유저 아이디를 검색 - 존재하지 않는 id일 경우 null를 리턴
         const db = getDb();
         const users = await db
             .select({
@@ -27,7 +24,12 @@ export async function getCurrentUserFromRequest(request: NextRequest) {
                 role: db_users.role,
             })
             .from(db_users)
-            .where(eq(db_users.id, userId))
+            .where(
+                and(
+                    eq(db_users.sessionTokenHash, sessionTokenHash),
+                    gt(db_users.sessionExpiresAt, new Date()),
+                ),
+            )
             .limit(1);
 
         return users[0] ?? null;
