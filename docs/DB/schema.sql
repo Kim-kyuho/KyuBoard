@@ -2,6 +2,8 @@ CREATE TABLE public.users (
     id serial PRIMARY KEY,
     email varchar(254) NOT NULL UNIQUE,
     password_hash text NOT NULL,
+    session_token_hash varchar(64),
+    session_expires_at timestamp without time zone,
     permission_flg boolean NOT NULL DEFAULT false,
     role varchar(20) NOT NULL DEFAULT 'user',
     created_at timestamp without time zone NOT NULL DEFAULT now(),

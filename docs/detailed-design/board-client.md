@@ -1,6 +1,6 @@
 # BoardClient 상세설계
 
-소스: `components/BoardClient.tsx`
+소스: `app/boards/[boardId]/page.tsx`, `components/BoardClient.tsx`
 
 보드 화면의 클라이언트 루트다. 서버가 조회한 보드·카드·드로잉 데이터를 도메인 훅에 전달하고, 각 훅의 상태와 핸들러를 화면 컴포넌트에 연결하는 조정 허브다.
 
@@ -15,7 +15,7 @@
 | `mappedTables` | `Table[]` | `useBoardTables.initialTables` |
 | `mappedStrokes` | `BoardStroke[]` | `useBoardDrawing.initialStrokes` |
 
-`app/boards/[boardId]/page.tsx`가 DB 행의 필드명을 화면 모델로 매핑해 전달한다.
+`app/boards/[boardId]/page.tsx`가 DB 행의 필드명을 화면 모델로 매핑해 전달한다. URL의 `boardId`가 양의 정수가 아니거나 보드 조회 결과가 없으면 `notFound()`를 호출하며, 이 경우 카드·드로잉 조회와 `BoardClient` 렌더링은 실행하지 않는다.
 
 ## 로컬 State/Ref
 
@@ -46,7 +46,7 @@
 | `useBoardDrawing` | 획·드로잉 모드·도구 | DrawingLayer와 DrawingToolBar |
 | `useBoardScroll` | 보드 패닝과 입력 보호 | `.board-scroll-layer` pointer 이벤트 |
 | `useCardLayer` | 네 카드 타입의 z 갱신 | 각 카드 전용 툴바의 front/back |
-| `useAiAssistant` | AI 채팅, 사용 가능 여부, 미저장 AI 카드 | 메모·Mermaid·표 컬렉션의 setter와 insert/update 핸들러를 주입 |
+| `useAiAssistant` | AI 채팅, 사용 가능 여부, 미저장 생성·수정·삭제·이동 상태 | 네 카드 컬렉션과 메모·Mermaid·표의 insert/update/delete, 이미지 insert/delete 핸들러를 주입 |
 
 ## 파생 편집 상태
 

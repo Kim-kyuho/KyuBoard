@@ -43,7 +43,7 @@
 | 요소 | 조건 | 비고 |
 | --- | --- | --- |
 | 일반 도구 세로 목록 `div` (48줄) | `!cardEditing`일 때만 | `fixed bottom-16 right-5`, `z-50000`, class `board-toolbar toolbar-reveal` |
-| 드로잉 시작/완료 버튼 (136줄) | `!cardEditing || drawingMode` | `fixed bottom-10 left-7`, 같은 위치에서 `Pencil`과 `Check` 전환 |
+| 드로잉 시작/완료 버튼 (136줄) | `!cardEditing || drawingMode` | `fixed bottom-10 left-10`, 같은 위치에서 `Pencil`과 `Check` 전환 |
 | `#card-tool-portal` `div` (154줄) | **항상**, `cardEditing` 값과 무관 | 빈 컨테이너 — `CardToolPortal`(각 카드 툴바, `DrawingToolBar`)이 `createPortal`로 여기에 자식을 렌더링하는 대상. 동일 위치(`fixed bottom-16 right-5`, `z-50000`)에 겹쳐 배치되어, 카드 편집 중에는 일반 도구 대신 이 슬롯에 카드 전용 툴바가 나타나는 것처럼 보인다 |
 | `BoardZoomControl` (157줄) | 항상 | `cardEditing`과 무관하게 항상 표시 |
 

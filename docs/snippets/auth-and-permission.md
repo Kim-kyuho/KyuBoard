@@ -2,22 +2,25 @@
 
 ## 현재 유저 가져오기
 
-세션 쿠키에서 user ID를 복원하고 DB에서 유저 정보를 조회한다.
+세션 쿠키 원문을 SHA-256으로 해시하고, DB의 활성 세션과 일치하는 유저를 조회한다.
 
 ```ts
 export async function getCurrentUserFromRequest(request: NextRequest) {
-  const userId = getUserIdFromSessionToken(
+  const sessionTokenHash = getSessionTokenHash(
     request.cookies.get(sessionCookieName)?.value,
   );
 
-  if (!userId) {
+  if (!sessionTokenHash) {
     return null;
   }
 
   const users = await db
     .select({ id, email, isApproved, role })
     .from(db_users)
-    .where(eq(db_users.id, userId))
+    .where(and(
+      eq(db_users.sessionTokenHash, sessionTokenHash),
+      gt(db_users.sessionExpiresAt, new Date()),
+    ))
     .limit(1);
 
   return users[0] ?? null;
@@ -44,46 +47,37 @@ export function getCardPermissionMessage(
 
 ## 세션 토큰
 
-토큰 구조:
-
-```txt
-userId.signature
-```
-
-서명 생성:
+로그인마다 32바이트 난수를 새로 만들고 원문은 쿠키에만 보낸다.
 
 ```ts
-function signUserId(userId: number) {
-  return createHmac("sha256", getSessionSecret())
-    .update(String(userId))
-    .digest("hex");
+export function createSessionToken() {
+  return randomBytes(32).toString("base64url");
 }
 ```
 
-서명 검증:
+DB에는 원문이 아니라 SHA-256 해시와 만료 시각을 저장한다.
 
 ```ts
-function isValidSign(signature: string, expectedSignature: string) {
-  const signatureBuffer = Buffer.from(signature, "hex");
-  const expectedBuffer = Buffer.from(expectedSignature, "hex");
+export function hashSessionToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
 
-  if (signatureBuffer.length !== expectedBuffer.length) {
-    return false;
-  }
-
-  return timingSafeEqual(signatureBuffer, expectedBuffer);
+export function createSessionExpiresAt(now = Date.now()) {
+  return new Date(now + sessionMaxAgeSeconds * 1000);
 }
 ```
+
+로그인 시 사용자 행의 기존 해시를 덮어쓰므로 같은 계정의 이전 기기 세션은 무효화된다. 로그아웃은 현재 쿠키 해시와 일치하는 행의 세션 해시와 만료 시각을 `null`로 만든다.
 
 ## 쿠키 설정
 
 ```ts
-response.cookies.set(sessionCookieName, createSessionToken(user.id), {
+response.cookies.set(sessionCookieName, sessionToken, {
   httpOnly: true,
   sameSite: "lax",
   secure: process.env.NODE_ENV === "production",
   path: "/",
-  maxAge: 60 * 60 * 24 * 7,
+  maxAge: sessionMaxAgeSeconds,
 });
 ```
 
@@ -94,3 +88,6 @@ response.cookies.set(sessionCookieName, createSessionToken(user.id), {
 - `lib/auth/password.ts`
 - `app/api/signin/route.ts`
 - `app/api/signout/route.ts`
+- `app/api/signup/route.ts`
+- `app/api/me/route.ts`
+- `hooks/useBoardAuth.ts`

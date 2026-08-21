@@ -1,12 +1,12 @@
 # AI 어시스턴트 상세설계
 
-소스: `components/AiAssistantButton.tsx`, `components/AiChatPanel.tsx`, `components/GeminiIcon.tsx`, `hooks/useAiAssistant.ts`, `lib/ai/board-plan.ts`, `lib/ai/assistant.ts`, `lib/ai/kyuboard-guide.ts`
+소스: `components/AiAssistantButton.tsx`, `components/AiChatPanel.tsx`, `components/GeminiIcon.tsx`, `hooks/useAiAssistant.ts`, `lib/ai/board-plan.ts`, `lib/ai/assistant.ts`, `lib/ai/kyuboard-guide.ts`, `app/api/ai/status/route.ts`, `app/api/ai/chat/route.ts`
 
 ## 역할
 
 자연어 요청을 받아 다섯 가지 일을 한다. 보드를 바꾸는 네 가지는 모두 저장 여부를 사용자가 결정한다.
 
-- **생성**: 메모, 표, Mermaid 카드를 임시 카드로 만들어 보드에 올린다.
+- **생성**: 메모와 선택적인 표·Mermaid·이미지 첨부 카드를 임시 카드로 만들어 보드에 올린다.
 - **재배치**: 이미 보드에 있는 카드의 위치를 다시 잡는다. 내용은 바꾸지 않고 좌표만 바꾼다.
 - **고치기**: 이미 있는 카드의 내용을 바꾼다. 좌표와 크기는 건드리지 않는다.
 - **지우기**: 이미 있는 카드를 지운다. 저장 전까지는 화면에서만 사라진다.
@@ -21,7 +21,7 @@
 | `aiPanelOpen` | `boolean` | 아이콘 활성색(`#ec4899`)과 `aria-pressed` |
 | `onToggle` | `() => void` | `useAiAssistant.handleToggleAiPanel` |
 
-`fixed right-5 top-17`로 보드 메뉴 Ellipsis 버튼 바로 아래에 놓는다. `BoardMenu` 드롭다운이 같은 자리에 열리므로 z를 `50001`로 한 단계 올려 항상 드롭다운 위에 오게 한다. 렌더 순서에 기대면 JSX 위치가 바뀔 때 조용히 가려지므로 z로 명시한다.
+`fixed right-5 top-17 z-50000`으로 보드 메뉴 Ellipsis 버튼 바로 아래에 놓는다. `BoardMenu` 드롭다운은 같은 위치의 `z-50001`이므로 메뉴가 열리면 AI 버튼 위에 표시된다. 채팅 패널도 `z-50000`이다.
 
 lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼을 인라인 SVG로 둔다. `fill="currentColor"`라서 버튼의 text 색상을 따라간다.
 
@@ -49,10 +49,11 @@ lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼�
 | `sending` / `saving` | `false` | 중복 요청 방지 |
 | `pendingCards` | 빈 배열 3종 | 아직 저장하지 않은 AI 카드의 임시 ID |
 | `pendingImageIds` | `[]` | 아직 업로드하지 않은 AI 이미지 카드의 임시 ID |
+| `pendingMoves` | 빈 배열 3종 | 재배치 전후의 메모·Mermaid·표 좌표. Discard가 이전 좌표로 복원한다 |
 | `pendingEdits` | 빈 배열 3종 | 고치기 전 카드 원본. Discard가 이 값으로 되돌린다 |
 | `pendingDeletions` | 빈 배열 4종 | 지운 카드 원본. Discard가 그대로 되살린다 |
 
-카드 컬렉션은 소유하지 않는다. `useBoardMemos`/`useBoardMermaids`/`useBoardTables`의 setter와 insert 핸들러를 주입받아 쓴다.
+카드 컬렉션은 소유하지 않는다. 네 카드 컬렉션과 setter를 주입받고, 메모·Mermaid·표의 insert/update/delete 및 이미지 insert/delete 핸들러를 사용한다. 기존 이미지의 내용 수정과 재배치는 지원하지 않는다.
 
 ## API 키
 
@@ -69,14 +70,14 @@ lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼�
 
 ## 배치 원점
 
-- 생성(`getPlanOrigin`): 기존 카드들의 오른쪽 끝 최댓값 + `newColumnGap`(120)을 x로 잡아 새 열이 기존 카드와 겹치지 않게 한다. y는 현재 보이는 화면 상단 + 80이다.
+- 생성(`getPlanOrigin`): 기존 메모·Mermaid·표의 오른쪽 끝 최댓값 + `newColumnGap`(120)을 x로 잡는다. 기존 이미지의 오른쪽 끝은 이 계산에 포함하지 않는다. y는 현재 보이는 화면 상단 + 80이다.
 - 재배치: 보드 전체를 다시 정리하므로 항상 보드 왼쪽 위(40, 40)에서 시작한다.
 
 원점이 보드 밖을 가리켜도 `placeItems`가 보드 안으로 잘라 넣는다. 배치 후에는 첫 메모 위치로 `scrollTo`한다.
 
 ## 배치 방식 (`placeItems`)
 
-모델이 `layout` 필드로 세 가지 중 하나를 고른다. 생략하면 `column`이다. 좌표는 어떤 방식에서도 모델이 정하지 않는다.
+모델이 `layout` 필드로 네 가지 중 하나를 고른다. 생략하면 `column`이다. 좌표는 어떤 방식에서도 모델이 정하지 않는다.
 
 | layout | 흐름 | 쓰는 상황 |
 | --- | --- | --- |
@@ -103,12 +104,12 @@ lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼�
 
 `grid`는 행 높이를 가장 큰 섹션에 맞춰 하나로 통일한다. 그래야 줄이 어긋나지 않고, 아래 줄 메모의 꼭짓점을 위 줄 첨부 카드가 덮지 않는다.
 
-세 방식 모두 같은 두 불변식 위에서 동작한다.
+네 방식 모두 같은 두 불변식 위에서 동작한다.
 
 - 가로 간격 `pitchX`가 (메모 폭 - 겹침 + 첨부 폭)보다 크다 → 첨부 카드가 옆 칸 메모에 닿지 않는다.
 - `sectionGap > attachmentOverlap` → 첨부 카드가 위 칸 메모의 아래 꼭짓점에 닿지 않는다.
 
-`tests/unit/ai-board-plan.test.ts`의 `layout modes`가 세 방식 각각에 대해 "카드 하나가 정확히 메모 하나에만 걸린다"와 "보드를 벗어나지 않는다"를 전수 검증한다.
+`tests/unit/ai-board-plan.test.ts`의 `layout modes`가 네 방식 각각에 대해 "카드 하나가 정확히 메모 하나에만 걸린다"와 "보드를 벗어나지 않는다"를 전수 검증한다.
 
 ## 보드 경계 (`placeItems`)
 
@@ -127,7 +128,7 @@ lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼�
 - 고치기는 부분 수정이 아니라 **전체 교체**다. 메모 본문을 바꿀 때 모델은 그 메모의 blocks 전체를 다시 보낸다. 일부만 보내면 나머지가 사라지므로 프롬프트에서 명시적으로 막는다.
 - 고치기는 좌표와 크기를 건드리지 않는다. 사용자가 맞춰 둔 배치를 AI가 흔들지 않는다.
 - 지우기는 저장 전까지 로컬 배열에서만 제거하고 원본을 `pendingDeletions`에 보관한다. Discard를 누르면 그대로 되살아난다.
-- 저장할 때 지우기를 **가장 마지막에** 실행한다. 앞 단계가 실패해도 원본이 남아 있게 하기 위해서다.
+- 저장 순서상 삭제는 내용 수정 뒤, 재배치 PATCH 앞에서 실행한다. 한 모델 응답에서 여러 함수가 오면 하나만 선택하므로 일반 흐름에서는 삭제와 재배치가 동시에 대기하지 않는다.
 - 같은 카드를 연달아 고치면 `pendingEdits`는 맨 처음 값을 유지한다. Discard가 항상 AI가 손대기 전 상태로 돌아간다.
 - 모델이 목록에 없는 ID를 지어내면 적용 단계에서 걸러지고 "찾지 못했습니다" 안내가 나간다.
 
@@ -172,14 +173,22 @@ lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼�
 
 ## 저장 (`handleSavePendingCards`)
 
-메모를 계획 순서대로 하나씩 `await` 하며 INSERT한다. 메모의 serial ID 순서가 곧 Markdown 문서 순서이므로 병렬로 보내면 순서가 뒤섞인다. 메모를 모두 저장한 뒤 Mermaid, 표를 저장한다.
+실제 저장 순서는 다음과 같다.
+
+1. 메모를 계획 순서대로 하나씩 INSERT
+2. Mermaid, 표, 이미지 INSERT
+3. 메모, Mermaid, 표 내용 UPDATE
+4. 메모, Mermaid, 표, 이미지 DELETE
+5. 메모, Mermaid, 표 좌표 UPDATE
+
+메모의 serial ID 순서가 곧 Markdown 문서 순서이므로 메모 INSERT는 병렬 처리하지 않는다. 각 단계에서 호출하는 컬렉션 훅이 API 오류 메시지와 로컬 상태 교체를 담당한다.
 
 ## 서버 계약
 
 | 경로 | 동작 |
 | --- | --- |
 | `GET /api/ai/status` | 서버에 키가 설정됐는지와 이 사용자가 쓸 수 있는지. 키 값은 다루지 않는다 |
-| `POST /api/ai/chat` | 권한 확인 → 키 존재 확인 → 스냅샷 검사 → 모델 호출(폴백 포함) → `plan` 또는 `arrangement` 반환 |
+| `POST /api/ai/chat` | 권한 확인 → 키 존재 확인 → 스냅샷 검사 → 모델 호출(폴백 포함) → 답변과 선택된 `plan`, `arrangement`, `edit`, `deletion` 중 하나 및 생성 이미지 반환 |
 
 `POST /api/ai/chat`은 DB에 카드를 쓰지 않는다. 서버에 `AI_API_KEY`가 없거나 모든 모델이 혼잡하면 503으로 응답한다.
 
@@ -196,12 +205,12 @@ lucide-react에는 Gemini 아이콘이 없어 `GeminiIcon`에 별 모양 심볼�
 - 여러 함수가 동시에 호출되면 파괴적인 순서로 하나만 고른다. 지우기 > 고치기 > 재배치 > 생성.
 - Gemini는 어시스턴트 역할을 `model`로 부르므로 `toGeminiContents`가 역할 이름을 변환한다.
 - 함수 호출이 없으면 계획 없이 답변만 반환한다.
-- 함수 인자는 `boardPlanSchema`로 다시 검증한다. JSON Schema를 통과해도 모델 출력은 신뢰하지 않는다.
+- 함수 인자는 종류에 따라 `boardPlanSchema`, `boardArrangementSchema`, `boardEditSchema`, `boardDeletionSchema`로 다시 검증한다. JSON Schema를 통과해도 모델 출력은 신뢰하지 않는다.
 
 ## 알려진 특이사항
 
 - 대화 기록은 컴포넌트 state에만 있고 저장하지 않는다. 새로고침하면 사라진다.
-- 새 계획이 오면 이전 미저장 카드를 먼저 걷어낸다. 한 번에 하나의 제안만 보드에 남는다.
+- 새 보드 변경 응답(`plan`, `arrangement`, `edit`, `deletion`)이 오면 이전 미저장 변경을 먼저 원복한다. 한 번에 하나의 제안만 보드에 남는다.
 - 저장 도중 일부 INSERT가 실패하면 성공한 카드는 남는다. 실패 메시지는 각 컬렉션 훅이 표시한다.
 - 호출 횟수 제한이 없다. 승인된 사용자가 여러 명이 되면 요청 제한을 함께 검토해야 한다.
 - 혼잡(503)은 모델과 시간대에 따라 다르다. 실측으로 순서를 정하고, 폴백 목록을 항상 함께 둔다.

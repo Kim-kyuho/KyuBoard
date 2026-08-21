@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1180" viewBox="0 0 1800 1180" role="img" aria-labelledby="title desc">
   <title id="title">KyuBoard Current Structure</title>
-  <desc id="desc">Current KyuBoard architecture including board previews, four card types, drawing, Markdown compilation, APIs, database, Cloudinary, and authentication.</desc>
+  <desc id="desc">Current KyuBoard architecture including board previews, four card types, drawing, Markdown compilation, AI assistance, APIs, database, Cloudinary, and authentication.</desc>
   <defs>
     <style>
       .bg { fill: #f8fafc; }
@@ -38,7 +38,7 @@
   </g>
 
   <text x="60" y="58" class="panel-title">KyuBoard Current Structure</text>
-  <text x="60" y="88" class="muted">Spatial board for rich text, images, diagrams, tables, drawing, static previews, and Markdown compilation</text>
+  <text x="60" y="88" class="muted">Spatial board for rich text, images, diagrams, tables, drawing, AI-assisted editing, static previews, and Markdown compilation</text>
 
   <rect x="55" y="125" width="350" height="700" rx="12" class="panel"/>
   <text x="82" y="168" class="section-title">Board List</text>
@@ -65,7 +65,7 @@
   <rect x="85" y="682" width="290" height="108" rx="8" class="box purple"/>
   <text x="146" y="716" class="text">Board Menu</text>
   <text x="104" y="744" class="small">auth · current board · compile</text>
-  <text x="115" y="768" class="muted">individual board action menu</text>
+  <text x="115" y="768" class="muted">About · individual board actions</text>
 
   <rect x="445" y="125" width="1300" height="700" rx="12" class="panel"/>
   <text x="475" y="168" class="section-title">Board Canvas / BoardClient</text>
@@ -113,59 +113,73 @@
   <path d="M1235 273V315" class="soft"/>
   <path d="M1545 273V315" class="soft"/>
 
-  <rect x="475" y="600" width="360" height="175" rx="8" class="box rose"/>
+  <rect x="475" y="600" width="275" height="175" rx="8" class="box rose"/>
   <text x="500" y="635" class="section-title">Drawing Layer</text>
-  <text x="500" y="669" class="small">SVG strokes · draw / pan / erase</text>
-  <text x="500" y="697" class="small">mouse · touch · Apple Pencil</text>
-  <text x="500" y="725" class="small">pointer ownership + palm rejection</text>
-  <text x="500" y="753" class="muted">one JSONB stroke list per board</text>
+  <text x="500" y="669" class="small">SVG draw / pan / erase</text>
+  <text x="500" y="697" class="small">mouse · touch · Pencil</text>
+  <text x="500" y="725" class="small">pointer ownership</text>
+  <text x="500" y="753" class="muted">JSONB strokes per board</text>
 
-  <rect x="865" y="600" width="390" height="175" rx="8" class="box green"/>
-  <text x="890" y="635" class="section-title">Compile to Markdown</text>
-  <text x="890" y="669" class="small">memo corners + highest-z cards</text>
-  <text x="890" y="697" class="small">HTML / image / Mermaid / GFM table</text>
-  <text x="890" y="725" class="small">preview modal + .md download</text>
-  <text x="890" y="753" class="muted">drawing is not compiled</text>
+  <rect x="780" y="600" width="300" height="175" rx="8" class="box green"/>
+  <text x="805" y="635" class="section-title">Compile to Markdown</text>
+  <text x="805" y="669" class="small">memo corners + highest z</text>
+  <text x="805" y="697" class="small">HTML · image · diagrams</text>
+  <text x="805" y="725" class="small">GFM table · .md download</text>
+  <text x="805" y="753" class="muted">drawing is not compiled</text>
 
-  <rect x="1285" y="600" width="400" height="175" rx="8" class="box blue"/>
-  <text x="1310" y="635" class="section-title">Board Preview Capture</text>
-  <text x="1310" y="669" class="small">500ms debounce · current viewport</text>
-  <text x="1310" y="697" class="small">html-to-image + Canvas images</text>
-  <text x="1310" y="725" class="small">WebP overwrite upload</text>
-  <text x="1310" y="753" class="muted">insert / update / drawing save</text>
+  <rect x="1110" y="600" width="275" height="175" rx="8" class="box blue"/>
+  <text x="1135" y="635" class="section-title">Board Preview</text>
+  <text x="1135" y="669" class="small">500ms debounce</text>
+  <text x="1135" y="697" class="small">html-to-image + Canvas</text>
+  <text x="1135" y="725" class="small">WebP overwrite upload</text>
+  <text x="1135" y="753" class="muted">current viewport snapshot</text>
 
-  <path d="M655 550V600" class="soft"/>
-  <path d="M1060 550V600" class="soft"/>
-  <path d="M1485 550V600" class="soft"/>
-  <path d="M1285 687H1255" class="soft dash"/>
-  <path d="M1285 735C1060 830 560 835 375 642" class="arrow dash"/>
+  <rect x="1415" y="600" width="270" height="175" rx="8" class="box purple"/>
+  <text x="1440" y="635" class="section-title">AI Assistant</text>
+  <text x="1440" y="669" class="small">Gemini function calling</text>
+  <text x="1440" y="697" class="small">create · edit · delete</text>
+  <text x="1440" y="725" class="small">rearrange · guide</text>
+  <text x="1440" y="753" class="muted">Save / Discard gate</text>
+
+  <path d="M612 550V600" class="soft"/>
+  <path d="M930 550V600" class="soft"/>
+  <path d="M1248 550V600" class="soft"/>
+  <path d="M1550 550V600" class="soft"/>
+  <path d="M1110 687H1080" class="soft dash"/>
+  <path d="M1110 735C940 830 560 835 375 642" class="arrow dash"/>
   <text x="780" y="816" class="label">PreviewIMG.webp shown in board list</text>
 
   <rect x="55" y="900" width="1690" height="220" rx="12" class="panel"/>
-  <text x="82" y="944" class="section-title">Server and Persistence</text>
+  <text x="82" y="944" class="section-title">Server, Persistence, and Providers</text>
 
-  <rect x="115" y="980" width="280" height="82" rx="8" class="box blue"/>
-  <text x="190" y="1015" class="text">Route Handlers</text>
-  <text x="150" y="1043" class="muted">auth · CRUD · layer · drawing</text>
+  <rect x="85" y="980" width="260" height="82" rx="8" class="box blue"/>
+  <text x="150" y="1015" class="text">Route Handlers</text>
+  <text x="112" y="1043" class="muted">auth · CRUD · AI · layer</text>
 
-  <rect x="475" y="980" width="300" height="82" rx="8" class="box green"/>
-  <text x="565" y="1015" class="text">Neon DB</text>
-  <text x="505" y="1043" class="muted">7 tables · no foreign keys</text>
+  <rect x="400" y="980" width="260" height="82" rx="8" class="box green"/>
+  <text x="475" y="1015" class="text">Neon DB</text>
+  <text x="438" y="1043" class="muted">7 tables · no foreign keys</text>
 
-  <rect x="855" y="980" width="300" height="82" rx="8" class="box amber"/>
-  <text x="943" y="1015" class="text">Cloudinary</text>
-  <text x="895" y="1043" class="muted">card images + board previews</text>
+  <rect x="715" y="980" width="260" height="82" rx="8" class="box amber"/>
+  <text x="783" y="1015" class="text">Cloudinary</text>
+  <text x="743" y="1043" class="muted">images + board previews</text>
 
-  <rect x="1235" y="980" width="300" height="82" rx="8" class="box purple"/>
-  <text x="1332" y="1015" class="text">Auth</text>
-  <text x="1273" y="1043" class="muted">HMAC cookie · approval · role</text>
+  <rect x="1030" y="980" width="260" height="82" rx="8" class="box purple"/>
+  <text x="1125" y="1015" class="text">Auth</text>
+  <text x="1062" y="1043" class="muted">token hash · expiry · role</text>
 
-  <path d="M620 775C620 870 255 870 255 980" class="arrow"/>
-  <path d="M1060 775C1060 870 255 870 255 980" class="arrow"/>
-  <path d="M1485 775C1485 870 255 870 255 980" class="arrow"/>
-  <path d="M395 1021H475" class="arrow"/>
-  <path d="M395 1021C590 1120 900 1120 965 1062" class="arrow"/>
-  <path d="M1235 1021H1155" class="soft"/>
+  <rect x="1345" y="980" width="300" height="82" rx="8" class="box cyan"/>
+  <text x="1429" y="1015" class="text">Google Gemini</text>
+  <text x="1397" y="1043" class="muted">chat + image generation</text>
 
-  <text x="90" y="1100" class="muted">Board deletion explicitly removes related rows and DB-backed Cloudinary image assets.</text>
+  <path d="M612 775C612 870 215 870 215 980" class="arrow"/>
+  <path d="M930 775C930 870 215 870 215 980" class="arrow"/>
+  <path d="M1248 775C1248 870 215 870 215 980" class="arrow"/>
+  <path d="M1550 775C1550 870 215 870 215 980" class="arrow"/>
+  <path d="M345 1021H400" class="arrow"/>
+  <path d="M345 1021C520 1120 780 1120 845 1062" class="arrow"/>
+  <path d="M345 1003C610 920 900 920 1030 1003" class="soft"/>
+  <path d="M345 1021C730 910 1260 910 1495 980" class="arrow"/>
+
+  <text x="90" y="1100" class="muted">Board deletion explicitly removes related rows, Cloudinary card images, and the fixed PreviewIMG asset.</text>
 </svg>

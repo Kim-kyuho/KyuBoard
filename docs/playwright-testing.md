@@ -85,7 +85,26 @@ PLAYWRIGHT_BASE_URL=https://kyu-board.vercel.app npm run test:e2e
 E2E_BOARD_ID=13 npm run test:e2e
 ```
 
-`E2E_BOARD_ID`가 없으면 보드 목록의 첫 번째 보드를 사용한다. 목록에 보드가 하나도 없으면 보드 작업 화면 spec만 skip한다.
+`E2E_BOARD_ID`가 없으면 보드 목록의 첫 번째 보드를 사용한다. 로컬에서 목록에 보드가 하나도 없으면 보드 작업 화면 spec만 skip한다. CI에서는 테스트가 조용히 통과하지 않도록 명시적으로 실패시킨다.
+
+## GitHub Actions
+
+`.github/workflows/tests.yml`은 `main` 대상 Pull Request 또는 수동 실행에서 동작한다. 기능 브랜치 push와 Pull Request가 같은 검사를 중복 실행하지 않도록 push 트리거는 사용하지 않는다.
+
+```text
+npm ci
+→ npm run lint
+→ npx tsc --noEmit
+→ npm test
+→ npm run build
+→ Playwright Chromium/WebKit 설치
+→ npm run test:e2e
+```
+
+- 필수 secret: `NEON_CONNECTION_STRING`
+- 선택 secret: `E2E_BOARD_ID` (없으면 첫 보드 사용)
+- 실패 여부와 관계없이 `playwright-report/`를 30일 artifact로 업로드한다.
+- 같은 PR에 새 커밋이 들어오면 이전 실행은 `concurrency` 설정으로 취소한다.
 
 ## 디버깅용 단일 조합
 
@@ -97,4 +116,3 @@ npx playwright test tests/e2e/board-workspace.spec.ts \
 ```
 
 모바일 포인터 문제는 실제 iOS Safari와 WebKit 에뮬레이션 결과가 완전히 같지 않을 수 있다. Playwright는 회귀 검증에 사용하고 Apple Pencil·팜 리젝션은 실제 iPad에서도 최종 확인한다.
-
