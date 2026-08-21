@@ -1,54 +1,48 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
+    createSessionExpiresAt,
     createSessionToken,
-    getUserIdFromSessionToken,
+    getSessionTokenHash,
+    hashSessionToken,
     sessionCookieName,
+    sessionMaxAgeSeconds,
 } from "@/lib/auth/session";
 
 describe("session tokens", () => {
-    const originalSecret = process.env.AUTH_SECRET;
-
-    beforeEach(() => {
-        process.env.AUTH_SECRET = "test-session-secret";
-    });
-
-    afterEach(() => {
-        if (originalSecret === undefined) {
-            delete process.env.AUTH_SECRET;
-        } else {
-            process.env.AUTH_SECRET = originalSecret;
-        }
-    });
-
-    it("uses the expected cookie name and round-trips a user id", () => {
-        const token = createSessionToken(42);
+    it("uses the expected cookie name and creates a random token", () => {
+        const firstToken = createSessionToken();
+        const secondToken = createSessionToken();
 
         expect(sessionCookieName).toBe("kyuboard_session");
-        expect(getUserIdFromSessionToken(token)).toBe(42);
+        expect(firstToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
+        expect(secondToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
+        expect(firstToken).not.toBe(secondToken);
+    });
+
+    it("hashes a valid session token with SHA-256", () => {
+        const token = createSessionToken();
+        const tokenHash = hashSessionToken(token);
+
+        expect(tokenHash).toMatch(/^[0-9a-f]{64}$/);
+        expect(getSessionTokenHash(token)).toBe(tokenHash);
     });
 
     it.each([
         undefined,
         "",
         "not-a-token",
-        "0.signature",
-        "-1.signature",
-        "1.invalid",
-        "1.abc.extra",
+        "a".repeat(42),
+        "a".repeat(44),
+        `${"a".repeat(42)}+`,
     ])("rejects invalid token %s", (token) => {
-        expect(getUserIdFromSessionToken(token)).toBeNull();
+        expect(getSessionTokenHash(token)).toBeNull();
     });
 
-    it("rejects a token signed with another secret", () => {
-        const token = createSessionToken(7);
-        process.env.AUTH_SECRET = "another-secret";
+    it("creates a seven-day server expiration", () => {
+        const now = Date.UTC(2026, 7, 21, 0, 0, 0);
 
-        expect(getUserIdFromSessionToken(token)).toBeNull();
-    });
-
-    it("requires AUTH_SECRET", () => {
-        delete process.env.AUTH_SECRET;
-
-        expect(() => createSessionToken(1)).toThrow("AUTH_SECRET is required");
+        expect(createSessionExpiresAt(now).getTime()).toBe(
+            now + sessionMaxAgeSeconds * 1000,
+        );
     });
 });

@@ -1,5 +1,11 @@
 import { verifyPassword } from "@/lib/auth/password";
-import { createSessionToken, sessionCookieName } from "@/lib/auth/session";
+import {
+    createSessionExpiresAt,
+    createSessionToken,
+    hashSessionToken,
+    sessionCookieName,
+    sessionMaxAgeSeconds,
+} from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { db_users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -45,6 +51,18 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        const sessionToken = createSessionToken();
+        const sessionExpiresAt = createSessionExpiresAt();
+
+        await db
+            .update(db_users)
+            .set({
+                sessionTokenHash: hashSessionToken(sessionToken),
+                sessionExpiresAt,
+                updatedAt: new Date(),
+            })
+            .where(eq(db_users.id, user.id));
+
         const response = NextResponse.json(
             {
                 ok: true,
@@ -57,12 +75,12 @@ export async function POST(request: NextRequest) {
             { status: 200 },
         );
 
-        response.cookies.set(sessionCookieName, createSessionToken(user.id), {
+        response.cookies.set(sessionCookieName, sessionToken, {
             httpOnly: true,
             sameSite: "lax",
             secure: process.env.NODE_ENV === "production",
             path: "/",
-            maxAge: 60 * 60 * 24 * 7,
+            maxAge: sessionMaxAgeSeconds,
         });
 
         return response;

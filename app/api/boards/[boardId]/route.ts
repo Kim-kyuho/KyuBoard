@@ -136,7 +136,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
             .from(db_images)
             .where(eq(db_images.boardId, boardId));
 
-        await Promise.all(boardImages.map((image) => cloudinary.uploader.destroy(image.publicId)));
+        const previewPublicId = `kyuboard/boards/${boardId}/PreviewIMG`;
+
+        await Promise.all([
+            ...boardImages.map((image) => cloudinary.uploader.destroy(image.publicId)),
+            cloudinary.uploader.destroy(previewPublicId, { invalidate: true }),
+        ]);
 
         await db.delete(db_images).where(eq(db_images.boardId, boardId));
 
