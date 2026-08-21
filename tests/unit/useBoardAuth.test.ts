@@ -23,7 +23,7 @@ describe("useBoardAuth", () => {
             .mockResolvedValueOnce({ json: vi.fn().mockResolvedValue({
                 user: { email: "kyu@example.com", isApproved: true, role: "admin" },
             }) })
-            .mockResolvedValueOnce({}));
+            .mockResolvedValueOnce({ ok: true }));
         const { result } = renderHook(() => useBoardAuth({ onSignOutComplete }));
         await waitFor(() => expect(result.current.currentUser).not.toBeNull());
 
@@ -32,5 +32,20 @@ describe("useBoardAuth", () => {
         expect(fetch).toHaveBeenLastCalledWith("/api/signout", { method: "POST" });
         expect(result.current.currentUser).toBeNull();
         expect(onSignOutComplete).toHaveBeenCalledOnce();
+    });
+
+    it("keeps the current user when sign out fails", async () => {
+        const user = { email: "kyu@example.com", isApproved: true, role: "admin" };
+        const onSignOutComplete = vi.fn();
+        vi.stubGlobal("fetch", vi.fn()
+            .mockResolvedValueOnce({ json: vi.fn().mockResolvedValue({ user }) })
+            .mockResolvedValueOnce({ ok: false }));
+        const { result } = renderHook(() => useBoardAuth({ onSignOutComplete }));
+        await waitFor(() => expect(result.current.currentUser).toEqual(user));
+
+        await act(async () => result.current.handleSignOut());
+
+        expect(result.current.currentUser).toEqual(user);
+        expect(onSignOutComplete).not.toHaveBeenCalled();
     });
 });

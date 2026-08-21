@@ -28,6 +28,10 @@ export async function openTestBoard(page: Page) {
     const firstBoardLink = page.locator('a[href^="/boards/"]').first();
 
     if (await firstBoardLink.count() === 0) {
+        if (process.env.CI) {
+            throw new Error("E2E verification requires at least one board or E2E_BOARD_ID.");
+        }
+
         return false;
     }
 

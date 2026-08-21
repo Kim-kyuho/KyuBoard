@@ -61,12 +61,10 @@ describe("useMermaidRenderer", () => {
     });
 
     it("keeps the rendered SVG while removing Mermaid temporary elements", async () => {
-        let renderedSvg: SVGSVGElement | null = null;
-
         mermaidMock.render.mockImplementation(async (id: string) => {
             const preview = document.createElement("div");
             preview.className = "mermaid-rendered";
-            renderedSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            const renderedSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             renderedSvg.id = id;
             preview.appendChild(renderedSvg);
             document.body.appendChild(preview);
@@ -81,7 +79,7 @@ describe("useMermaidRenderer", () => {
         const { result } = renderHook(() => useMermaidRenderer({ source: "flowchart LR\nA-->B", mermaidId: 11 }));
 
         await waitFor(() => expect(result.current.svg).toContain("<svg"));
-        expect(renderedSvg?.isConnected).toBe(true);
+        expect(document.querySelector(".mermaid-rendered svg")?.isConnected).toBe(true);
         expect(document.querySelector("[id^='dkyuboard-mermaid-11-']")).toBeNull();
     });
 
