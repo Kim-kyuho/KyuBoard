@@ -84,7 +84,7 @@ export default function TableCard({
                 onResizeStop={handleResizeStop}
             >
                 <div
-                    className="relative h-full w-full overflow-hidden rounded-xl bg-white"
+                    className="relative h-full w-full overflow-hidden rounded-xl"
                     onClick={handleTablePress}
                     onDoubleClick={editTable}
                     onPointerDown={handleDoubleTap}

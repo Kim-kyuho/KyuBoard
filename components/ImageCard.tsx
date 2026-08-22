@@ -120,7 +120,7 @@ export default function ImageCard(props: ImageCardProps) {
                 onResizeStop={handleResizeStop}
             >
                 <div
-                    className="relative h-full w-full rounded-xl bg-white"
+                    className="relative h-full w-full rounded-xl"
                     onClick={handleImagePress}
                     onDoubleClick={editImage}
                     onPointerDown={handleDoubleTap}

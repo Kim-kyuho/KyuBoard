@@ -23,8 +23,8 @@ export default function TableGrid({ source, isEditing, onChange }: TableGridProp
     } = useTableEdit({ source, isEditing, onChange });
 
     return (
-        <div className="flex h-full min-h-0 flex-col bg-white text-sm text-neutral-800">
-            <div className={`shrink-0 border-b border-neutral-200 p-2 ${isEditing ? "" : "bg-neutral-50 text-neutral-300"}`}>
+        <div className="flex h-full min-h-0 flex-col text-sm text-neutral-800">
+            <div className={`shrink-0 border-b border-neutral-200 p-2 ${isEditing ? "bg-white" : "bg-neutral-50 text-neutral-300"}`}>
                 <div className="flex h-8 items-center gap-2 pr-10">
                     <PressableButton
                         className="flex h-8 items-center gap-1 px-2 text-xs disabled:cursor-not-allowed disabled:text-neutral-300"
