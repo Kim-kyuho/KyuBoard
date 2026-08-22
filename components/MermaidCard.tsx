@@ -118,7 +118,7 @@ export default function MermaidCard({
                 onResizeStop={handleResizeStop}
             >
                 <div
-                    className="relative h-full w-full rounded-xl bg-white"
+                    className="relative h-full w-full rounded-xl"
                     onClick={handleMermaidPress}
                     onDoubleClick={editMermaid}
                     onPointerDown={handleDoubleTap}
